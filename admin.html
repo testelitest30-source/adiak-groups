@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>
+ADIAK Team Maker · Admin
+</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="root">
+</div>
+<div id="modal">
+</div>
+<div id="toast">
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js">
+</script>
+<script>
+const SUPABASE_URL="https://epenklutnevjvgpsjehp.supabase.co", SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwZW5rbHV0bmV2anZncHNqZWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzkwMDEsImV4cCI6MjEwNzExNTAwMX0.1-p4pyec2_NTpCb3W7FG0q-DI5KxNzpmR16Msn9VLJo";
+const $=s=>document.querySelector(s),esc=s=>String(s==null?"":s).replace(/[&
+>"']/g,c=>({"&":"&amp;","
+":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let pressing=false,pressTs=0,pendingDraw=false,lastSig="",sb=null,uid=null,ME=null,P=[],G=[],M=[],AR=[],PE=[],SET={max_groups:"6"},tab="dash",chSel="all",online=new Set(),chan=null,tm=null,tt=null,impText="",dayLabel="",dayDis=false,pq="";
+const nm=id=>{const p=P.find(x=>x.id===id);return p?p.name:"?"},short=l=>String(l||"").replace("@classroom.app",""),isAdm=p=>!!p&&(p.is_admin||(p.perms||[]).includes("admin"));
+const val=i=>$("#"+i).value,maxG=()=>+SET.max_groups||6,gname=id=>{const g=G.find(x=>x.id===id);return g?g.name:"—"};
+const av=p=>{let h=0;for(const c of p.name)h=(h*31+c.charCodeAt(0))%360;return`
+<div class="av" style="background:hsl(${h},55%,48%)">
+${p.avatar?`
+<img src="${esc(p.avatar)}" alt="">
+`:esc(p.name[0].toUpperCase())}${online.has(p.id)?"
+<i>
+</i>
+":""}
+</div>
+`};
+function toast(m,bad){const t=$("#toast");t.textContent=m;t.className="show"+(bad?" bad":"");clearTimeout(tt);tt=setTimeout(()=>{t.className=""},3500)}
+const modal=h=>{$("#modal").innerHTML=`
+<div class="ov" onclick="if(event.target===this)closeM()">
+<div class="box">
+${h}
+</div>
+</div>
+`},closeM=()=>{$("#modal").innerHTML=""};
+function confirmBox(t,fn,label){modal(`
+<p>
+${t}
+</p>
+<div class="row">
+<button class="s" onclick="closeM()">
+Cancel
+</button>
+<button class="d" id="yes">
+${label||"Yes, do it"}
+</button>
+</div>
+`);$("#yes").onclick=()=>{closeM();fn()}}
+async function call(fn,args,ok){const {data,error}=await sb.rpc(fn,args);if(error){toast(error.message,1);return null}if(ok)toast(ok);await load();return data==null?true:data}
+
+/* ---------- login ---------- */
+const normId=v=>{v=String(v||"").trim().toLowerCase();return v.includes("@")?v:v+"@classroom.app"};
+function loginView(msg){$("#root").innerHTML=`
+<div class="card login">
+<h2>
+🛠 ADIAK Admin
+</h2>
+<p class="mu">
+Sign in with an admin account.
+</p>
+<input id="li" placeholder="ID" autocapitalize="none" autocomplete="username" style="margin:4px 0">
+<input id="lp" type="password" placeholder="Password" autocomplete="current-password" style="margin:4px 0" onkeydown="if(event.key==='Enter')doLogin()">
+<div class="err">
+${esc(msg||"")}
+</div>
+<button style="width:100%" onclick="doLogin()">
+Sign in
+</button>
+</div>
+`}
+async function doLogin(){const {data,error}=await sb.auth.signInWithPassword({email:normId(val("li")),password:val("lp")});if(error){loginView("Wrong ID or password");return}uid=data.user.id;await enter()}
+function noAccess(){$("#root").innerHTML=`
+<div class="card login">
+<h2>
+No access
+</h2>
+<p class="mu">
+This account has no admin rights.
+</p>
+<div class="row">
+<button class="s" onclick="signOut()">
+Sign out
+</button>
+<a href="index.html">
+<button>
+Student site
+</button>
+</a>
+</div>
+</div>
+`}
+async function signOut(){if(chan){try{await sb.removeChannel(chan)}catch(e){}chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}uid=null;ME=null;loginView()}
+async function enter(){const r=await sb.from("profiles").select("*").eq("id",uid).single();ME=r.data;if(!ME||!isAdm(ME)){noAccess();return}await load();subscribe()}
+function subscribe(){if(chan)return;chan=sb.channel("room").on("postgres_changes",{event:"*",schema:"public"},()=>{clearTimeout(tm);tm=setTimeout(load,300)}).on("presence",{event:"sync"},()=>{const o=Object.keys(chan.presenceState()).sort().join();if(o!==[...online].sort().join()){online=new Set(Object.keys(chan.presenceState()));draw()}}).subscribe()}
+async function load(){const [p,g,m,a,s,pe]=await Promise.all([sb.from("profiles").select("*").order("name"),sb.from("groups").select("*").order("id"),sb.from("messages").select("*").order("id",{ascending:false}).limit(800),sb.from("archives").select("*").order("id",{ascending:false}),sb.from("app_settings").select("*"),sb.from("point_events").select("*").order("id",{ascending:false}).limit(200)]);
+ if(p.error){toast(p.error.message,1);return}
+ P=p.data||[];G=g.data||[];M=(m.data||[]).reverse();AR=a.data||[];(s.data||[]).forEach(x=>{SET[x.key]=x.value});PE=pe.data||[];ME=P.find(x=>x.id===uid)||ME;
+ for(const x of AR){try{const r=await sb.from("archived_messages").select("id",{count:"exact",head:true}).eq("archive_id",x.id);x.n=r.count||0}catch(e){x.n=0}}
+ const sig=JSON.stringify([P.map(p=>[p.id,p.name,p.points,p.group_id,p.login,(p.perms||[]).join(),p.is_admin]),G.map(g=>[g.id,g.name,g.capacity,g.host_id]),M.length,M.length?M[M.length-1].id:0,AR.map(a=>[a.id,a.n]),SET.max_groups]);if(sig!==lastSig){lastSig=sig;draw()}}
+
+/* ---------- layout ---------- */
+const TABS=
+<script src="admin.js" defer>
+</script>

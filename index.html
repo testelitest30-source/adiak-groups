@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<title>
+ADIAK Team Maker
+</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="root">
+</div>
+<div id="modal">
+</div>
+<div id="toast">
+</div>
+<div id="toasts">
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js">
+</script>
+<script>
+const SUPABASE_URL="https://epenklutnevjvgpsjehp.supabase.co", SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwZW5rbHV0bmV2anZncHNqZWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzkwMDEsImV4cCI6MjEwNzExNTAwMX0.1-p4pyec2_NTpCb3W7FG0q-DI5KxNzpmR16Msn9VLJo";
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&
+>"']/g,c=>({"&":"&amp;","
+":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let pressing=false,pressTs=0,pmSig="",SET={max_groups:6},menuOpen=false,MYSID=null,navStack=[],restoring=false,lastSnap=null,pmDrawn=null,wasNotes=false,URLS={},needUrls=new Set(),rec=null,pendingRender=false,PE=[],pm=null,sb=null,chan=null,uid=null,screen="boot",err="",roster=[],P={},G=[],RQ=[],JB=[],KK=[],KB=[],IV=[],M=[],online=new Set(),SEEN={};
+let NOTES=[],notesOpen=false,tab="groups",openG=null,conv=null,sheet=false,sp=null,tm=null,tt=null,ready=false,quietUntil=0,lastKey="",lastMax=0,muted=false,AC=null;
+try{muted=localStorage.getItem("mute")==="1"}catch(e){}
+const phone=()=>innerWidth
+=800, ME=()=>P[uid], grp=id=>G.find(g=>g.id===id), nameOf=id=>P[id]?P[id].name:"?";
+const can=p=>{const u=ME(),a=(u&&u.perms)||[];return !!u&&(u.is_admin||a.includes("admin")||a.includes(p))};
+const adm=p=>!!p&&(p.is_admin||(p.perms||[]).includes("admin"));
+const tag=p=>!p?"":adm(p)?'
+<span class="chip tag">
+🛡 Admin
+</span>
+':(p.perms||[]).includes("points")?'
+<span class="chip tag2">
+⭐ Scorer
+</span>
+':"";
+const credits=inl=>`
+<div class="credits${inl?" inline":""}">
+<small>
+Created by
+</small>
+<div>
+<b>
+Sübhan Camalzadə
+</b>
+<span class="chip tag">
+🛡 Admin
+</span>
+</div>
+<div>
+<b>
+Nurəli Qasımlı
+</b>
+<span class="chip tag">
+🛡 Admin
+</span>
+</div>
+</div>
+`;
+const ppl=()=>Object.values(P).filter(p=>!p.is_admin).sort((a,b)=>a.name.localeCompare(b.name));
+const mem=g=>ppl().filter(p=>p.group_id===g), idle=()=>ppl().filter(p=>p.group_id===null);
+const gname=id=>{const g=grp(id);return g?g.name:"?"}, gcol=id=>`hsl(${(id*67+200)%360} 70% 52%)`;
+const gchip=p=>p.is_admin?`
+<span class="chip">
+host
+</span>
+`:p.group_id===null?`
+<span class="chip on">
+idle
+</span>
+`:`
+<span class="chip" style="background:${gcol(p.group_id)}22;color:${gcol(p.group_id)}">
+${esc(gname(p.group_id))}
+</span>
+`;
+const dots=(k,c,col)=>Array.from({length:c},(_,i)=>`
+<i class="dot" style="${i<k?"background:"+col:""}">
+</i>
+`.replace('class="dot"',i
+<k?'class="dot f"':'class="dot"')).join("");
+const dmKey=(a,b)=>
+a
+<b?`d:${a}:${b}`:`d:${b}:${a}`;
+const RANKS=[["Newcomer",0],["Speaker",10],["Orator",25],["Maestro",50]];
+const rank=p=>
+{let i=0;RANKS.forEach((r,j)=>{if(p>=r[1])i=j});const nx=RANKS[i+1];return{name:RANKS[i][0],pct:nx?Math.round((p-RANKS[i][1])/(nx[1]-RANKS[i][1])*100):100}};
+const av=(p,c="")=>{let h=0;for(const ch of p.name)h=(h*31+ch.charCodeAt(0))%360;
+ return`
+<div class="av ${c}" onclick="event.stopPropagation();showProfile('${p.id}')" style="background:hsl(${h},55%,48%)">
+${p.avatar?`
+<img src="${esc(p.avatar)}" alt="">
+`:esc(p.name[0].toUpperCase())}${online.has(p.id)?'
+<i class="on">
+</i>
+':""}
+</div>
+`};
+
+/* ---------- sound (synthesized, no files) ---------- */
+function tone(f,d,t="sine",v=.08,at=0){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();const o=AC.createOscillator(),g=AC.createGain(),s=AC.currentTime+at;o.type=t;o.frequency.setValueAtTime(f,s);g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.0001,s+d);o.connect(g);g.connect(AC.destination);o.start(s);o.stop(s+d)}catch(e){}}
+const snd={msg:()=>{tone(784,.1,"sine",.09);tone(1047,.22,"sine",.09,.11)},click:()=>tone(520,.04,"triangle",.04),pop:()=>tone(660,.09,"triangle"),ding:()=>{tone(880,.12);tone(1320,.2,"sine",.06,.09)},
+ ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.2,"triangle",.09,i*.09)),alert:()=>{tone(740,.1,"square",.035);tone(988,.16,"square",.035,.12)},err:()=>{tone(180,.28,"sawtooth",.06)}};
+const cb=n=>n?`
+<span class="ub">
+${n>99?"99+":n}
+</span>
+`:"";
+const prev=(m,n=34)=>m.file_path?(/^image\//.test(m.file_type)?"🖼️ Photo":/^audio\//.test(m.file_type)?"🎤 Voice message":"📎 "+m.file_name):m.body.slice(0,n);
+const fsize=n=>n
+1024?n+" B":n
+1048576?Math.round(n/1024)+" KB":(n/1048576).toFixed(1)+" MB";
+const ficon=(t,n)=>/powerpoint|presentation|\.pptx?$/i.test(t+n)?"📊":/pdf/i.test(t+n)?"📕":/word|document|\.docx?$/i.test(t+n)?"📝":/excel|sheet|\.xlsx?$/i.test(t+n)?"📈":/zip|rar|7z/i.test(t+n)?"🗜️":"📎";
+function urlFor(p){const c=URLS[p];if(c&&c.exp>Date.now())return c.url;needUrls.add(p);return""}
+async function fetchUrls(){if(!needUrls.size||!sb)return;const paths=[...needUrls];needUrls.clear();let d=null;try{d=(await sb.storage.from("chat-files").createSignedUrls(paths,3600)).data}catch(e){}
+ paths.forEach((p,i)=>{URLS[p]=d&&d[i]&&d[i].signedUrl?{url:d[i].signedUrl,exp:Date.now()+3300000}:{url:"",exp:Date.now()+20000}});render()}
+function fileHtml(m){if(!m.file_path)return"";const u=urlFor(m.file_path),t=m.file_type||"";
+ if(/^image\//.test(t))return u?`
+<img class="ph" src="${esc(u)}" alt="${esc(m.file_name)}" onclick="window.open(this.src)">
+`:`
+<div class="file">
+🖼️ Loading…
+</div>
+`;
+ if(/^audio\//.test(t))return u?`
+<audio controls preload="metadata" src="${esc(u)}">
+</audio>
+`:`
+<div class="file">
+🎤 Loading…
+</div>
+`;
+ return`
+<a class="file" ${u?`href="${esc(u)}" target="_blank" rel="noopener"`:""}>
+<span class="ic">
+${ficon(t,m.file_name)}
+</span>
+<span style="min-width:0">
+<b>
+${esc(m.file_name)}
+</b>
+<br>
+<small class="mu">
+${fsize(m.file_size||0)}${u?" · tap to open":""}
+</small>
+</span>
+</a>
+`}
+function pickFile(inp){const f=inp.files[0];inp.value="";if(f)sendFile(f)}
+async function sendFile(f){if(!conv)return;if(f.size>26214400){toast("Files must be under 25 MB",1);snd.err();return}
+ toast("Uploading "+f.name+"…");const ch=conv,safe=f.name.replace(/[^\w.\-]+/g,"_").slice(-60),path=uid+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,7)+"-"+safe;
+ const up=await sb.storage.from("chat-files").upload(path,f,{contentType:f.type||"application/octet-stream"});
+ if(up.error){toast(up.error.message,1);snd.err();return}
+ if(await rpc("send_file",{ch,path,fname:f.name,ftype:f.type||"",fsize:f.size,caption:""})){snd.pop();toast("Sent ✓")}}
+const recTime=()=>{const s=Math.floor((Date.now()-rec.t0)/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+async function toggleRec(){if(rec){stopRec(true);return}
+ if(!navigator.mediaDevices||!window.MediaRecorder){toast("Voice recording is not supported in this browser",1);return}
+ try{const st=await navigator.mediaDevices.getUserMedia({audio:true}),mt=["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(t=>MediaRecorder.isTypeSupported(t))||"",mr=new MediaRecorder(st,mt?{mimeType:mt}:{});
+  rec={mr,st,chunks:[],t0:Date.now(),send:true,ch:conv,iv:setInterval(()=>{const b=$("#micbtn");if(b&&rec)b.textContent="⏹ "+recTime()+" · send";if(rec&&Date.now()-rec.t0>300000)stopRec(true)},500)};
+  mr.ondataavailable=e=>{if(e.data.size)rec.chunks.push(e.data)};
+  mr.onstop=()=>{const r=rec;clearInterval(r.iv);r.st.getTracks().forEach(t=>t.stop());rec=null;render();if(!r.send||!r.chunks.length)return;
+   const type=(mr.mimeType||"audio/webm").split(";")[0],ext=type.includes("mp4")?"m4a":"webm";conv=r.ch;sendFile(new File(r.chunks,"voice-"+new Date().toISOString().slice(11,19).replace(/:/g,"")+"."+ext,{type}))};
+  mr.start();render()}catch(e){toast("Microphone access was denied",1)}}
+function stopRec(send){if(!rec)return;rec.send=send;rec.mr.stop()}
+const cancelRec=()=>stopRec(false);
+function toggleMute(){muted=!muted;try{localStorage.setItem("mute",muted?"1":"0")}catch(e){}if(!muted)snd.ding();render()}
+addEventListener("click",e=>{if(e.target.closest&&e.target.closest("button,.gr,.li"))snd.click()},true);
+
+function toast(m,bad){const t=$("#toast");t.textContent=m;t.className="show"+(bad?" bad":"");clearTimeout(tt);tt=setTimeout(()=>{t.className=""},3800)}
+async function rpc(fn,a){quietUntil=Date.now()+3000;const {error}=await sb.rpc(fn,a);if(error){toast(error.message,1);snd.err();return false}await refresh();return true}
+function closeM(){pm=null;pmDrawn=null;pmSig="";$("#modal").innerHTML=""}
+function ask(t,fn){$("#modal").innerHTML=`
+<div class="ov">
+<div class="card" style="max-width:340px">
+<p>
+${t}
+</p>
+<div class="row">
+<button class="s" style="flex:1" onclick="closeM()">
+Cancel
+</button>
+<button class="d" style="flex:1" id="yes">
+Yes
+</button>
+</div>
+</div>
+</div>
+`;$("#yes").onclick=()=>{closeM();fn()}}
+function party(){for(let i=0;i
+34;i++){const e=document.createElement("span");e.className="pt";e.textContent=["🎉","✨","🎊","⭐","💜"][i%5];e.style.left=Math.random()*100+"vw";e.style.animationDelay=Math.random()*.7+"s";document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}}
+
+/* ---------- unread ---------- */
+const loadSeen=()=>{try{SEEN=JSON.parse(localStorage.getItem("seen:"+uid))||{}}catch(e){SEEN={}}};
+const saveSeen=()=>{try{localStorage.setItem("seen:"+uid,JSON.stringify(SEEN))}catch(e){}};
+const unread=ch=>M.filter(m=>m.channel===ch&&m.sender!==null&&m.sender!==uid&&m.id>(SEEN[ch]||0)).length;
+const totalUnread=()=>{let n=0;new Set(M.map(m=>m.channel)).forEach(c=>{n+=unread(c)});return n};
+const visibleConv=()=>conv&&(!phone()||(sheet&&sp==="chat"))?conv:null;
+function markSeen(all){const chs=all?[...new Set(M.map(m=>m.channel))]:(visibleConv()?[conv]:[]);let ch=false;
+ chs.forEach(c=>{const ids=M.filter(m=>m.channel===c).map(m=>m.id);if(ids.length){const mx=Math.max(...ids);if((SEEN[c]||0)
+<mx){SEEN[c]=mx;ch=true}}});if(ch)saveSeen()}
+function myVotes(){const u=ME();if(!u||u.group_id===null)return{j:[],k:[]};const g=grp(u.group_id),host=!!g&&g.host_id===uid;
+ return{j:RQ.filter(r=>
+r.group_id===u.group_id&&(r.stage==="pending"||(r.stage==="voting"&&!JB.some(b=>b.request_id===r.id&&b.voter_id===uid))||(r.stage==="approved"&&host))),
+  k:KK.filter(x=>x.group_id===u.group_id&&x.target_id!==uid&&!KB.some(b=>b.kick_id===x.id&&b.voter_id===uid))}}
+const myInvites=()=>ME()&&ME().group_id===null?IV.filter(x=>x.user_id===uid):[];
+const inboxCount=()=>{const v=myVotes();return v.j.length+v.k.length+myInvites().length};
+
+/* ---------- profile popup ---------- */
+const statsOf=id=>{const ev=PE.filter(e=>e.user_id===id),pr=ev.filter(e=>e.kind==="host"&&e.amount>0),sum=pr.reduce((a,e)=>a+e.amount,0);return{ev,n:pr.length,best:pr.reduce((m,e)=>Math.max(m,e.amount),0),avg:pr.length?Math.round(sum/pr.length*10)/10:0}};
+function showProfile(id){if(!P[id])return;pm=id;render()}
+function closeProfile(){if(navStack.length&&!navStack[navStack.length-1].pm)history.back();else{pm=null;closeM();render()}}
+let givingPts=false;
+async function givePoints(id){if(givingPts)return;const i=$("#gp"),n=parseInt(i&&i.value,10);if(!n||n
+-100||n>100){toast("Typ
+<script src="app.js" defer>
+</script>
