@@ -1,0 +1,676 @@
+/*
+ * ADIAK Team Maker — əsas saytın JavaScript-i.
+ * Bu fayl səhifənin düymələrini, məlumat yüklənməsini və ekran yenilənməsini idarə edir.
+ * Məntiqə müdaxilə edilməyib; oxunaqlılıq üçün sətir bölgüsü və şərhlər əlavə olunub.
+ */
+
+const SUPABASE_URL="https://epenklutnevjvgpsjehp.supabase.co", SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwZW5rbHV0bmV2anZncHNqZWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzkwMDEsImV4cCI6MjEwNzExNTAwMX0.1-p4pyec2_NTpCb3W7FG0q-DI5KxNzpmR16Msn9VLJo";
+
+
+const $=s=>document.querySelector(s);
+
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let pressing=false,pressTs=0,pmSig="",SET={
+  max_groups:6},menuOpen=false,MYSID=null,navStack=[],restoring=false,lastSnap=null,pmDrawn=null,wasNotes=false,URLS={
+  },needUrls=new Set(),rec=null,pendingRender=false,PE=[],pm=null,sb=null,chan=null,uid=null,screen="boot",err="",roster=[],P={
+  },G=[],RQ=[],JB=[],KK=[],KB=[],IV=[],M=[],online=new Set(),SEEN={
+  };
+let NOTES=[],notesOpen=false,tab="groups",openG=null,conv=null,sheet=false,sp=null,tm=null,tt=null,ready=false,quietUntil=0,lastKey="",lastMax=0,muted=false,AC=null;
+try{
+  muted=localStorage.getItem("mute")==="1"}catch(e){
+  }
+const phone=()=>innerWidth<=800, ME=()=>P[uid], grp=id=>G.find(g=>g.id===id), nameOf=id=>P[id]?P[id].name:"?";
+const can=p=>{
+  const u=ME(),a=(u&&u.perms)||[];return !!u&&(u.is_admin||a.includes("admin")||a.includes(p))};
+const adm=p=>!!p&&(p.is_admin||(p.perms||[]).includes("admin"));
+const tag=p=>!p?"":adm(p)?' <span class="chip tag">🛡 Admin</span>':(p.perms||[]).includes("points")?' <span class="chip tag2">⭐ Scorer</span>':"";
+const credits=inl=>`<div class="credits${inl?" inline":""}"><small>Created by</small><div><b>Sübhan Camalzadə</b> <span class="chip tag">🛡 Admin</span></div><div><b>Nurəli Qasımlı</b> <span class="chip tag">🛡 Admin</span></div></div>`;
+const ppl=()=>Object.values(P).filter(p=>!p.is_admin).sort((a,b)=>a.name.localeCompare(b.name));
+const mem=g=>ppl().filter(p=>p.group_id===g), idle=()=>ppl().filter(p=>p.group_id===null);
+const gname=id=>{
+  const g=grp(id);return g?g.name:"?"}, gcol=id=>`hsl(${(id*67+200)%360} 70% 52%)`;
+const gchip=p=>p.is_admin?`<span class="chip">host</span>`:p.group_id===null?`<span class="chip on">idle</span>`:`<span class="chip" style="background:${gcol(p.group_id)}22;color:${gcol(p.group_id)}">${
+  esc(gname(p.group_id))}</span>`;
+const dots=(k,c,col)=>Array.from({length:c},(_,i)=>`<i class="dot" style="${i<k?"background:"+col:""}"></i>`.replace('class="dot"',i<k?'class="dot f"':'class="dot"')).join("");
+const dmKey=(a,b)=>a<b?`d:${
+  a}:${
+  b}`:`d:${
+  b}:${
+  a}`;
+const RANKS=[["Newcomer",0],["Speaker",10],["Orator",25],["Maestro",50]];
+const rank=p=>{let i=0;RANKS.forEach((r,j)=>{if(p>=r[1])i=j});const nx=RANKS[i+1];return{name:RANKS[i][0],pct:nx?Math.round((p-RANKS[i][1])/(nx[1]-RANKS[i][1])*100):100}};
+const av=(p,c="")=>{let h=0;for(const ch of p.name)h=(h*31+ch.charCodeAt(0))%360;
+ return`<div class="av ${c}" onclick="event.stopPropagation();showProfile('${p.id}')" style="background:hsl(${h},55%,48%)">${
+  p.avatar?`<img src="${esc(p.avatar)}" alt="">`:esc(p.name[0].toUpperCase())}${online.has(p.id)?'<i class="on"></i>':""}</div>`};
+
+/* ---------- sound (synthesized, no files) ---------- */
+function tone(f,d,t="sine",v=.08,at=0){
+  if(muted)return;
+  try{
+    AC=AC||new(window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended")AC.resume();
+    const o=AC.createOscillator(),g=AC.createGain(),s=AC.currentTime+at;
+    o.type=t;
+    o.frequency.setValueAtTime(f,s);
+    g.gain.setValueAtTime(v,s);
+    g.gain.exponentialRampToValueAtTime(.0001,s+d);
+    o.connect(g);
+    g.connect(AC.destination);
+    o.start(s);
+    o.stop(s+d)}catch(e){
+    }}
+const snd={
+  msg:()=>{
+    tone(784,.1,"sine",.09);
+    tone(1047,.22,"sine",.09,.11)},click:()=>tone(520,.04,"triangle",.04),pop:()=>tone(660,.09,"triangle"),ding:()=>{
+    tone(880,.12);
+    tone(1320,.2,"sine",.06,.09)},
+ ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.2,"triangle",.09,i*.09)),alert:()=>{
+    tone(740,.1,"square",.035);
+    tone(988,.16,"square",.035,.12)},err:()=>{
+    tone(180,.28,"sawtooth",.06)}};
+
+const cb=n=>n?`<span class="ub">${n>99?"99+":n}</span>`:"";
+const prev=(m,n=34)=>m.file_path?(/^image\//.test(m.file_type)?"🖼️ Photo":/^audio\//.test(m.file_type)?"🎤 Voice message":"📎 "+m.file_name):m.body.slice(0,n);
+const fsize=n=>n<1024?n+" B":n<1048576?Math.round(n/1024)+" KB":(n/1048576).toFixed(1)+" MB";
+const ficon=(t,n)=>/powerpoint|presentation|\.pptx?$/i.test(t+n)?"📊":/pdf/i.test(t+n)?"📕":/word|document|\.docx?$/i.test(t+n)?"📝":/excel|sheet|\.xlsx?$/i.test(t+n)?"📈":/zip|rar|7z/i.test(t+n)?"🗜️":"📎";
+function urlFor(p){const c=URLS[p];if(c&&c.exp>Date.now())return c.url;needUrls.add(p);return""}
+async function fetchUrls(){if(!needUrls.size||!sb)return;const paths=[...needUrls];needUrls.clear();let d=null;try{d=(await sb.storage.from("chat-files").createSignedUrls(paths,3600)).data}catch(e){}
+ paths.forEach((p,i)=>{URLS[p]=d&&d[i]&&d[i].signedUrl?{url:d[i].signedUrl,exp:Date.now()+3300000}:{url:"",exp:Date.now()+20000}});render()}
+function fileHtml(m){if(!m.file_path)return"";const u=urlFor(m.file_path),t=m.file_type||"";
+ if(/^image\//.test(t))return u?`<img class="ph" src="${esc(u)}" alt="${esc(m.file_name)}" onclick="window.open(this.src)">`:`<div class="file">🖼️ Loading…</div>`;
+ if(/^audio\//.test(t))return u?`<audio controls preload="metadata" src="${esc(u)}"></audio>`:`<div class="file">🎤 Loading…</div>`;
+ return`<a class="file" ${
+  u?`href="${esc(u)}" target="_blank" rel="noopener"`:""}><span class="ic">${ficon(t,m.file_name)}</span><span style="min-width:0"><b>${esc(m.file_name)}</b><br><small class="mu">${fsize(m.file_size||0)}${u?" · tap to open":""}</small></span></a>`}
+function pickFile(inp){
+  const f=inp.files[0];
+  inp.value="";
+  if(f)sendFile(f)}
+async function sendFile(f){
+  if(!conv)return;
+  if(f.size>26214400){
+    toast("Files must be under 25 MB",1);
+    snd.err();
+    return}
+ toast("Uploading "+f.name+"…");
+  const ch=conv,safe=f.name.replace(/[^\w.\-]+/g,"_").slice(-60),path=uid+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,7)+"-"+safe;
+  
+ const up=await sb.storage.from("chat-files").upload(path,f,{
+    contentType:f.type||"application/octet-stream"});
+  
+ if(up.error){
+    toast(up.error.message,1);
+    snd.err();
+    return}
+ if(await rpc("send_file",{
+    ch,path,fname:f.name,ftype:f.type||"",fsize:f.size,caption:""})){
+    snd.pop();
+    toast("Sent ✓")}}
+const recTime=()=>{
+  const s=Math.floor((Date.now()-rec.t0)/1000);
+  return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+
+async function toggleRec(){
+  if(rec){
+    stopRec(true);
+    return}
+ if(!navigator.mediaDevices||!window.MediaRecorder){
+    toast("Voice recording is not supported in this browser",1);
+    return}
+ try{
+    const st=await navigator.mediaDevices.getUserMedia({
+      audio:true}),mt=["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(t=>MediaRecorder.isTypeSupported(t))||"",mr=new MediaRecorder(st,mt?{
+      mimeType:mt}:{
+      });
+    
+  rec={
+      mr,st,chunks:[],t0:Date.now(),send:true,ch:conv,iv:setInterval(()=>{
+        const b=$("#micbtn");if(b&&rec)b.textContent="⏹ "+recTime()+" · send";if(rec&&Date.now()-rec.t0>300000)stopRec(true)},500)};
+    
+  mr.ondataavailable=e=>{
+      if(e.data.size)rec.chunks.push(e.data)};
+    
+  mr.onstop=()=>{
+      const r=rec;
+      clearInterval(r.iv);
+      r.st.getTracks().forEach(t=>t.stop());
+      rec=null;
+      render();
+      if(!r.send||!r.chunks.length)return;
+      
+   const type=(mr.mimeType||"audio/webm").split(";")[0],ext=type.includes("mp4")?"m4a":"webm";
+      conv=r.ch;
+      sendFile(new File(r.chunks,"voice-"+new Date().toISOString().slice(11,19).replace(/:/g,"")+"."+ext,{
+        type}))};
+    
+  mr.start();
+    render()}catch(e){
+    toast("Microphone access was denied",1)}}
+function stopRec(send){
+  if(!rec)return;
+  rec.send=send;
+  rec.mr.stop()}
+const cancelRec=()=>stopRec(false);
+
+function toggleMute(){
+  muted=!muted;
+  try{
+    localStorage.setItem("mute",muted?"1":"0")}catch(e){
+    }if(!muted)snd.ding();
+  render()}
+addEventListener("click",e=>{
+  if(e.target.closest&&e.target.closest("button,.gr,.li"))snd.click()},true);
+
+
+function toast(m,bad){
+  const t=$("#toast");
+  t.textContent=m;
+  t.className="show"+(bad?" bad":"");
+  clearTimeout(tt);
+  tt=setTimeout(()=>{
+    t.className=""},3800)}
+async function rpc(fn,a){
+  quietUntil=Date.now()+3000;
+  const {
+    error}=await sb.rpc(fn,a);
+  if(error){
+    toast(error.message,1);
+    snd.err();
+    return false}await refresh();
+  return true}
+function closeM(){
+  pm=null;
+  pmDrawn=null;
+  pmSig="";
+  $("#modal").innerHTML=""}
+function ask(t,fn){
+  $("#modal").innerHTML=`<div class="ov"><div class="card" style="max-width:340px"><p>${t}</p><div class="row"><button class="s" style="flex:1" onclick="closeM()">Cancel</button><button class="d" style="flex:1" id="yes">Yes</button></div></div></div>`;$("#yes").onclick=()=>{closeM();fn()}}
+function party(){for(let i=0;i<34;i++){const e=document.createElement("span");e.className="pt";e.textContent=["🎉","✨","🎊","⭐","💜"][i%5];e.style.left=Math.random()*100+"vw";e.style.animationDelay=Math.random()*.7+"s";document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}}
+
+/* ---------- unread ---------- */
+const loadSeen=()=>{try{SEEN=JSON.parse(localStorage.getItem("seen:"+uid))||{}}catch(e){SEEN={}}};
+const saveSeen=()=>{try{localStorage.setItem("seen:"+uid,JSON.stringify(SEEN))}catch(e){}};
+const unread=ch=>M.filter(m=>m.channel===ch&&m.sender!==null&&m.sender!==uid&&m.id>(SEEN[ch]||0)).length;
+const totalUnread=()=>{let n=0;new Set(M.map(m=>m.channel)).forEach(c=>{n+=unread(c)});return n};
+const visibleConv=()=>conv&&(!phone()||(sheet&&sp==="chat"))?conv:null;
+function markSeen(all){const chs=all?[...new Set(M.map(m=>m.channel))]:(visibleConv()?[conv]:[]);let ch=false;
+ chs.forEach(c=>{const ids=M.filter(m=>m.channel===c).map(m=>m.id);if(ids.length){const mx=Math.max(...ids);if((SEEN[c]||0)<mx){SEEN[c]=mx;ch=true}}});if(ch)saveSeen()}
+function myVotes(){const u=ME();if(!u||u.group_id===null)return{j:[],k:[]};const g=grp(u.group_id),host=!!g&&g.host_id===uid;
+ return{j:RQ.filter(r=>r.group_id===u.group_id&&(r.stage==="pending"||(r.stage==="voting"&&!JB.some(b=>b.request_id===r.id&&b.voter_id===uid))||(r.stage==="approved"&&host))),
+  k:KK.filter(x=>x.group_id===u.group_id&&x.target_id!==uid&&!KB.some(b=>b.kick_id===x.id&&b.voter_id===uid))}}
+const myInvites=()=>ME()&&ME().group_id===null?IV.filter(x=>x.user_id===uid):[];
+const inboxCount=()=>{const v=myVotes();return v.j.length+v.k.length+myInvites().length};
+
+/* ---------- profile popup ---------- */
+const statsOf=id=>{const ev=PE.filter(e=>e.user_id===id),pr=ev.filter(e=>e.kind==="host"&&e.amount>0),sum=pr.reduce((a,e)=>a+e.amount,0);return{ev,n:pr.length,best:pr.reduce((m,e)=>Math.max(m,e.amount),0),avg:pr.length?Math.round(sum/pr.length*10)/10:0}};
+function showProfile(id){if(!P[id])return;pm=id;render()}
+function closeProfile(){if(navStack.length&&!navStack[navStack.length-1].pm)history.back();else{pm=null;closeM();render()}}
+let givingPts=false;
+async function givePoints(id){if(givingPts)return;const i=$("#gp"),n=parseInt(i&&i.value,10);if(!n||n<-100||n>100){toast("Type a number from -100 to 100",1);snd.err();if(i&&i.focus)i.focus();return}
+ givingPts=true;const btn=$("#givebtn");if(btn){btn.disabled=true;btn.textContent="Adding…"}
+ const {error}=await sb.rpc("add_points",{u:id,n});givingPts=false;
+ if(error){toast(error.message,1);snd.err();if(btn){btn.disabled=false;btn.textContent="Add points"}return}
+ const old=P[id].points;P[id].points=Math.max(0,old+n);PE.unshift({id:Date.now(),user_id:id,amount:n,kind:"host",created_at:new Date().toISOString()});
+ drawProfile(false);const g=$("#gp");if(g)g.value="";pointsFx(n,old,P[id].points);toast((n>0?"+":"")+n+" points → "+P[id].name)}
+function sparks(){for(let i=0;i<12;i++){const e=document.createElement("span");e.className="pt";e.textContent=["✨","⭐","💜"][i%3];e.style.left=(25+Math.random()*50)+"vw";e.style.fontSize="20px";e.style.animationDelay=Math.random()*.4+"s";document.body.appendChild(e);setTimeout(()=>e.remove(),2400)}}
+function pointsFx(n,from,to){const b=$("#ptsbig"),raf=typeof requestAnimationFrame==="function"?requestAnimationFrame:f=>setTimeout(f,16);
+ if(b&&b.classList){b.classList.add("bump");const t0=Date.now(),step=()=>{const k=Math.min(1,(Date.now()-t0)/700);b.textContent=Math.round(from+(to-from)*k);if(k<1)raf(step)};step()}
+ if(b&&b.getBoundingClientRect){const r=b.getBoundingClientRect(),e=document.createElement("div");e.className="fx"+(n<0?" neg":"");e.textContent=(n>0?"+":"")+n;e.style.left=(r.left+r.width/2-22)+"px";e.style.top=r.top+"px";document.body.appendChild(e);setTimeout(()=>e.remove(),1300)}
+ if(n>0){snd.ok();sparks()}else snd.err()}
+function drawProfile(first){const p=P[pm];if(!p){closeM();return}const me=ME(),st=statsOf(p.id),rk=rank(p.points),mine=p.id===uid,gv=$("#gp")?$("#gp").value:"",
+ myG=me.group_id!==null?grp(me.group_id):null,canInvite=!p.is_admin&&p.group_id===null&&!!myG&&myG.host_id===uid&&mem(myG.id).length<myG.capacity&&!IV.some(x=>x.user_id===p.id&&x.group_id===myG.id);
+ $("#modal").innerHTML=`<div class="ov${first?"":" still"}" onclick="if(event.target===this)closeProfile()"><div class="card pm" style="max-width:360px;width:100%;max-height:88vh;overflow:auto;margin:0">
+  <div style="text-align:center">${
+  av(p,"huge")}<h3 style="margin:8px 0 2px">${
+  esc(p.name)}</h3><div style="margin-bottom:4px">${
+  tag(p)}</div><span class="mu">${
+  rk.name}</span> ${
+  gchip(p)}${
+  online.has(p.id)?' <span class="chip on">online</span>':""}</div>
+  <div class="bar"><i style="width:${rk.pct}%"></i></div>
+  <div class="stat"><div><b id="ptsbig">${
+  p.points}</b><span class="mu">total points</span></div><div><b>${
+  st.n}</b><span class="mu">presentations</span></div><div><b>${
+  st.best}</b><span class="mu">best score</span></div></div>
+  ${
+  st.avg?`<p class="mu" style="text-align:center;margin:8px 0 0">Average per presentation: <b>${st.avg}</b></p>`:""}
+  <p style="margin:12px 0 4px"><b>Recent scores</b></p>${st.ev.slice(0,5).map(e=>`<div class="row sp mu" style="padding:3px 0"><span>${e.kind==="host"?"🎤 Presentation":"🧪 Test bonus"}</span><span><b style="color:var(--tx)">${
+  e.amount>0?"+":""}${
+  e.amount}</b> · ${
+  new Date(e.created_at).toLocaleDateString()}</span></div>`).join("")||"<span class='mu'>No scores recorded yet</span>"}
+  ${can("points")&&!p.is_admin?`<div style="margin-top:12px"><span class="mu">Points to give</span><div class="row" style="margin-top:4px"><input id="gp" type="number" inputmode="numeric" placeholder="e.g. 8" value="${esc(gv)}" min="-100" max="100" style="width:96px" onkeydown="if(event.key==='Enter')givePoints('${p.id}')"><button class="ok" id="givebtn" style="flex:1" onclick="givePoints('${p.id}')">Add points</button></div><div class="row" style="margin-top:6px;flex-wrap:wrap">${[1,2,3,5,8,10].map(n=>`<span class="chip pl" onclick="$('#gp').value=${
+  n}">+${n}</span>`).join("")}</div></div>`:""}
+  <div class="row" style="margin-top:12px">${
+  mine?"":`<button style="flex:1" onclick="openDM('${p.id}')">💬 Chat</button>`}${canInvite?`<button class="ok" style="flex:1" onclick="rpc('send_invite',{g:${myG.id},u:'${
+  p.id}'})">💌 Invite</button>`:""}<button class="s" style="flex:1" onclick="closeProfile()">Close</button></div></div></div>`}
+
+/* ---------- notifications ---------- */
+const loadNotes=()=>{
+  try{
+    NOTES=JSON.parse(localStorage.getItem("notes:"+uid))||[]}catch(e){
+    NOTES=[]}};
+const saveNotes=()=>{
+  try{
+    localStorage.setItem("notes:"+uid,JSON.stringify(NOTES))}catch(e){
+    }};
+const unreadNotes=()=>NOTES.filter(n=>!n.read).length;
+function readNotes(){
+  if(NOTES.some(n=>!n.read)){
+    NOTES.forEach(n=>{
+      n.read=true});saveNotes()}}
+function ago(t){
+  const s=Math.max(0,Math.round((Date.now()-t)/1000));return s<60?"just now":s<3600?Math.floor(s/60)+" min ago":s<86400?Math.floor(s/3600)+" h ago":Math.floor(s/86400)+" d ago"}
+function notify(t,b,act,sound){
+  NOTES.unshift({
+    id:Date.now()+Math.random(),t,b:b||"",act:act||null,time:Date.now(),read:false});NOTES=NOTES.slice(0,40);saveNotes();(snd[sound||"ding"])();try{
+    if(document.hidden&&window.Notification&&Notification.permission==="granted")new Notification(t,{
+      body:b||""})}catch(x){
+    }
+ try{
+    const box=$("#toasts"),e=document.createElement("div");e.className="nt";e.innerHTML="<b>"+esc(t)+"</b>"+(b?"<small>"+esc(b)+"</small>":"");e.onclick=()=>{
+      e.remove();go(act)};box.appendChild(e);while(box.children.length>3)box.removeChild(box.firstChild);setTimeout(()=>{
+      if(e.remove)e.remove()},6500)}catch(x){
+    }}
+function go(a){
+  if(notesOpen)readNotes();notesOpen=false;if(!a){
+    render();return}
+ if(a.k==="chat"){
+    openChat(a.ch);return}
+ if(a.k==="req"){
+    if(phone()){
+      sheet=true;sp="req"}else{
+      tab="req";openG=null}render();return}
+ if(a.k==="group"){
+    openG=a.id;if(phone()){
+      sheet=false;sp=null}else tab="groups";render()}}
+function openChat(ch){
+  if(pm)closeM();conv=ch;notesOpen=false;menuOpen=false;if(phone()){
+    sheet=true;sp="chat"}render()}
+const openDM=id=>openChat(dmKey(uid,id));
+function toggleNotes(){
+  if(notesOpen)readNotes();notesOpen=!notesOpen;render()}
+const noteRows=()=>NOTES.length?NOTES.map((n,i)=>`<div class="nrow${n.read?"":" un"}" onclick="go(NOTES[${
+  i}].act)"><b>${esc(n.t)}</b>${n.b?`<br><span class="mu">${esc(n.b)}</span>`:""}<br><small>${ago(n.time)}</small></div>`).join(""):"<p class='mu'>No notifications yet</p>";
+const noteHead=`<div class="row sp"><b>🔔 Notifications</b><button class="s" onclick="readNotes();render()">Mark all read</button></div>`;
+const notesPanel=()=>`<div id="notes" class="card">${noteHead}${
+  noteRows()}</div>`;
+const notesPage=()=>`<div class="card">${
+  noteHead}${
+  noteRows()}</div>`;
+
+/* ---------- data + realtime ---------- */
+async function refresh(){
+ const [p,g,r,jb,k,kb,iv,pe,m,se]=await Promise.all([sb.from("profiles").select("id,name,avatar,points,group_id,is_admin,perms"),sb.from("groups").select("*").order("id"),
+  sb.from("requests").select("*"),sb.from("join_ballots").select("*"),sb.from("kicks").select("*"),sb.from("kick_ballots").select("*"),sb.from("invites").select("*"),sb.from("point_events").select("*").order("id",{ascending:false}).limit(500),
+  sb.from("messages").select("*").order("id",{ascending:false}).limit(300),sb.from("sessions").select("sid").eq("user_id",uid)]);
+ if(p.error||g.error){toast("Connection problem. Retrying…",1);return}
+ if(se&&se.data&&se.data[0]&&MYSID&&se.data[0].sid!==MYSID){await kickedOut();return}
+ const u0=ME(),o={pts:u0?u0.points:0,g:u0?u0.group_id:null,rqs:new Map(RQ.map(x=>[x.id,x.stage])),kk:new Set(KK.map(x=>x.id)),iv:new Set(IV.map(x=>x.id)),mx:M.length?M[M.length-1].id:0,
+  mem:new Set(u0&&u0.group_id!==null?mem(u0.group_id).map(x=>x.id):[]),my:new Set(RQ.filter(x=>x.user_id===uid).map(x=>x.id))};
+ P={};p.data.forEach(x=>{P[x.id]=x});G=g.data||[];RQ=r.data||[];JB=jb.data||[];KK=k.data||[];KB=kb.data||[];IV=iv.data||[];PE=pe.data||[];M=(m.data||[]).reverse();
+ const u=ME();if(u&&conv&&conv[0]==="g"&&u.group_id!==+conv.slice(2))conv=null;
+ if(!ready){if(!Object.keys(SEEN).length)markSeen(true);ready=true;const n=inboxCount(),tx="📬 "+n+" item"+(n>1?"s":"")+" waiting for you";if(n&&!(NOTES[0]&&!NOTES[0].read&&NOTES[0].t===tx))notify(tx,"Open Requests",{k:"req"},"alert")}else diff(o);
+ render()}
+function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){sparks();notify("⭐ +"+dp+" points!","Your total is now "+u.points,null,"ok")}const g=u.group_id,isHost=g!==null&&grp(g)&&grp(g).host_id===uid;
+ if(o.g===null&&g!==null){party();notify("🎉 You joined "+gname(g),"Welcome to the group!",{k:"group",id:g},"ok")}
+ else if(o.g!==null&&g===null&&Date.now()>quietUntil)notify("You are no longer in "+gname(o.g),"",null,"err");
+ if(g!==null){
+  RQ.forEach(r=>{if(r.group_id!==g||r.user_id===uid)return;const was=o.rqs.get(r.id),nm=nameOf(r.user_id);
+   if(was===undefined)notify("🙋 "+nm+" wants to join","Open Requests and put it to a vote",{k:"req"},"alert");
+   else if(was==="pending"&&r.stage==="voting")notify("🗳️ Vote opened for "+nm,"Cast your vote in Requests",{k:"req"},"alert");
+   else if(was!=="approved"&&r.stage==="approved"&&isHost)notify("✅ Majority approved "+nm,"Your final decision is needed",{k:"req"},"alert")});
+  KK.filter(k=>k.group_id===g&&k.target_id!==uid&&!o.kk.has(k.id)).forEach(k=>notify("🗳️ Kick vote for "+nameOf(k.target_id),"Cast your vote in Requests",{k:"req"},"alert"));
+  if(o.g===g)mem(g).filter(p=>p.id!==uid&&!o.mem.has(p.id)).forEach(p=>notify("👋 "+p.name+" joined your group","",{k:"group",id:g},"ok"))}
+ IV.filter(x=>x.user_id===uid&&!o.iv.has(x.id)&&g===null).forEach(x=>notify("💌 "+gname(x.group_id)+" invited you!","Open Requests to accept",{k:"req"},"alert"));
+ RQ.filter(r=>r.user_id===uid).forEach(r=>{const was=o.rqs.get(r.id);
+  if(was==="pending"&&r.stage==="voting")notify("🗳️ Members are voting on your request",gname(r.group_id),null,"ding");
+  if(was!==undefined&&was!=="approved"&&r.stage==="approved")notify("👍 Members approved your request","Waiting for the host's final decision",null,"ok")});
+ if(g===null&&o.g===null&&Date.now()>quietUntil&&[...o.my].some(id=>!RQ.some(r=>r.id===id)))notify("Your join request was declined 😕","",null,"err");
+ const vc=visibleConv();
+ M.filter(m=>m.id>o.mx&&m.sender!==uid&&m.sender!==null).slice(-3).forEach(m=>{if(m.channel===vc){snd.pop();return}if(m.channel==="all")return;
+  notify(m.channel[0]==="d"?"New message from "+nameOf(m.sender):"New message in "+gname(+m.channel.slice(2))+" from "+nameOf(m.sender),prev(m,60),{k:"chat",ch:m.channel},"msg")})}
+const sched=()=>{clearTimeout(tm);tm=setTimeout(refresh,150)};
+function subscribe(){if(chan)return;
+ chan=sb.channel("room",{config:{presence:{key:uid}}})
+  .on("postgres_changes",{event:"*",schema:"public"},ev=>{if(ev.table==="app_settings")loadMeta().then(render);sched()})
+  .on("presence",{event:"sync"},()=>{online=new Set(Object.keys(chan.presenceState()));render()})
+  .subscribe(s=>{if(s==="SUBSCRIBED")chan.track({at:Date.now()})})}
+
+/* ---------- cards ---------- */
+function joinCard(r){const gid=r.group_id,g=grp(gid),inG=ME().group_id===gid,isHost=!!g&&(g.host_id===uid||can("admin")),n=mem(gid).length,need=Math.floor(n/2)+1,v=JB.filter(b=>b.request_id===r.id&&P[b.voter_id]&&P[b.voter_id].group_id===gid),y=v.filter(b=>b.approve).length,my=v.find(b=>b.voter_id===uid),who=P[r.user_id];
+ let act="",body="";
+ if(r.stage==="pending"){act=inG?`<button onclick="rpc('open_vote',{r:${r.id}})">🗳️ Put to vote</button>`:`<span class="chip">waiting</span>`;body=`<span class="mu">Step 1 of 3 · waiting for a member to open the vote</span>`}
+ else if(r.stage==="voting"){act=inG&&!my?`<span class="row"><button onclick="rpc('vote_join',{r:${r.id},ok:true})">✓ Accept</button><button class="s" onclick="rpc('vote_join',{r:${r.id},ok:false})">✗ Reject</button></span>`:my?`<span class="chip">you voted ${
+  my.approve?"✓":"✗"}</span>`:`<span class="chip">voting</span>`;
+  body=`<div class="bar"><i style="width:${Math.min(100,y/need*100)}%"></i></div><span class="mu">Step 2 of 3 · ${
+  y}/${
+  need} approvals needed (majority)</span>`}
+ else{act=isHost?`<span class="row"><button class="ok" onclick="rpc('host_decide',{r:${r.id},ok:true})">Accept ✅</button><button class="s" onclick="rpc('host_decide',{r:${r.id},ok:false})">Decline</button></span>`:`<span class="chip">waiting for host</span>`;
+  body=`<div class="bar"><i style="width:100%"></i></div><span class="mu">Step 3 of 3 · members approved · the host decides</span>`}
+ return`<div class="b vote${r.stage==="approved"&&isHost?" glow":""}"><small>Join request · ${
+  esc(gname(gid))}</small><div class="row sp"><span class="row">${
+  who?av(who):""}<b class="pl" onclick="showProfile('${r.user_id}')">${
+  esc(nameOf(r.user_id))}</b></span>${
+  act}</div>${
+  body}</div>`}
+function kickCard(k){const gid=k.group_id,m=mem(gid).filter(p=>p.id!==k.target_id).length,need=Math.floor((4*m+4)/5),v=KB.filter(b=>b.kick_id===k.id&&b.voter_id!==k.target_id&&P[b.voter_id]&&P[b.voter_id].group_id===gid),y=v.filter(b=>b.approve).length,my=v.find(b=>b.voter_id===uid),inG=ME().group_id===gid;
+ return`<div class="b vote"><small>Kick vote · ${
+  esc(gname(gid))}</small>Remove <b>${
+  esc(nameOf(k.target_id))}</b>?<div class="bar"><i style="width:${need?Math.min(100,y/need*100):100}%;background:#dc2626"></i></div><span class="mu">${
+  y}/${
+  need} approvals (80% of ${
+  m})</span>${
+  inG&&uid!==k.target_id&&!my?`<div class="row" style="margin-top:8px"><button onclick="rpc('vote_kick',{k:${k.id},ok:true})">✓ Approve</button><button class="s" onclick="rpc('vote_kick',{
+  k:${
+    k.id},ok:false})">✗ Reject</button></div>`:my?` · you voted ${my.approve?"✓":"✗"}`:""}</div>`}
+const cards=()=>conv[0]==="g"?RQ.filter(r=>r.group_id===+conv.slice(2)).map(joinCard).join("")+KK.filter(k=>k.group_id===+conv.slice(2)).map(kickCard).join(""):"";
+
+/* ---------- pages ---------- */
+function profile(){
+  const u=ME(),rk=rank(u.points);return`<div class="card"><div class="row">${av(u,"big")}<div style="flex:1"><b>${
+  esc(u.name)}</b>${
+  tag(u)}<br><span class="mu">${
+  rk.name} · ${
+  u.points} pts</span><div class="bar"><i style="width:${rk.pct}%"></i></div>${
+  gchip(u)}</div></div></div>`}
+const convOther=k=>{const x=k.split(":");return x[1]===uid?x[2]:x[1]};
+function convTitle(k){if(k==="all")return"Everyone";if(k[0]==="g")return gname(+k.slice(2))+" (my group)";const x=k.split(":");return nameOf(x[1]===uid?x[2]:x[1])}
+function openC(k){conv=k;render()}
+const ub=n=>n?`<span class="badge">${
+  n}</span>`:"";
+function chatList(){const u=ME(),LAST={};M.forEach(m=>{LAST[m.channel]=m});
+ const items=[{ch:"all",t:"Everyone",d:"All students",a:`<div class="av" style="background:#4f46e5">🌍</div>`,c:""}];
+ if(u.group_id!==null)items.push({ch:"g:"+u.group_id,t:gname(u.group_id),d:"Only my group",a:`<div class="av" style="background:${gcol(u.group_id)}">👥</div>`,c:""});
+ Object.values(P).filter(p=>p.id!==uid).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>items.push({ch:dmKey(uid,p.id),t:p.name,d:"Say hi 👋",a:av(p),c:gchip(p),g:tag(p)}));
+ const li=x=>LAST[x.ch]?LAST[x.ch].id:0;items.forEach((x,i)=>{x.i=i});items.sort((a,b)=>li(b)-li(a)||a.i-b.i);
+ return`<div class="card"><div class="row sp"><b>Chat</b>${
+  can("admin")?`<button class="s" onclick="clearAllChats()" title="Delete every chat">🗑 Clear all</button>`:"<span></span>"}</div>${
+  items.map(x=>{
+    const n=unread(x.ch),m=LAST[x.ch];
+  return`<div class="li${n?" un":""}" onclick="openC('${x.ch}')">${x.a}<div class="g"><b class="nm">${esc(x.t)}</b>${x.g||""} ${x.c}<br><span class="mu pv">${esc(m?(m.sender===uid?"You: ":"")+prev(m):x.d)}</span></div><span style="text-align:right;white-space:nowrap"><small class="mu">${m?hm(m.created_at):""}</small><br>${cb(n)}</span></div>`}).join("")}</div>`}
+const hm=t=>{
+    try{
+      return new Date(t).toLocaleTimeString([],{
+        hour:"2-digit",minute:"2-digit"})}catch(e){
+      return""}};
+function thread(){
+    const t=M.filter(m=>m.channel===conv);
+ return`<div class="card"><div class="row sp"><button class="s" onclick="goBack()">←</button><b${conv[0]==="d"?` class="pl" onclick="showProfile('${convOther(conv)}')"`:""}>${esc(convTitle(conv))}</b>${can("admin")?`<button class="s" onclick="clearChat()" title="Delete all messages in this chat">🗑</button>`:"<span></span>"}</div>${cards()}<div id="msgs">${t.map(m=>{const nw=lastMax>0&&m.id>lastMax?" new":"";return m.sender===null?`<div class="b sys${nw}">${esc(m.body)}</div>`:`<div class="b ${m.sender===uid?"me":""}${nw}">${m.sender===uid?"":`<small class="pl" onclick="showProfile('${
+    m.sender}')">${esc(nameOf(m.sender))}${tag(P[m.sender])}</small>`}${fileHtml(m)}${m.body?esc(m.body):""}<time>${hm(m.created_at)}</time></div>`}).join("")||"<span class='mu'>No messages yet. Say hi! 👋</span>"}</div><div class="row"><input type="file" id="fi" style="display:none" onchange="pickFile(this)"><button class="s" onclick="$('#fi').click()" title="Send a file or photo">📎</button><input id="tx" style="flex:1;min-width:0" maxlength="1000" placeholder="Message…" onkeydown="if(event.key==='Enter')send()"><button id="micbtn" class="s${rec?" rec":""}" onclick="toggleRec()" title="Voice message">${rec?"⏹ "+recTime()+" · send":"🎤"}</button>${rec?`<button class="s" onclick="cancelRec()" title="Cancel">✖</button>`:`<button onclick="send()">Send</button>`}</div></div>`}
+async function send(){
+    const i=$("#tx"),x=i.value.trim();if(!x)return;i.value="";snd.pop();const ok=await rpc("send_message",{
+      ch:conv,body:x});const n=$("#tx");if(n){
+      if(!ok)n.value=x;n.focus()}}
+const chatPage=()=>conv===null?chatList():thread();
+function hero(){
+    const u=ME();if(u.is_admin)return`<div class="card hero"><b>👑 Host panel</b><br><span class="mu">Give points in Settings. You can start a kick vote in any group.</span></div>`;
+ const g=u.group_id!==null?grp(u.group_id):null;
+ return g?`<div class="card hero" style="border-left:5px solid ${gcol(g.id)}"><b>You're in ${esc(g.name)}</b><br><span class="mu">${mem(g.id).length}/${g.capacity} members${g.host_id===uid?" · you are the host 👑":""}</span></div>`
+  :`<div class="card hero"><span class="wave">👋</span> <b>You're idle</b><br><span class="mu">Open a group and send a join request, create your own, or wait for an invitation.</span></div>`}
+function groupsHtml(){
+  return G.map(g=>{
+    const k=mem(g.id).length,mine=ME().group_id===g.id,pend=RQ.some(r=>r.user_id===uid&&r.group_id===g.id);return`<div class="gr" style="border-left:5px solid ${gcol(g.id)}" onclick="openG=${
+    g.id};render()"><div><b>${esc(g.name)}</b> ${mine?'<span class="chip on">my group</span>':pend?'<span class="chip">requested</span>':""}<br>${dots(k,g.capacity,gcol(g.id))}</div><span class="mu">${k}/${g.capacity} · ${g.capacity-k} free</span></div>`}).join("")}
+const ranked=()=>ppl().sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name));
+const board=()=>`<div class="card"><b>🏆 Top points</b>${ranked().filter(p=>p.points>0).slice(0,5).map((p,i)=>`<div class="li" onclick="showProfile('${p.id}')">${["🥇","🥈","🥉","4","5"][i]} ${av(p)}<div class="g">${esc(p.name)}${tag(p)}</div><b>${p.points}</b></div>`).join("")||"<div class='mu'>No points yet</div>"}<div style="text-align:right;margin-top:6px"><button class="s" onclick="showAll()">See all →</button></div></div>`;
+function showAll(){
+  $("#modal").innerHTML=`<div class="ov" onclick="if(event.target===this)closeM()"><div class="card pm" style="max-width:380px;width:100%;max-height:86vh;overflow:auto;margin:0"><div class="row sp"><b>🏆 All students</b><button class="s" onclick="closeM()">Close</button></div>${ranked().map((p,i)=>`<div class="li" onclick="showProfile('${p.id}')"><span class="mu" style="width:26px">${i+1}</span>${av(p)}<div class="g">${esc(p.name)}${tag(p)}<br>${gchip(p)}</div><b>${p.points}</b></div>`).join("")}</div></div>`}
+function inviteBox(g){
+  const iv=IV.filter(x=>x.group_id===g.id);return`<div class="card" style="margin:12px 0 0"><b>💌 Invite idle students</b>${idle().map(p=>{
+    const i=iv.find(x=>x.user_id===p.id);return`<div class="li">${av(p)}<div class="g">${
+    esc(p.name)}</div>${
+    i?`<button class="s" onclick="rpc('cancel_invite',{i:${i.id}})">Invited ✓ · cancel</button>`:`<button onclick="rpc('send_invite',{
+  g:${
+    g.id},u:'${p.id}'})">Invite</button>`}</div>`}).join("")||"<div class='mu'>No idle students right now</div>"}</div>`}
+function groupPage(id){
+  const g=grp(id);if(!g){
+    openG=null;return groupsPage()}
+ const m=mem(id),u=ME(),pend=RQ.some(r=>r.user_id===uid&&r.group_id===id),full=m.length>=g.capacity,canK=can("admin")||g.host_id===uid,inG=u.group_id===id;let btn;
+ if(inG)btn=`<button class="d" style="width:100%" onclick="leave()">Leave group</button>`;
+ else if(pend)btn=`<button class="s" style="width:100%" onclick="rpc('cancel_request',{g:${id}})">Request sent · tap to withdraw</button>`;
+ else btn=`<button style="width:100%" ${full||u.group_id!==null||u.is_admin?"disabled":""} onclick="rpc('request_join',{g:${id}})">${
+  full?"Group full":u.group_id!==null?"Leave your group first":"Join request"}</button>`;
+ return`<div class="card" style="border-top:5px solid ${gcol(id)}"><button class="s" onclick="goBack()">← Back</button><h3>${
+  esc(g.name)}</h3><p>${
+  dots(m.length,g.capacity,gcol(id))}<br><span class="mu">${
+  m.length} participants · ${
+  g.capacity-m.length} free spots</span></p><p class="mu" style="margin:0 0 4px">Tap a member to see their profile</p>
+ ${
+  m.map(p=>`<div class="li" onclick="showProfile('${p.id}')">${av(p)}<div class="g">${esc(p.name)}${p.id===g.host_id?" 👑":""}${tag(p)}</div><span class="mu">${p.points} pts</span>${canK&&p.id!==uid?`<button class="d" style="margin-left:6px" onclick="event.stopPropagation();kick('${
+  p.id}')">Kick</button>`:""}</div>`).join("")||"<i class='mu'>No members yet</i>"}
+ ${
+  inG?RQ.filter(r=>r.group_id===id).map(joinCard).join("")+KK.filter(k=>k.group_id===id).map(kickCard).join(""):""}<p>${
+  btn}</p></div>${
+  g.host_id===uid&&!full?inviteBox(g):""}`}
+function groupsPage(){return openG!==null?groupPage(openG):`${
+  hero()}<div class="card"><div class="row sp"><b>Groups</b><span class="chip${G.length>=maxG()?"":" on"}" id="gcount">${
+  G.length}/${
+  maxG()} created · ${
+  Math.max(0,maxG()-G.length)} left</span></div>${
+  G.length?groupsHtml():`<p class="mu">No groups yet. Create the first one! 👇</p>`}<div style="text-align:right;margin-top:8px"><button onclick="newGroupForm()" ${
+  G.length>=maxG()?"disabled":""}>+ New group</button></div></div>${
+  board()}`}
+function reqPage(){const u=ME(),mine=RQ.filter(r=>r.user_id===uid),inv=myInvites(),mv=myVotes(),gid=u.group_id,ord={approved:0,pending:1,voting:2},
+ theirs=gid!==null?RQ.filter(r=>r.group_id===gid).sort((a,b)=>ord[a.stage]-ord[b.stage]):[],lab={pending:"Waiting for a member to open the vote",voting:"Members are voting",approved:"Approved by members · waiting for the host"};
+ return(inv.length?`<div class="card glow"><b>💌 Invitations for you</b>${
+  inv.map(x=>`<div class="gr" style="cursor:default"><span><b>${esc(gname(x.group_id))}</b><br><span class="mu">from ${
+  esc(nameOf(x.invited_by))}</span></span><span class="row"><button onclick="rpc('respond_invite',{i:${x.id},ok:true})">Accept</button><button class="s" onclick="rpc('respond_invite',{i:${x.id},ok:false})">Decline</button></span></div>`).join("")}</div>`:"")
+ +(gid!==null?`<div class="card ${mv.j.length||mv.k.length?"glow":""}"><b>🙋 People who want to join ${esc(gname(gid))}</b>${theirs.map(joinCard).join("")||"<p class='mu'>No join requests right now</p>"}${mv.k.length?"<p><b>🗳️ Kick votes</b></p>"+mv.k.map(kickCard).join(""):""}</div>`:"")
+ +`<div class="card"><b>My sent requests</b>${mine.map(r=>`<div class="gr" style="cursor:default"><span>${esc(gname(r.group_id))}<br><span class="mu">${
+  lab[r.stage]}</span></span><button class="s" onclick="rpc('cancel_request',{g:${r.group_id}})">Withdraw</button></div>`).join("")||"<p class='mu'>No pending requests</p>"}</div>`}
+const idlePage=()=>`<div class="card"><b>Idle people (${idle().length})</b>${
+  idle().map(p=>`<div class="li" onclick="showProfile('${p.id}')">${av(p)}<div class="g">${esc(p.name)}${tag(p)}</div></div>`).join("")||"<p class='mu'>Nobody 🎉</p>"}</div>`;
+function settingsPage(){
+  const u=ME();return`<div class="card"><b>Settings</b><p class="mu">Display name</p><div class="row"><input id="nn" value="${esc(u.name)}" maxlength="30" style="flex:1;min-width:0"><button onclick="saveName()">Save</button></div>
+ ${
+  can("admin")?'<p><a class="chip on" href="admin.html" target="_blank" style="text-decoration:none">🛠 Open admin panel</a></p>':""}<p class="mu">Profile picture</p><input type="file" accept="image/*" onchange="pic(this)"><p class="row"><button class="s" onclick="toggleMute()">${
+  muted?"🔇 Sounds off":"🔊 Sounds on"}</button><button class="s" onclick="confirmLogout()">Log out</button></p>
+ ${
+  can("points")?`<hr><b>Give points</b><div class="row" style="margin-top:8px"><select id="ps">${ppl().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select><input id="pp" type="number" value="1" min="-100" max="100" style="width:80px"><button onclick="rpc('add_points',{
+  u:$('#ps').value,n:+$('#pp').value})">Add</button></div>`:""}</div>`}
+const pages={
+  notes:notesPage,chat:chatPage,idle:idlePage,groups:groupsPage,settings:settingsPage,req:()=>reqPage()};
+const snap=()=>({
+  tab,openG,conv,sheet,sp,menuOpen,pm});
+const mItems=()=>[["notes","🔔","Notifications",ub(unreadNotes())],["chat","💬","Chat",ub(totalUnread())],["idle","🧍","Idle people ("+idle().length+")",""],["groups","👥","Groups",""],["settings","⚙️","Settings",""],["req","📨","Requests & invites",ub(inboxCount())]];
+const drawer=()=>{
+  const u=ME(),rk=rank(u.points);return`<div id="scrim" onclick="goBack()"></div><div id="drawer"><div class="dh">${av(u,"big")}<div><b>${
+  esc(u.name)}</b><br><span class="mu">${
+  rk.name} · ${
+  u.points} pts</span></div></div>${
+  mItems().map(([k,i,t,b])=>`<div class="gr" onclick="menuOpen=false;sheet=true;sp='${k}';render()"><span>${i} ${t} ${b}</span><span>›</span></div>`).join("")}<div class="gr" onclick="confirmLogout()"><span>🚪 Log out</span></div></div>`};
+function goBack(){
+  if(navStack.length)history.back();else{
+    openG=null;conv=null;sp=null;sheet=false;menuOpen=false;pm=null;$("#modal").innerHTML="";render()}}
+
+/* ---------- archive, settings, single device ---------- */
+const maxG=()=>+SET.max_groups||6;
+async function loadMeta(){
+  try{
+    const a=await sb.from("app_settings").select("*");(a.data||[]).forEach(x=>{
+      SET[x.key]=x.value})}catch(e){
+    }}
+async function kickedOut(){
+  if(!uid)return;if(chan){
+    try{
+      await sb.removeChannel(chan)}catch(e){
+      }chan=null}try{
+    await sb.auth.signOut({
+      scope:"local"})}catch(e){
+    }
+ try{
+    localStorage.removeItem("sid")}catch(e){
+    }MYSID=null;uid=null;conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();
+ err="You were signed out because this account was opened on another device.";screen="login";render()}
+
+/* ---------- actions ---------- */
+function leave(){
+  ask("Are you sure you want to leave this group?",async()=>{
+    conv=null;if(await rpc("leave_group",{
+      }))toast("You left the group")})}
+function clearChat(){
+  ask("Delete ALL messages in this chat? This cannot be undone.",async()=>{
+    if(await rpc("admin_clear_channel",{
+      ch:conv}))toast("Chat cleared")})}
+function clearAllChats(){
+  ask("Delete ALL chats for everyone? This cannot be undone.",async()=>{
+    if(await rpc("admin_clear_all_chats",{
+      }))toast("All chats cleared")})}
+function confirmLogout(){
+  ask("Are you sure you want to log out?",()=>logout())}
+function kick(t){
+  rpc("start_kick",{
+    t}).then(ok=>{
+    if(ok)toast("Vote opened in the group chat")})}
+function newGroupForm(){
+  const u=ME();if(G.length>=maxG()){
+    toast("The group limit ("+maxG()+") is reached",1);snd.err();return}if(u.is_admin||u.group_id!==null){
+    toast("Only idle students can create a group. Leave your group first.",1);snd.err();return}
+ $("#modal").innerHTML=`<div class="ov"><div class="card" style="max-width:340px"><b>New group</b><p class="mu">You become the host.</p><input id="gname" placeholder="Group name" maxlength="30" style="width:100%;margin-bottom:8px"><div class="row"><span>Max members</span><select id="gcap">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<option ${n===5?"selected":""}>${
+  n}</option>`).join("")}</select></div><div class="row" style="margin-top:12px"><button class="s" style="flex:1" onclick="closeM()">Cancel</button><button style="flex:1" onclick="makeGroup()">Create</button></div></div></div>`}
+function makeGroup(){
+  const nm=$("#gname").value.trim(),cap=+$("#gcap").value;closeM();rpc("create_group",{
+    nm,cap}).then(ok=>{
+    if(ok){
+      snd.ok();party()}})}
+function saveName(){
+  rpc("update_me",{
+    nm:$("#nn").value,av:null}).then(ok=>{
+    if(ok){
+      snd.ok();toast("Name saved")}})}
+function pic(inp){
+  const f=inp.files[0];if(!f)return;const im=new Image();
+ im.onload=()=>{
+    const c=document.createElement("canvas");c.width=c.height=96;const s=Math.min(im.width,im.height);c.getContext("2d").drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,96,96);URL.revokeObjectURL(im.src);rpc("update_me",{
+      nm:null,av:c.toDataURL("image/jpeg",.7)})};
+ im.onerror=()=>toast("Could not read that image",1);im.src=URL.createObjectURL(f)}
+
+/* ---------- login + screens ---------- */
+const normId=v=>{
+  v=String(v||"").trim().toLowerCase();return v.includes("@")?v:v+"@classroom.app"};
+const lastId=()=>{
+  try{
+    return localStorage.getItem("lastId")||""}catch(e){
+    return""}};
+async function login(){
+  const raw=$("#idin").value;err="";if(!raw.trim()){
+    err="Type your ID";snd.err();render();return}try{
+    localStorage.setItem("lastId",raw.trim())}catch(e){
+    }
+ try{
+    window.Notification&&Notification.permission==="default"&&Notification.requestPermission()}catch(e){
+    }
+ const {
+    data,error}=await sb.auth.signInWithPassword({
+    email:normId(raw),password:$("#pw").value});
+ if(error){
+    err=/fetch|network|load/i.test(error.message)?"No connection to the server. Check your internet.":"Wrong ID or password";snd.err();render();return}snd.ok();await start(data.user,true)}
+async function setPw(){
+  const a=$("#p1").value;if(a.length<6){
+    err="At least 6 characters";return render()}if(a!==$("#p2").value){
+    err="Passwords do not match";return render()}
+ const {
+    data,error}=await sb.auth.updateUser({
+    password:a,data:{
+      must_change:false}});if(error){
+    err=error.message;return render()}err="";snd.ok();await start(data.user,true)}
+async function start(user,fresh){
+  uid=user.id;ready=false;loadSeen();loadNotes();if(user.user_metadata&&user.user_metadata.must_change){
+    screen="setpw";return render()}
+ try{
+    MYSID=fresh?null:localStorage.getItem("sid")}catch(e){
+    MYSID=null}
+ if(!MYSID){
+    MYSID=Math.random().toString(36).slice(2)+Date.now().toString(36);try{
+      localStorage.setItem("sid",MYSID)}catch(e){
+      }await sb.rpc("claim_session",{
+      s:MYSID})}
+ screen="app";await loadMeta();await refresh();subscribe()}
+async function loadLogin(){
+  screen="login";render()}
+async function logout(){
+  if(chan){
+    await sb.removeChannel(chan);chan=null}try{
+    await sb.auth.signOut({
+      scope:"local"})}catch(e){
+    }try{
+    localStorage.removeItem("sid")}catch(e){
+    }MYSID=null;uid=null;conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();await loadLogin()}
+async function boot(){
+  if(SUPABASE_URL.includes("PASTE")){
+    screen="setup";return render()}
+ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);const {
+    data}=await sb.auth.getSession();if(data.session)return start(data.session.user);await loadLogin()}
+
+function view(){
+ const stage=x=>`<div class="stage"><i class="blob b1"></i><i class="blob b2"></i>${x}</div>`;
+ if(screen==="boot")return stage(`<div class="card login" style="text-align:center"><div class="big-logo">👥</div><p class="mu">Loading…</p></div>`);
+ if(screen==="setup")return`<div class="card login"><h2>Setup needed</h2><p>Open <b>index.html</b> and paste your Supabase URL and anon key at the top of the script.</p></div>`;
+ if(screen==="login")return stage(`<div class="card login"><div style="text-align:center"><div class="big-logo">👥</div><h2 style="margin:4px 0">ADIAK Team Maker</h2><div class="mu">Build your presentation team</div></div><p class="mu">Type your ID and password, then press Enter. Forgot it? Ask an admin to reset it.</p>
+  <input id="idin" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Your ID (for example ali.m)" value="${esc(lastId())}" onkeydown="if(event.key==='Enter')$('#pw').focus()">
+  <input id="pw" type="password" autocomplete="current-password" placeholder="Password" onkeydown="if(event.key==='Enter')login()"><div class="err">${
+  esc(err)}</div><button onclick="login()">Log in</button></div>`);
+ if(screen==="setpw")return stage(`<div class="card login"><h2>🔐 Set a new password</h2><p class="mu">Your temporary password stops working after this.</p>
+  <input id="p1" type="password" placeholder="New password (min 6)"><input id="p2" type="password" placeholder="Repeat"><div class="err">${
+  esc(err)}</div><button onclick="setPw()">Save and continue</button></div>`);
+ if(!ME())return`<div class="card login"><p>Your profile was not found. Ask the host to check your account.</p><button onclick="logout()">Log out</button></div>`;
+ const hd=`<div class="hd"><b class="logo">👥 ADIAK Team Maker</b><span class="row">${
+  phone()?"":`<button onclick="toggleNotes()" title="Notifications">🔔${ub(unreadNotes())}</button>`}<button onclick="toggleMute()" title="Sounds">${muted?"🔇":"🔊"}</button><button onclick="confirmLogout()">Log out</button></span></div>${
+  !phone()&&notesOpen?notesPanel():""}`;
+ if(phone()){const T={notes:"Notifications",chat:"Chat",idle:"Idle people",groups:"Groups",settings:"Settings",req:"Requests & invites"}[sp]||"Menu",bn=unreadNotes();
+  return hd+`<div id="main">${
+  profile()}${
+  groupsPage()}${
+  credits(true)}</div><button id="fab" onclick="menuOpen=true;render()">⋮${
+  ub(bn)}</button>${
+  menuOpen?drawer():""}<div id="sheet" style="display:${sheet&&sp?"block":"none"}"><div class="hd"><b>${
+  T}</b><button onclick="goBack()">← Back</button></div>${
+  sheet&&sp?pages[sp]():""}</div>`}
+ return hd+`<div id="app"><div>${
+  profile()}${
+  chatPage()}</div><div id="main"><div class="tabs">${
+  [["settings","Settings",""],["groups","Groups",""],["req","Requests & idle",ub(inboxCount())]].map(([k,t,b])=>`<button class="${tab===k?"on":""}" onclick="tab='${k}';openG=null;render()">${t}${b}</button>`).join("")}</div>${tab==="settings"?settingsPage():tab==="req"?reqPage()+idlePage():groupsPage()}</div></div>${credits(false)}`}
+function render(){
+  const holding=pressing&&Date.now()-pressTs<2500;if(holding||(document.querySelectorAll&&[...document.querySelectorAll("audio")].some(a=>!a.paused&&!a.ended))){
+    pendingRender=true;return}pendingRender=false;
+ const a=document.activeElement,keep=a&&a.id&&["tx","nn","pw","p1","p2","nm","idin"].includes(a.id)?{
+    id:a.id,v:a.value}:null,key=[screen,tab,openG,conv,sp,sheet,menuOpen,pm].join("|"),R=$("#root");
+ if(!restoring&&screen==="app"&&lastKey.startsWith("app|")&&key!==lastKey&&lastSnap){
+    navStack.push(lastSnap);try{
+      history.pushState({
+        n:navStack.length},"")}catch(e){
+      }}
+ const inN=sheet&&sp==="notes"&&phone();if(wasNotes&&!inN)readNotes();wasNotes=inN;
+ if(screen==="app"&&ME())markSeen();
+ R.className=key!==lastKey?"in":"";lastKey=key;R.innerHTML=view();if(pm&&screen==="app"){
+    const q=P[pm],me=ME(),sig=q?[q.id,q.name,q.points,q.group_id,(q.perms||[]).join(),q.avatar?1:0,online.has(pm)?1:0,PE.length,me.group_id,(me.perms||[]).join(),me.is_admin?1:0,IV.length,G.length].join("|"):"";if(pmDrawn!==pm||sig!==pmSig){
+      drawProfile(pmDrawn!==pm);pmSig=sig}pmDrawn=pm}else{
+    if(pmDrawn)$("#modal").innerHTML="";pmDrawn=null}
+ if(keep){
+    const n=$("#"+keep.id);if(n){
+      n.value=keep.v;n.focus()}}
+ const mb=$("#msgs");if(mb)mb.scrollTop=mb.scrollHeight;
+ if(screen==="app"&&ME()){
+    const n=totalUnread()+inboxCount();document.title=(n?"("+n+") ":"")+"ADIAK Team Maker"}
+ if(needUrls.size)fetchUrls();lastMax=M.length?M[M.length-1].id:0;lastSnap=snap()}
+["pause","ended"].forEach(ev=>addEventListener(ev,e=>{
+  if(pendingRender&&e.target&&e.target.tagName==="AUDIO")render()},true));
+addEventListener("pointerdown",()=>{
+  pressing=true;pressTs=Date.now()},true);
+["pointerup","pointercancel"].forEach(ev=>addEventListener(ev,()=>{
+  setTimeout(()=>{
+    pressing=false;if(pendingRender)render()},20)},true));
+addEventListener("popstate",()=>{
+  if(screen!=="app")return;const s=navStack.pop();if(!s)return;restoring=true;tab=s.tab;openG=s.openG;conv=s.conv;sheet=s.sheet;sp=s.sp;menuOpen=s.menuOpen;pm=s.pm&&P[s.pm]?s.pm:null;render();restoring=false});
+let tx0=0,ty0=0;
+addEventListener("touchstart",e=>{
+  const t=e.touches[0];tx0=t.clientX;ty0=t.clientY},{
+  passive:true});
+addEventListener("touchend",e=>{
+  if(!phone()||screen!=="app")return;const t=e.changedTouches[0],dx=t.clientX-tx0,dy=t.clientY-ty0;if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*.6)return;
+ if(dx<0&&!menuOpen&&!sp&&!pm&&tx0>innerWidth*.5){
+    menuOpen=true;render()}else if(dx>0&&menuOpen)goBack()},{
+  passive:true});
+addEventListener("resize",()=>{
+  if(screen==="app")render()});
+boot();

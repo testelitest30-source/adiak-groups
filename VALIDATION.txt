@@ -1,0 +1,2 @@
+/mnt/data/site_readable/app.js: sintaksis qaydasındadır
+/mnt/data/site_readable/admin.js: sintaksis qaydasındadır
