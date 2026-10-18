@@ -1,0 +1,245 @@
+/* =====================================================================
+   admin.js  -  ADIAK Team Maker admin paneli
+   Bölmələr:  1 Köməkçilər · 2 Giriş · 3 Məlumat · 4 Ümumi görünüş · 5 Dashboard · 6 İnsanlar
+              7 Qruplar · 8 Çatlar · 9 Parollar · 10 Gün sonu / İdxal / Ayarlar · 11 Başlanğıc
+   Hər əməliyyat bazada ayrıca yetki ilə qorunur: bu fayl yalnız lazım olan düymələri göstərir.
+   ===================================================================== */
+
+/* ---------- 1. KÖMƏKÇİLƏR ---------- */
+const $=s=>document.querySelector(s);
+// HTML-ə təhlükəsiz mətn yazmaq üçün
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+// Vəziyyət: sb=Supabase, ME=giriş etmiş adam, P=insanlar, G=qruplar, M=mesajlar, AR=arxivlər, PW=parol siyahısı
+let sb=null,uid=null,ME=null,P=[],G=[],M=[],AR=[],PW=[],SET={max_groups:"6"},online=new Set(),chan=null;
+let tab="dash",pf="all",pq="",chSel="all",pwq="",pwFilter="all",pwShown=new Set(),pwAll=false,impText="",dayLabel="",dayDis=false,npRole="student";
+let pressing=false,pressTs=0,pendingDraw=false,lastSig="",tm=null,tt=null;
+
+// Yetki siyahısı: açarlar bazadakı perms ilə eynidir
+const PERMS=[
+ {k:"points",i:"⭐",t:"Give points",d:"Add or remove points for students."},
+ {k:"groups",i:"👥",t:"Manage groups",d:"Put students into groups, move or remove them, edit groups."},
+ {k:"chats",i:"💬",t:"Moderate chats",d:"Read every chat and delete messages or whole chats."},
+ {k:"passwords",i:"🔑",t:"See & reset passwords",d:"See students' passwords and make new temporary ones. Never admins'."},
+ {k:"panel",i:"🖥️",t:"Open this admin panel",d:"Enter the panel. Each tab still needs its own permission."},
+ {k:"admin",i:"🛡️",t:"Full admin",d:"Everything, including permissions, import, closing the day and settings."}];
+
+// Mənim bu yetkim varmı? (admin hər şeyi edə bilər)
+const has=p=>!!ME&&(ME.is_admin||(ME.perms||[]).includes("admin")||(ME.perms||[]).includes(p));
+const isAdm=p=>!!p&&(p.is_admin||(p.perms||[]).includes("admin"));
+// Rol açarı: host / admin / teacher / student
+const roleKey=p=>p.is_admin?"host":isAdm(p)?"admin":p.role==="teacher"?"teacher":"student";
+const ROLE_LABEL={host:"Host",admin:"🛡 Admin",teacher:"👩‍🏫 Teacher",student:"🎓 Student"};
+const roleChip=p=>`<span class="chip ${roleKey(p)}">${ROLE_LABEL[roleKey(p)]}</span>`;
+// Adamın yetkilərini kiçik nişanlarla göstərir
+const permChips=p=>isAdm(p)?`<span class="chip">Full access</span>`:PERMS.filter(x=>(p.perms||[]).includes(x.k)).map(x=>`<span class="chip" title="${esc(x.t)}">${x.i} ${esc(x.t.split(" ")[0])}</span>`).join("");
+const nm=id=>{const p=P.find(x=>x.id===id);return p?p.name:"?"};
+const short=l=>String(l||"").replace("@classroom.app","");
+const gname=id=>{const g=G.find(x=>x.id===id);return g?g.name:"—"};
+const maxG=()=>+SET.max_groups||6;
+const val=i=>$("#"+i).value;
+const isStudent=p=>!p.is_admin&&p.role!=="teacher";
+// Avatar: şəkil və ya rəngli baş hərf
+const avatar=(p,lg)=>{let h=0;for(const c of p.name)h=(h*31+c.charCodeAt(0))%360;return`<div class="av${lg?" lg":""}" style="background:hsl(${h},55%,48%)">${p.avatar?`<img src="${esc(p.avatar)}" alt="">`:esc(p.name[0].toUpperCase())}${online.has(p.id)?"<i></i>":""}</div>`};
+// Ekranın altında qısa xəbər
+function toast(m,bad){const t=$("#toast");t.textContent=m;t.className="show"+(bad?" bad":"");clearTimeout(tt);tt=setTimeout(()=>{t.className=""},3600)}
+// Pəncərə açır / bağlayır
+const modal=(h,small)=>{$("#modal").innerHTML=`<div class="ov" onclick="if(event.target===this)closeM()"><div class="sheet${small?" sm":""}">${h}</div></div>`};
+const closeM=()=>{$("#modal").innerHTML=""};
+// Təsdiq pəncərəsi
+function confirmBox(t,fn,label){modal(`<div class="sheet-h"><h3 style="margin:0">Are you sure?</h3></div><div class="sheet-b"><p>${t}</p><div class="row" style="margin-top:16px"><button class="s" onclick="closeM()">Cancel</button><button class="d" id="yes">${label||"Yes, do it"}</button></div></div>`,true);$("#yes").onclick=()=>{closeM();fn()}}
+function copy(t){try{navigator.clipboard.writeText(t);toast("Copied ✓")}catch(e){toast("Select and copy it by hand",1)}}
+// Bazadakı funksiyanı çağırır; uğurlu olsa məlumatı yeniləyir. Xəta olsa qırmızı xəbər göstərir.
+async function call(fn,args,ok){const {data,error}=await sb.rpc(fn,args);if(error){toast(error.message,1);return null}if(ok)toast(ok);await load();return data==null?true:data}
+
+/* ---------- 2. GİRİŞ ---------- */
+const normId=v=>{v=String(v||"").trim().toLowerCase();return v.includes("@")?v:v+"@classroom.app"};
+function loginView(msg){$("#root").innerHTML=`<div class="panel login"><div style="font-size:38px">🛠️</div><h2>ADIAK Admin</h2><p class="mu">Sign in with an account that has panel access.</p><label class="l">ID</label><input id="li" placeholder="for example ali.m" autocapitalize="none" autocomplete="username"><label class="l">Password</label><input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><div class="err">${esc(msg||"")}</div><button style="width:100%" onclick="doLogin()">Sign in</button></div>`}
+async function doLogin(){const {data,error}=await sb.auth.signInWithPassword({email:normId(val("li")),password:val("lp")});if(error){loginView("Wrong ID or password");return}uid=data.user.id;await enter()}
+function noAccess(){$("#root").innerHTML=`<div class="panel login"><div style="font-size:38px">🔒</div><h2>No access</h2><p class="mu">This account is not allowed to open the admin panel. An admin can allow it in People → Permissions.</p><div class="row"><button class="s" onclick="signOut()">Sign out</button><a href="index.html"><button>Student site</button></a></div></div>`}
+async function signOut(){if(chan){try{await sb.removeChannel(chan)}catch(e){}chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}uid=null;ME=null;loginView()}
+// Giriş etmiş adamın profilini oxuyur; "panel" yetkisi yoxdursa içəri buraxmır
+async function enter(){const r=await sb.from("profiles").select("*").eq("id",uid).single();ME=r.data;if(!ME||!has("panel")){noAccess();return}await load();subscribe()}
+// Real vaxt: bazada dəyişiklik olanda avtomatik yenilənir
+function subscribe(){if(chan)return;chan=sb.channel("room")
+ .on("postgres_changes",{event:"*",schema:"public"},()=>{clearTimeout(tm);tm=setTimeout(load,300)})
+ .on("presence",{event:"sync"},()=>{const o=Object.keys(chan.presenceState()).sort().join();if(o!==[...online].sort().join()){online=new Set(Object.keys(chan.presenceState()));draw()}}).subscribe()}
+
+/* ---------- 3. MƏLUMAT ---------- */
+// Bazadan lazım olan hər şeyi yükləyir. Məlumat dəyişməyibsə səhifəni yenidən çəkmir (klik itməsin).
+async function load(){
+ const none=Promise.resolve({data:null});
+ const [p,g,s,m,a,pw]=await Promise.all([sb.from("profiles").select("*").order("name"),sb.from("groups").select("*").order("id"),sb.from("app_settings").select("*"),
+  has("chats")?sb.from("messages").select("*").order("id",{ascending:false}).limit(800):none,
+  has("chats")||has("admin")?sb.from("archives").select("*").order("id",{ascending:false}):none,
+  tab==="pass"&&has("passwords")?sb.rpc("admin_list_passwords"):none]);
+ if(p.error){toast(p.error.message,1);return}
+ P=p.data||[];G=g.data||[];(s.data||[]).forEach(x=>{SET[x.key]=x.value});M=(m.data||[]).reverse();AR=a.data||[];if(pw.data)PW=pw.data;ME=P.find(x=>x.id===uid)||ME;
+ if(tab==="day")for(const x of AR){try{const r=await sb.from("archived_messages").select("id",{count:"exact",head:true}).eq("archive_id",x.id);x.n=r.count||0}catch(e){x.n=0}}
+ const sig=JSON.stringify([P.map(x=>[x.id,x.name,x.points,x.group_id,x.login,x.role,(x.perms||[]).join(),x.is_admin,x.pw_updated_at]),G.map(x=>[x.id,x.name,x.capacity,x.host_id]),M.length,M.length?M[M.length-1].id:0,AR.map(x=>[x.id,x.n]),SET.max_groups,PW.map(x=>[x.user_id,x.source,x.updated_at])]);
+ if(sig!==lastSig){lastSig=sig;draw()}
+}
+
+/* ---------- 4. ÜMUMİ GÖRÜNÜŞ ---------- */
+// Hər tab üçün lazım olan yetki
+const TABS=[["dash","📊","Dashboard","panel"],["people","👥","People","panel"],["groups","🧩","Groups","panel"],["chats","💬","Chats","chats"],["pass","🔑","Passwords","passwords"],["day","🗂️","Close the day","admin"],["import","📥","Import names","admin"],["settings","⚙️","Settings","admin"]];
+const visibleTabs=()=>TABS.filter(t=>has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
+const switchTab=k=>{tab=k;if(k==="pass"||k==="day")lastSig="";draw();if(k==="pass"||k==="day")load()};
+// Yan menyu + seçilmiş səhifə. Düymə basılarkən gözləyir ki, klik itməsin.
+function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=true;return}pendingDraw=false;
+ const tabs=visibleTabs();if(!tabs.find(t=>t.k===tab))tab=tabs[0].k;
+ const page={dash,people,groups,chats,pass:passPage,day,import:imp,settings}[tab]();
+ $("#root").innerHTML=`<div class="app"><aside class="side"><div class="brand"><div class="logo">🛠️</div><div><b>ADIAK Admin</b><small>Team Maker control panel</small></div></div>
+  <nav class="nav">${tabs.map(t=>`<button class="${tab===t.k?"on":""}" onclick="switchTab('${t.k}')"><span class="i">${t.i}</span>${t.t}</button>`).join("")}</nav>
+  <div class="me"><div class="row">${avatar(ME)}<div class="grow"><b>${esc(ME.name)}</b><div style="margin-top:3px">${roleChip(ME)}</div></div></div><button onclick="signOut()">Sign out</button><a href="index.html">← Student site</a></div></aside>
+  <main class="main">${page}</main></div>`;
+ if(tab==="chats"){const m=$("#mlist");if(m)m.scrollTop=m.scrollHeight}}
+const head=(t,s,right)=>`<div class="page-h"><div><h1>${t}</h1><p>${s}</p></div><div class="row wrap">${right||""}</div></div>`;
+const empty=(e,t)=>`<div class="empty"><span class="e">${e}</span>${t}</div>`;
+
+/* ---------- 5. DASHBOARD ---------- */
+function dash(){const st=P.filter(isStudent),te=P.filter(p=>p.role==="teacher"),idle=st.filter(p=>p.group_id==null),staff=P.filter(p=>isAdm(p)||(p.perms||[]).length||p.role==="teacher");
+ const stat=(i,n,l)=>`<div class="stat"><div class="ico">${i}</div><div><b>${n}</b><span>${l}</span></div></div>`;
+ const last=M.filter(m=>m.sender).slice(-6).reverse();
+ return head("Dashboard","Welcome, "+esc(ME.name)+". Here is what is happening right now.")+
+ `<div class="stats">${stat("🎓",st.length,"students")}${stat("👩‍🏫",te.length,"teachers")}${stat("🧩",G.length+" / "+maxG(),"groups")}${stat("🕓",idle.length,"idle students")}${stat("🟢",online.size,"online now")}${has("chats")?stat("💬",M.length,"messages"):stat("🛡️",P.filter(isAdm).length,"admins")}</div>
+ <div class="panel"><h3>Team &amp; permissions</h3><p class="hint">Who can do what. Open a person to change it with the switches.</p>
+  <div class="plist">${staff.map(p=>`<div class="pc" onclick="person('${p.id}')">${avatar(p)}<div class="grow"><b>${esc(p.name)}</b><div class="chips">${roleChip(p)}${permChips(p)}</div></div></div>`).join("")||empty("👥","No staff yet")}</div></div>
+ <div class="panel"><h3>Quick actions</h3><p class="hint">Shortcuts to the things you do most.</p><div class="row wrap">
+  ${has("panel")?`<button onclick="switchTab('people')">👥 People</button>`:""}${has("admin")?`<button onclick="switchTab('import')">📥 Import names</button><button class="s" onclick="switchTab('day')">🗂️ Close the day</button>`:""}${has("passwords")?`<button class="s" onclick="switchTab('pass')">🔑 Passwords</button>`:""}${has("admin")?`<button class="s" onclick="addPerson()">➕ Add person</button>`:""}</div></div>
+ ${has("chats")?`<div class="panel"><h3>Latest messages</h3>${last.map(m=>`<div class="msg"><div><b>${esc(nm(m.sender))}</b> <small>${esc(title(m.channel))}</small><br>${esc(m.body||"📎 "+(m.file_name||"file"))}</div></div>`).join("")||empty("💬","No messages yet")}</div>`:""}`}
+
+/* ---------- 6. İNSANLAR ---------- */
+const PF=[["all","All"],["students","Students"],["teachers","Teachers"],["admins","Admins"],["idle","Idle"]];
+// Filtr + axtarış
+function match(p){const q=pq.trim().toLowerCase();if(q&&!p.name.toLowerCase().includes(q)&&!short(p.login).includes(q))return false;
+ return pf==="all"||(pf==="students"&&isStudent(p))||(pf==="teachers"&&p.role==="teacher")||(pf==="admins"&&isAdm(p))||(pf==="idle"&&isStudent(p)&&p.group_id==null)}
+const plist=()=>P.filter(match).map(p=>`<div class="pc" onclick="person('${p.id}')">${avatar(p)}<div class="grow"><b>${esc(p.name)}</b><span class="mono mu" style="font-size:13px">${esc(short(p.login))}</span><div class="chips">${roleChip(p)}${isStudent(p)&&p.group_id!=null?`<span class="chip">${esc(gname(p.group_id))}</span>`:isStudent(p)?'<span class="chip ok">idle</span>':""}${permChips(p)}</div></div>${isStudent(p)?`<div class="pts">${p.points}</div>`:""}</div>`).join("")||empty("🔍","Nobody found");
+function people(){return head("People",P.length+" accounts. Tap a person to manage them.",has("admin")?`<button onclick="addPerson()">➕ Add person</button>`:"")+
+ `<div class="toolbar"><input placeholder="Search by name or ID…" value="${esc(pq)}" oninput="pq=this.value;$('#plist').innerHTML=plist()"><div class="seg">${PF.map(([k,t])=>`<button class="${pf===k?"on":""}" onclick="pf='${k}';draw()">${t}</button>`).join("")}</div></div><div class="plist" id="plist">${plist()}</div>`}
+
+// Bir adamın bütün idarəsi: profil, xal, YETKİLƏR, parol, qrup, sessiya
+function person(id){const p=P.find(x=>x.id===id);if(!p)return;const g=G.find(x=>x.id===p.group_id),adminViewer=has("admin"),pm=p.perms||[];
+ const sec=(t,body,cls)=>`<div class="sec ${cls||""}"><h4>${t}</h4>${body}</div>`;
+ const permBlock=p.is_admin?`<p class="mu" style="margin:0">The Host account always has every right.</p>`
+  :adminViewer?`<p class="mu" style="margin:0 0 6px">Tick or untick to give or take a permission. It is saved at once.</p>
+    ${PERMS.map(x=>`<label class="prow"><span class="pi">${x.i}</span><span class="pt"><b>${x.t}</b><small>${x.d}</small></span><span class="sw"><input type="checkbox" ${pm.includes(x.k)?"checked":""} onchange="togglePerm('${id}','${x.k}',this)"><i></i></span></label>`).join("")}
+    <div class="row wrap" style="margin-top:10px"><button class="s sm" onclick="presetPerms('${id}',['points','groups'])">👩‍🏫 Teacher preset</button><button class="s sm" onclick="presetPerms('${id}',[])">Remove all</button></div>`
+  :`<div class="row wrap">${isAdm(p)?'<span class="chip admin">🛡 Full admin</span>':PERMS.filter(x=>pm.includes(x.k)).map(x=>`<span class="chip">${x.i} ${x.t}</span>`).join("")||'<span class="mu">No special permissions.</span>'}</div><p class="mu" style="margin:8px 0 0;font-size:13px">Only admins can change permissions.</p>`;
+ modal(`<div class="sheet-h"><div class="row">${avatar(p,true)}<div class="grow"><h3 style="margin:0">${esc(p.name)}</h3><span class="mono mu">${esc(short(p.login))}</span><div class="row wrap" style="margin-top:6px">${roleChip(p)}${isStudent(p)?(g?`<span class="chip">${esc(g.name)}</span>`:'<span class="chip ok">idle</span>'):""}</div></div><button class="s sm" onclick="closeM()">✕</button></div></div>
+ <div class="sheet-b">
+  ${adminViewer?sec("✏️ Profile",`<label class="l" style="margin-top:0">Name</label><div class="row"><input id="e_name" value="${esc(p.name)}" maxlength="30"><button onclick="saveName('${id}')">Save</button></div>
+     <label class="l">ID (what they type to log in)</label><div class="row"><input id="e_id" value="${esc(short(p.login))}" autocapitalize="none"><button onclick="saveId('${id}')">Save</button></div>
+     ${p.is_admin?"":`<label class="l">Role</label><div class="seg"><button class="${p.role!=="teacher"?"on":""}" onclick="setRole('${id}','student')">🎓 Student</button><button class="${p.role==="teacher"?"on":""}" onclick="setRole('${id}','teacher')">👩‍🏫 Teacher</button></div>`}`):""}
+  ${has("points")&&isStudent(p)?sec("⭐ Points",`<div class="row" style="margin-bottom:8px"><b style="font-size:22px">${p.points}</b><span class="mu">points now</span></div><div class="row"><input id="e_pts" type="number" inputmode="numeric" placeholder="e.g. 8 (or -3)" onkeydown="if(event.key==='Enter')addPts('${id}')"><button class="ok" onclick="addPts('${id}')">Add points</button></div>`):""}
+  ${sec("🧾 Permissions (Yetkilər)",permBlock)}
+  ${has("passwords")?(p.is_admin||isAdm(p)?sec("🔑 Password",`<p style="margin:0">🔒 Admin passwords are private. Only the admin can change their own (Settings → Change password).</p>`,"locked"):sec("🔑 Password",`<div id="pwbox"><span class="mu">Loading…</span></div>`)):""}
+  ${has("groups")&&isStudent(p)&&G.length?sec("👥 Group",`<p style="margin:0 0 8px">Now: <b>${g?esc(g.name):"no group"}</b></p><div class="row wrap"><select id="e_move">${G.map(x=>`<option value="${x.id}" ${x.id===p.group_id?"selected":""}>${esc(x.name)}</option>`).join("")}</select><button onclick="mvMember('${id}')">Move here</button>${g?`<button class="s" onclick="rmMember('${id}')">Remove</button>`:""}</div>`):""}
+  ${adminViewer&&!p.is_admin?sec("🚪 Session",`<button class="s" onclick="forceOut('${id}')">Sign out everywhere</button>`):""}
+ </div>`);
+ if(has("passwords")&&!isAdm(p))loadPw(id)}
+async function saveName(id){if(await call("admin_set_name",{u:id,nm:val("e_name")},"Name saved"))person(id)}
+async function saveId(id){if(await call("admin_set_login",{u:id,idt:val("e_id")},"ID saved"))person(id)}
+async function setRole(id,r){if(await call("admin_set_role",{u:id,r},"Role changed"))person(id)}
+async function addPts(id){const n=parseInt(val("e_pts"),10);if(!n){toast("Type a number",1);return}if(await call("add_points",{u:id,n},(n>0?"+":"")+n+" points"))person(id)}
+// Yetki açarı: basan kimi saxlanır; admin hüququ vermək təsdiq tələb edir
+async function togglePerm(id,k,box){const p=P.find(x=>x.id===id),cur=new Set(p.perms||[]);
+ const apply=async()=>{box.checked?cur.add(k):cur.delete(k);const ok=await call("admin_set_perms",{u:id,p:[...cur]},"Permissions saved");if(ok)person(id);else box.checked=!box.checked};
+ if(k==="admin"&&box.checked){box.checked=false;confirmBox("Give <b>full admin</b> rights to <b>"+esc(p.name)+"</b>? They can then do everything in this panel.",async()=>{box.checked=true;await apply()},"Yes, make admin");return}
+ await apply()}
+async function presetPerms(id,list){if(await call("admin_set_perms",{u:id,p:list},"Permissions saved"))person(id)}
+async function forceOut(id){if(await call("admin_force_logout",{u:id},"Signed out everywhere"))person(id)}
+async function rmMember(id){if(await call("admin_remove_member",{u:id},"Removed from the group"))person(id)}
+async function mvMember(id){if(await call("admin_move_member",{u:id,g:+val("e_move")},"Moved"))person(id)}
+// Yeni adam: tələbə və ya müəllim. Limit yoxdur (30-dan çox ola bilər).
+function addPerson(){npRole="student";modal(`<div class="sheet-h"><h3 style="margin:0">➕ Add a person</h3><p class="mu" style="margin:6px 0 0">No limit of 30. The ID is made automatically: first name, dot, first letter of the surname.</p></div><div class="sheet-b">
+  <label class="l">Role</label><div class="seg" id="npseg"><button class="on" onclick="setNp('student')">🎓 Student</button><button onclick="setNp('teacher')">👩‍🏫 Teacher</button></div>
+  <label class="l">Full name</label><input id="np_name" placeholder="Əli Məmmədov" maxlength="30" onkeydown="if(event.key==='Enter')doAddPerson()">
+  <div class="row" style="margin-top:18px"><button class="s" onclick="closeM()">Cancel</button><button onclick="doAddPerson()">Create</button></div></div>`);setTimeout(()=>{const i=$("#np_name");if(i&&i.focus)i.focus()},50)}
+function setNp(r){npRole=r;const b=document.querySelectorAll("#npseg button");if(b[0]){b[0].className=r==="student"?"on":"";b[1].className=r==="teacher"?"on":""}}
+async function doAddPerson(){const raw=val("np_name").trim();if(!raw){toast("Type a name",1);return}const {data,error}=await sb.rpc("admin_create_user",{raw,r:npRole});if(error){toast(error.message,1);return}await load();const r=(data||[])[0];
+ if(r)modal(`<div class="sheet-h"><h3 style="margin:0">✅ ${esc(r.new_name)} added</h3></div><div class="sheet-b"><p>ID: <b class="mono">${esc(r.new_login)}</b></p><div class="big">${esc(r.temp_password)}</div><p class="mu">Give them the ID and this temporary password. They choose their own password at the first login. You can see it later in the Passwords tab.</p><div class="row"><button onclick="copy('${esc(r.new_login)} / ${esc(r.temp_password)}')">Copy</button><button class="s" onclick="closeM()">Close</button></div></div>`,true)}
+
+/* ---------- 7. QRUPLAR ---------- */
+function groups(){const canEdit=has("groups");
+ return head("Groups",G.length+" of "+maxG()+" groups created")+`<div class="gcards">${G.map(g=>{const mem=P.filter(p=>p.group_id===g.id),pct=Math.min(100,Math.round(mem.length/g.capacity*100));
+  return`<div class="panel"><div class="row sp"><h3>${esc(g.name)}</h3><span class="chip">${mem.length}/${g.capacity}</span></div><div class="bar"><i style="width:${pct}%"></i></div>
+   <p class="mu" style="margin:0 0 8px">Host: ${esc(g.host_id?nm(g.host_id):"—")}</p>
+   ${mem.map(p=>`<div class="li pc" style="box-shadow:none;margin-bottom:6px" onclick="person('${p.id}')">${avatar(p)}<div class="grow"><b>${esc(p.name)}${p.id===g.host_id?" 👑":""}</b></div><span class="mu">${p.points} pts</span></div>`).join("")||empty("🪑","No members yet")}
+   ${canEdit?`<div class="row wrap" style="margin-top:10px"><button class="s sm" onclick="gEdit(${g.id})">✏️ Edit</button><button class="d sm" onclick="gDel(${g.id})">🗑 Delete</button></div>`:""}</div>`}).join("")||`<div class="panel">${empty("🧩","No groups yet. Students create them on the main site.")}</div>`}</div>`}
+function gEdit(id){const g=G.find(x=>x.id===id),mem=P.filter(p=>p.group_id===id);modal(`<div class="sheet-h"><h3 style="margin:0">✏️ Edit group</h3></div><div class="sheet-b"><label class="l">Name</label><input id="g_name" value="${esc(g.name)}" maxlength="30"><label class="l">Max members (1-10, not below ${mem.length})</label><input id="g_cap" type="number" min="1" max="10" value="${g.capacity}"><label class="l">Host</label><select id="g_host">${mem.map(p=>`<option value="${p.id}" ${p.id===g.host_id?"selected":""}>${esc(p.name)}</option>`).join("")||"<option value=''>(no members)</option>"}</select><div class="row" style="margin-top:18px"><button class="s" onclick="closeM()">Cancel</button><button onclick="gSave(${id})">Save</button></div></div>`,true)}
+async function gSave(id){if(await call("admin_group_update",{g:id,nm:val("g_name"),cap:+val("g_cap"),host:val("g_host")||null},"Group saved"))closeM()}
+function gDel(id){confirmBox("Delete this group? Its members become idle and its chat is removed.",async()=>{await call("admin_delete_group",{g:id},"Group deleted")})}
+
+/* ---------- 8. ÇATLAR ---------- */
+const title=k=>k==="all"?"Everyone":k[0]==="g"?gname(+k.slice(2))+" (group)":k.split(":").slice(1).map(nm).join(" & ");
+function chans(){const c={};M.forEach(x=>{const o=c[x.channel]||(c[x.channel]={k:x.channel,n:0,last:0});o.n++;o.last=Math.max(o.last,x.id)});return Object.values(c).sort((a,b)=>b.last-a.last)}
+function chats(){const cs=chans();if(!cs.find(c=>c.k===chSel)&&cs[0])chSel=cs[0].k;const t=M.filter(m=>m.channel===chSel).slice(-200);
+ return head("Chats","Read and moderate every conversation. Deleted messages cannot be restored.",`<button class="d" onclick="clearAll()">🗑 Delete ALL chats</button>`)+
+ `<div class="chats"><div class="panel list">${cs.map(c=>`<div class="citem ${c.k===chSel?"on":""}" onclick="chSel='${esc(c.k)}';draw()"><span>${esc(title(c.k))}</span><span class="chip">${c.n}</span></div>`).join("")||empty("💬","No chats")}</div>
+  <div class="panel"><div class="row sp" style="margin-bottom:10px"><h3>${esc(title(chSel))}</h3><button class="d sm" onclick="clearCh()">Clear this chat</button></div>
+  <div class="msgs" id="mlist">${t.map(m=>`<div class="msg"><div class="grow"><b>${esc(m.sender?nm(m.sender):"System")}</b> <small>${new Date(m.created_at).toLocaleString()}</small><br>${m.file_path?`📎 ${esc(m.file_name)} `:""}${esc(m.body)}</div><button class="s sm" title="Delete" onclick="delMsg(${m.id})">🗑</button></div>`).join("")||empty("💬","No messages")}</div></div></div>`}
+const delMsg=id=>confirmBox("Delete this message?",async()=>{await call("admin_delete_message",{i:id},"Message deleted")});
+const clearCh=()=>confirmBox("Delete ALL messages in <b>"+esc(title(chSel))+"</b>?",async()=>{await call("admin_clear_channel",{ch:chSel},"Chat cleared")});
+const clearAll=()=>confirmBox("Delete <b>every</b> message in <b>every</b> chat ("+M.length+" messages)? This cannot be undone.",async()=>{await call("admin_clear_all_chats",{},"All chats cleared")});
+
+/* ---------- 9. PAROLLAR ---------- */
+const PW_STATUS={temp:["warn","Temporary"],student:["ok","Set by student"],stale:["bad","Changed, reset to see"],none:["","No copy"]};
+const pwKey=r=>r.pw?(r.source||"temp"):(r.source==="stale"?"stale":"none");
+// Bir adamın parolunu açır (adminlərin parolu heç vaxt göstərilmir)
+async function loadPw(id){const box=$("#pwbox");if(!box)return;const r=await sb.rpc("admin_get_password",{u:id});if(r.error){box.innerHTML=`<span class="mu">${esc(r.error.message)}</span>`;return}pwView(id,(r.data||[])[0])}
+let pwOne=false;
+function pwView(id,row){const box=$("#pwbox");if(!box)return;const reset=has("passwords")?`<button class="s sm" onclick="resetPw('${id}')">🔑 Reset</button>`:"";
+ if(!row)return box.innerHTML=`<p class="mu" style="margin:0 0 10px">No copy saved yet. Reset the password to create a new one you can see.</p>${reset}`;
+ if(row.source==="stale"||!row.pw)return box.innerHTML=`<p class="mu" style="margin:0 0 10px">The student changed it before copies were turned on, so it cannot be shown. Reset to create a visible one.</p>${reset}`;
+ const st=PW_STATUS[row.source]||PW_STATUS.temp;
+ box.innerHTML=`<div class="pwbox"><div class="v" id="pwv">${pwOne?esc(row.pw):"••••••••"}</div><button class="s sm" onclick="pwOne=!pwOne;pwView('${id}',window.__row)">${pwOne?"🙈 Hide":"👁 Show"}</button><button class="s sm" onclick="copy(window.__row.pw)">Copy</button></div>
+  <div class="row wrap" style="margin-top:10px"><span class="chip ${st[0]}">${st[1]}</span><span class="mu" style="font-size:13px">${row.updated_at?new Date(row.updated_at).toLocaleString():""}</span><span class="grow"></span>${reset}</div>`;window.__row=row}
+async function resetPw(id){const p=P.find(x=>x.id===id);confirmBox("Create a new temporary password for <b>"+esc(p?p.name:"this person")+"</b>? The old one stops working and they are signed out.",async()=>{const pw=await call("admin_reset_password",{u:id});if(typeof pw==="string"){pwOne=true;modal(`<div class="sheet-h"><h3 style="margin:0">🔑 New temporary password</h3></div><div class="sheet-b"><p>${esc(p?p.name:"")} · ID <b class="mono">${esc(p?short(p.login):"")}</b></p><div class="big">${esc(pw)}</div><p class="mu">They set their own password at the next login. You can look at it again in the Passwords tab.</p><div class="row"><button onclick="copy('${esc(p?short(p.login):"")} / ${esc(pw)}')">Copy</button><button class="s" onclick="person('${id}')">Back</button></div></div>`,true)}},"Yes, reset")}
+// Parol cədvəli
+function pwRows(){const q=pwq.trim().toLowerCase();return PW.filter(r=>(!q||r.name.toLowerCase().includes(q)||short(r.login).includes(q))&&(pwFilter==="all"||(pwFilter==="students"&&r.role==="student")||(pwFilter==="teachers"&&r.role==="teacher")||(pwFilter==="reset"&&!r.pw)))}
+function passPage(){if(!has("passwords"))return"";const rows=pwRows();
+ return head("Passwords","What each person logs in with. Admin passwords are private and never shown.",`<button class="s" onclick="pwAll=!pwAll;pwShown=new Set();draw()">${pwAll?"🙈 Hide all":"👁 Reveal all"}</button><button onclick="dlPw()">⬇ Download CSV</button>`)+
+ `<div class="toolbar"><input placeholder="Search by name or ID…" value="${esc(pwq)}" oninput="pwq=this.value;$('#pwtab').innerHTML=pwTable()"><div class="seg">${[["all","All"],["students","Students"],["teachers","Teachers"],["reset","Needs reset"]].map(([k,t])=>`<button class="${pwFilter===k?"on":""}" onclick="pwFilter='${k}';draw()">${t}</button>`).join("")}</div></div>
+ <div class="panel" style="padding:0"><div class="scroll" id="pwtab">${pwTable()}</div></div>`}
+function pwTable(){const rows=pwRows();
+ return`<table class="tbl"><tr><th>Person</th><th>ID</th><th>Password</th><th>Status</th><th></th></tr>${rows.map(r=>{const k=pwKey(r),st=PW_STATUS[k],show=pwAll||pwShown.has(r.user_id);
+  return`<tr><td><div class="row">${avatar({name:r.name})}<div><b>${esc(r.name)}</b><br><span class="chip ${r.role}">${r.role==="teacher"?"👩‍🏫 Teacher":"🎓 Student"}</span></div></div></td><td class="mono">${esc(short(r.login))}</td>
+   <td class="mono" style="font-weight:700;letter-spacing:1px">${r.pw?(show?esc(r.pw):"••••••••"):'<span class="mu">—</span>'}</td><td><span class="chip ${st[0]}">${st[1]}</span></td>
+   <td><div class="row wrap">${r.pw?`<button class="s sm" onclick="togglePw('${r.user_id}')">${show?"🙈":"👁"}</button><button class="s sm" onclick="copy('${esc(short(r.login))} / ${esc(r.pw)}')">Copy</button>`:""}<button class="s sm" onclick="resetPw('${r.user_id}')">🔑 Reset</button></div></td></tr>`}).join("")||`<tr><td colspan="5">${empty("🔍","Nobody found")}</td></tr>`}</table>`}
+function togglePw(id){pwShown.has(id)?pwShown.delete(id):pwShown.add(id);$("#pwtab").innerHTML=pwTable()}
+// Excel-də düzgün açılan CSV
+function dlPw(){const rows=pwRows().map(r=>[r.name,short(r.login),r.pw||"",PW_STATUS[pwKey(r)][1]]),csv="\ufeffName,ID,Password,Status\n"+rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(",")).join("\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="passwords.csv";a.click()}
+
+/* ---------- 10. GÜN SONU / İDXAL / AYARLAR ---------- */
+function day(){return head("Close the day","When the presentations are over, archive every chat and start fresh")+
+ `<div class="panel"><p>All current chats are moved to a <b>read-only archive</b> that only admins see here. Students start with empty chats. Points stay.</p>
+  <label class="l">Name of this archive</label><input id="d_lbl" value="${esc(dayLabel||"Presentation day · "+new Date().toLocaleDateString())}" oninput="dayLabel=this.value">
+  <label class="row" style="margin-top:14px;cursor:pointer"><input type="checkbox" id="d_dis" ${dayDis?"checked":""} onchange="dayDis=this.checked" style="width:auto"> Also dissolve all groups (everyone becomes idle)</label>
+  <div style="margin-top:16px"><button class="d" onclick="closeDay()">🗂️ Close the day and archive chats</button></div></div>
+  <div class="panel"><h3>Archives</h3>${AR.map(a=>`<div class="li pc" style="box-shadow:none;margin-top:8px" onclick="openAr(${a.id})"><div class="grow"><b>${esc(a.label)}</b><br><span class="mu">${new Date(a.created_at).toLocaleString()} · ${a.n||0} messages</span></div><span>›</span></div>`).join("")||empty("🗂️","No archives yet")}</div>`}
+function closeDay(){const l=val("d_lbl"),d=$("#d_dis").checked;confirmBox("Archive <b>"+M.length+"</b> messages"+(d?" and dissolve all groups":"")+"? Students will see empty chats afterwards.",async()=>{if(await call("admin_close_day",{lbl:l,dissolve:d},"Day closed. Chats archived."))dayLabel=""},"Yes, close the day")}
+async function openAr(id){const a=AR.find(x=>x.id===id),r=await sb.from("archived_messages").select("*").eq("archive_id",id).order("id"),by={};(r.data||[]).forEach(m=>{(by[m.channel_label]=by[m.channel_label]||[]).push(m)});
+ modal(`<div class="sheet-h"><h3 style="margin:0">🗂️ ${esc(a.label)}</h3></div><div class="sheet-b">${Object.keys(by).map(k=>`<p style="margin:14px 0 6px"><b>${esc(k)}</b> <span class="chip">${by[k].length}</span></p>${by[k].slice(0,40).map(m=>`<div class="msg"><div><b>${esc(m.sender?nm(m.sender):"System")}</b><br>${m.file_path?"📎 "+esc(m.file_name)+" ":""}${esc(m.body)}</div></div>`).join("")}`).join("")||empty("🗂️","Empty")}<div class="row" style="margin-top:14px"><button class="s" style="flex:1" onclick="closeM()">Close</button></div></div>`)}
+const unused=()=>P.filter(p=>isStudent(p)&&/^Student \d+$/.test(p.name)).length;
+function imp(){return head("Import names","Paste a class list. IDs and temporary passwords are created automatically.")+
+ `<div class="panel"><p>One full name per line, for example <b>Əli Məmmədov</b>. The ID becomes <b>ali.m</b>. Only accounts nobody has used yet are filled; accounts with a changed password are never touched. To add people beyond those, use <b>➕ Add person</b> in People.</p><p class="mu">Unused numbered accounts left: <b>${unused()}</b></p>
+  <textarea id="imp" rows="10" placeholder="Əli Məmmədov&#10;Aysel Hüseynova&#10;…" oninput="impText=this.value">${esc(impText)}</textarea><div style="margin-top:12px"><button onclick="doImport()">📥 Create IDs and passwords</button></div></div>`}
+async function doImport(){const names=impText.split("\n").map(s=>s.trim()).filter(Boolean);if(!names.length){toast("Paste at least one name",1);return}
+ confirmBox("Create accounts for <b>"+names.length+"</b> students? New temporary passwords are generated.",async()=>{const {data,error}=await sb.rpc("admin_import_students",{names});if(error){toast(error.message,1);return}impText="";await load();showImport(data||[])},"Create")}
+const csvOf=rows=>"\ufeffName,ID,Temporary password\n"+rows.map(r=>[r.new_name,r.new_login,r.temp_password].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(",")).join("\n");
+function showImport(rows){window.__rows=rows;modal(`<div class="sheet-h"><h3 style="margin:0">✅ ${rows.length} students ready</h3><p class="mu" style="margin:6px 0 0">You can see these passwords later in the Passwords tab.</p></div><div class="sheet-b"><div class="scroll" style="max-height:46vh"><table class="tbl"><tr><th>Name</th><th>ID</th><th>Password</th></tr>${rows.map(r=>`<tr><td>${esc(r.new_name)}</td><td class="mono"><b>${esc(r.new_login)}</b></td><td class="mono">${esc(r.temp_password)}</td></tr>`).join("")}</table></div><div class="row wrap" style="margin-top:14px"><button onclick="dlCsv()">⬇ Download CSV</button><button class="s" onclick="copy(window.__rows.map(r=>r.new_name+'\\t'+r.new_login+'\\t'+r.temp_password).join('\\n'))">Copy all</button><button class="s" onclick="closeM()">Close</button></div></div>`)}
+function dlCsv(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csvOf(window.__rows)],{type:"text/csv"}));a.download="students.csv";a.click()}
+function settings(){return head("Settings","Rules of the site")+
+ `<div class="panel"><h3>Group limit</h3><p class="hint">With 30 students in groups of 5, six groups are enough.</p><div class="row" style="max-width:320px"><select id="mg">${[1,2,3,4,5,6,7,8,9,10,11,12].map(n=>`<option ${n===maxG()?"selected":""}>${n}</option>`).join("")}</select><button onclick="saveMax()">Save</button></div></div>
+  <div class="panel" style="border-color:var(--bad)"><h3 style="color:var(--bad)">Danger zone</h3><p class="hint">Deletes ALL messages, archives, point history and groups, and sets every score to 0. Accounts and passwords stay. Use it once, to clear test data before launch.</p><button class="d" onclick="resetAll()">Clear all data…</button></div>`}
+const saveMax=()=>call("admin_set_setting",{k:"max_groups",v:val("mg")},"Saved");
+function resetAll(){modal(`<div class="sheet-h"><h3 style="margin:0;color:var(--bad)">Clear all data?</h3></div><div class="sheet-b"><p>This cannot be undone. Type <b>RESET</b> to confirm.</p><input id="rs" placeholder="RESET"><div class="row" style="margin-top:16px"><button class="s" onclick="closeM()">Cancel</button><button class="d" onclick="if(val('rs')==='RESET'){closeM();call('admin_reset_all',{},'Everything cleared')}else toast('Type RESET exactly',1)">Clear everything</button></div></div>`,true)}
+
+/* ---------- 11. BAŞLANĞIC ---------- */
+// Düymə basılarkən canlı yenilənmə gözləyir (klik itməsin)
+addEventListener("pointerdown",()=>{pressing=true;pressTs=Date.now()},true);
+["pointerup","pointercancel"].forEach(ev=>addEventListener(ev,()=>{setTimeout(()=>{pressing=false;if(pendingDraw)draw()},20)},true));
+// Sayt açılanda ilk işləyən funksiya
+async function boot(){sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);const {data}=await sb.auth.getSession();if(data.session){uid=data.session.user.id;await enter()}else loginView()}
+boot();
