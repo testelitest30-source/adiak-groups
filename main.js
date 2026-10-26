@@ -49,7 +49,8 @@ async function setPw(){const a=$("#p1").value;if(a.length<6){err="At least 6 cha
 async function start(user,fresh){uid=user.id;ready=false;loadSeen();loadNotes();if(user.user_metadata&&user.user_metadata.must_change){screen="setpw";return render()}
  try{MYSID=fresh?null:localStorage.getItem("sid")}catch(e){MYSID=null}
  if(!MYSID){MYSID=Math.random().toString(36).slice(2)+Date.now().toString(36);try{localStorage.setItem("sid",MYSID)}catch(e){}await sb.rpc("claim_session",{s:MYSID})}
- screen="app";await loadMeta();await refresh();subscribe()}
+ screen="boot";render();await loadMeta();let ok=await refresh(true);for(let i=0;!ok&&screen==="boot"&&i<3;i++){await new Promise(r=>setTimeout(r,1000));ok=await refresh(true)}
+ if(screen!=="boot")return;if(!ok){err="Connection problem. Please try again.";screen="login";return render()}screen="app";render();subscribe()}
 async function loadLogin(){screen="login";render()}
 // Çıxış edir
 async function logout(){if(chan){await sb.removeChannel(chan);chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}try{localStorage.removeItem("sid")}catch(e){}MYSID=null;uid=null;conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();await loadLogin()}
@@ -65,5 +66,8 @@ let tx0=0,ty0=0;
 addEventListener("touchstart",e=>{const t=e.touches[0];tx0=t.clientX;ty0=t.clientY},{passive:true});
 addEventListener("touchend",e=>{if(!phone()||screen!=="app")return;const t=e.changedTouches[0],dx=t.clientX-tx0,dy=t.clientY-ty0;if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*.6)return;
  if(dx<0&&!menuOpen&&!sp&&!pm&&tx0>innerWidth*.5){menuOpen=true;render()}else if(dx>0&&menuOpen)goBack()},{passive:true});
-addEventListener("resize",()=>{if(screen==="app")render()});
+// Klaviatura açılanda ekranın hündürlüyü dəyişir; yalnız telefon/masaüstü keçidində yenilə
+let lastPhone=phone();addEventListener("resize",()=>{const p=phone();if(p!==lastPhone){lastPhone=p;if(screen==="app")render()}});
+// Yazı sahəsindən çıxanda gözləyən yeniləməni icra edir
+addEventListener("focusout",()=>{setTimeout(()=>{if(pendingRender&&!isTyping(document.activeElement))render()},80)});
 boot();

@@ -37,7 +37,7 @@ input:focus,select:focus{outline:2px solid var(--ac);outline-offset:1px}
 .glow{border-color:var(--ac);animation:glow 2.4s infinite}.hero b{font-size:16px}.wave{display:inline-block;font-size:28px;animation:wave 1.8s infinite;transform-origin:70% 70%}
 #fab{display:none;position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;font-size:26px;box-shadow:0 6px 16px #0006;padding:0;background:linear-gradient(135deg,var(--ac),var(--ac2));z-index:6}
 #fab .badge{position:absolute;top:-4px;right:-4px;margin:0}
-#sheet{display:none;position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:7;animation:up .3s}
+#sheet{display:none;position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:7}.in #sheet{animation:up .3s}
 .ov{position:fixed;inset:0;background:#0008;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .2s}.ov .card{animation:pop .3s}
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:11px 18px;border-radius:99px;opacity:0;pointer-events:none;transition:.3s;z-index:40;max-width:92%;text-align:center;box-shadow:0 6px 20px #0006}
 #toast.show{opacity:1;transform:translateX(-50%)}#toast.bad{background:#dc2626;animation:shake .4s}
@@ -49,8 +49,8 @@ input:focus,select:focus{outline:2px solid var(--ac);outline-offset:1px}
 .av.huge{width:88px;height:88px;font-size:36px;margin:0 auto}
 .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.stat div{background:var(--bg);border-radius:12px;padding:10px 4px;text-align:center}.stat b{display:block;font-size:22px}.stat span{font-size:12px}
 .pm{animation:pop .3s}
-#scrim{position:fixed;inset:0;background:#0007;z-index:29;animation:fade .2s}
-#drawer{position:fixed;top:0;right:0;bottom:0;width:min(80vw,320px);background:var(--card);z-index:30;box-shadow:-12px 0 32px #0007;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px;overflow:auto;animation:dr .28s cubic-bezier(.2,.8,.2,1)}
+#scrim{position:fixed;inset:0;background:#0007;z-index:29}.in #scrim{animation:fade .2s}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(80vw,320px);background:var(--card);z-index:30;box-shadow:-12px 0 32px #0007;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px;overflow:auto}.in #drawer{animation:dr .28s cubic-bezier(.2,.8,.2,1)}
 @keyframes dr{from{transform:translateX(100%)}}
 .dh{display:flex;gap:12px;align-items:center;padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid var(--bd)}
 .bump{animation:pop .5s;color:#16a34a}.ov.still,.ov.still .card{animation:none}

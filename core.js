@@ -6,7 +6,7 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let pressing=false,pressTs=0,pmSig="",SET={max_groups:6},menuOpen=false,MYSID=null,navStack=[],restoring=false,lastSnap=null,pmDrawn=null,wasNotes=false,URLS={},needUrls=new Set(),rec=null,pendingRender=false,PE=[],pm=null,sb=null,chan=null,uid=null,screen="boot",err="",roster=[],P={},G=[],RQ=[],JB=[],KK=[],KB=[],IV=[],M=[],online=new Set(),SEEN={};
-let NOTES=[],notesOpen=false,tab="groups",openG=null,conv=null,sheet=false,sp=null,tm=null,tt=null,ready=false,quietUntil=0,lastKey="",lastMax=0,muted=false,AC=null;
+let lastSig="",NOTES=[],notesOpen=false,tab="groups",openG=null,conv=null,sheet=false,sp=null,tm=null,tt=null,ready=false,quietUntil=0,lastKey="",lastMax=0,muted=false,AC=null;
 try{muted=localStorage.getItem("mute")==="1"}catch(e){}
 const phone=()=>innerWidth<=800, ME=()=>P[uid], grp=id=>G.find(g=>g.id===id), nameOf=id=>P[id]?P[id].name:"?";
 // Bu hesabın verilmiş yetkisi varmı? (admin hər şeyi edə bilər)
@@ -42,7 +42,7 @@ const fsize=n=>n<1024?n+" B":n<1048576?Math.round(n/1024)+" KB":(n/1048576).toFi
 const ficon=(t,n)=>/powerpoint|presentation|\.pptx?$/i.test(t+n)?"📊":/pdf/i.test(t+n)?"📕":/word|document|\.docx?$/i.test(t+n)?"📝":/excel|sheet|\.xlsx?$/i.test(t+n)?"📈":/zip|rar|7z/i.test(t+n)?"🗜️":"📎";
 function urlFor(p){const c=URLS[p];if(c&&c.exp>Date.now())return c.url;needUrls.add(p);return""}
 async function fetchUrls(){if(!needUrls.size||!sb)return;const paths=[...needUrls];needUrls.clear();let d=null;try{d=(await sb.storage.from("chat-files").createSignedUrls(paths,3600)).data}catch(e){}
- paths.forEach((p,i)=>{URLS[p]=d&&d[i]&&d[i].signedUrl?{url:d[i].signedUrl,exp:Date.now()+3300000}:{url:"",exp:Date.now()+20000}});render()}
+ paths.forEach((p,i)=>{URLS[p]=d&&d[i]&&d[i].signedUrl?{url:d[i].signedUrl,exp:Date.now()+3300000}:{url:"",exp:Date.now()+20000}});if(paths.some(p=>URLS[p].url))render()}
 // Mesajdakı fayl, şəkil və ya səsin HTML-i
 function fileHtml(m){if(!m.file_path)return"";const u=urlFor(m.file_path),t=m.file_type||"";
  if(/^image\//.test(t))return u?`<img class="ph" src="${esc(u)}" alt="${esc(m.file_name)}" onclick="window.open(this.src)">`:`<div class="file">🖼️ Loading…</div>`;
@@ -73,7 +73,7 @@ addEventListener("click",e=>{if(e.target.closest&&e.target.closest("button,.gr,.
 // Ekranın altında qısa xəbər göstərir (qırmızı = xəta)
 function toast(m,bad){const t=$("#toast");t.textContent=m;t.className="show"+(bad?" bad":"");clearTimeout(tt);tt=setTimeout(()=>{t.className=""},3800)}
 // Bazadakı funksiyanı çağırır, uğurlu olsa məlumatı yeniləyir
-async function rpc(fn,a){quietUntil=Date.now()+3000;const {error}=await sb.rpc(fn,a);if(error){toast(error.message,1);snd.err();return false}await refresh();return true}
+async function rpc(fn,a){quietUntil=Date.now()+3000;const {error}=await sb.rpc(fn,a);if(error){toast(error.message,1);snd.err();return false}await refresh(true);return true}
 function closeM(){pm=null;pmDrawn=null;pmSig="";$("#modal").innerHTML=""}
 // Bəli / Ləğv təsdiq pəncərəsi
 function ask(t,fn){$("#modal").innerHTML=`<div class="ov"><div class="card" style="max-width:340px"><p>${t}</p><div class="row"><button class="s" style="flex:1" onclick="closeM()">Cancel</button><button class="d" style="flex:1" id="yes">Yes</button></div></div></div>`;$("#yes").onclick=()=>{closeM();fn()}}
@@ -124,18 +124,20 @@ const notesPage=()=>`<div class="card">${noteHead}${noteRows()}</div>`;
 
 /* ================= MƏLUMAT YÜKLƏMƏ VƏ REAL VAXT ================= */
 // Bütün məlumatı bazadan yükləyir və səhifəni yeniləyir
-async function refresh(){
+async function refresh(force){
  const [p,g,r,jb,k,kb,iv,pe,m,se]=await Promise.all([sb.from("profiles").select("id,name,avatar,points,group_id,is_admin,perms,role"),sb.from("groups").select("*").order("id"),
   sb.from("requests").select("*"),sb.from("join_ballots").select("*"),sb.from("kicks").select("*"),sb.from("kick_ballots").select("*"),sb.from("invites").select("*"),sb.from("point_events").select("*").order("id",{ascending:false}).limit(500),
   sb.from("messages").select("*").order("id",{ascending:false}).limit(300),sb.from("sessions").select("sid").eq("user_id",uid)]);
- if(p.error||g.error){toast("Connection problem. Retrying…",1);return}
- if(se&&se.data&&se.data[0]&&MYSID&&se.data[0].sid!==MYSID){await kickedOut();return}
+ if(p.error||g.error){toast("Connection problem. Retrying…",1);if(ready){clearTimeout(tm);tm=setTimeout(()=>refresh(),2500)}return false}
+ if(se&&se.data&&se.data[0]&&MYSID&&se.data[0].sid!==MYSID){await kickedOut();return false}
+ // Məlumat əvvəlkindən fərqlənmirsə, ekranı yeniləmirik (yazan adamın ekranı pozulmasın)
+ const sg=JSON.stringify([p.data,g.data,r.data,jb.data,k.data,kb.data,iv.data,pe.data,m.data]);if(ready&&!force&&sg===lastSig)return true;lastSig=sg;
  const u0=ME(),o={pts:u0?u0.points:0,g:u0?u0.group_id:null,rqs:new Map(RQ.map(x=>[x.id,x.stage])),kk:new Set(KK.map(x=>x.id)),iv:new Set(IV.map(x=>x.id)),mx:M.length?M[M.length-1].id:0,
   mem:new Set(u0&&u0.group_id!==null?mem(u0.group_id).map(x=>x.id):[]),my:new Set(RQ.filter(x=>x.user_id===uid).map(x=>x.id))};
  P={};p.data.forEach(x=>{P[x.id]=x});G=g.data||[];RQ=r.data||[];JB=jb.data||[];KK=k.data||[];KB=kb.data||[];IV=iv.data||[];PE=pe.data||[];M=(m.data||[]).reverse();
  const u=ME();if(u&&conv&&conv[0]==="g"&&u.group_id!==+conv.slice(2))conv=null;
  if(!ready){if(!Object.keys(SEEN).length)markSeen(true);ready=true;const n=inboxCount(),tx="📬 "+n+" item"+(n>1?"s":"")+" waiting for you";if(n&&!(NOTES[0]&&!NOTES[0].read&&NOTES[0].t===tx))notify(tx,"Open Requests",{k:"req"},"alert")}else diff(o);
- render()}
+ render();return true}
 // Köhnə və yeni məlumatı müqayisə edib lazımi bildirişləri yaradır
 function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){sparks();notify("⭐ +"+dp+" points!","Your total is now "+u.points,null,"ok")}const g=u.group_id,isHost=g!==null&&grp(g)&&grp(g).host_id===uid;
  if(o.g===null&&g!==null){party();notify("🎉 You joined "+gname(g),"Welcome to the group!",{k:"group",id:g},"ok")}
@@ -160,7 +162,7 @@ const sched=()=>{clearTimeout(tm);tm=setTimeout(refresh,150)};
 function subscribe(){if(chan)return;
  chan=sb.channel("room",{config:{presence:{key:uid}}})
   .on("postgres_changes",{event:"*",schema:"public"},ev=>{if(ev.table==="app_settings")loadMeta().then(render);sched()})
-  .on("presence",{event:"sync"},()=>{online=new Set(Object.keys(chan.presenceState()));render()})
+  .on("presence",{event:"sync"},()=>{const n=new Set(Object.keys(chan.presenceState())),same=n.size===online.size&&[...n].every(x=>online.has(x));online=n;if(!same)render()})
   .subscribe(s=>{if(s==="SUBSCRIBED")chan.track({at:Date.now()})})}
 
 /* ================= AYARLAR VƏ TƏK CİHAZ QAYDASI ================= */
