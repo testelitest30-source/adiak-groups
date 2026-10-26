@@ -94,3 +94,11 @@ input:focus,select:focus{outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var
 .li{border-radius:14px}.gr{background:var(--card)}
 .chip{font-weight:500}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:10px;border:3px solid transparent;background-clip:content-box}
+
+/* ===== Dil düyməsi (AZ | EN) ===== */
+.lang{display:inline-flex;border-radius:12px;overflow:hidden;border:1px solid #ffffff66;vertical-align:middle;margin-right:6px}
+.lang button{border-radius:0;padding:6px 11px;background:#ffffff22;background-image:none;box-shadow:none;font-weight:700;color:#fff;opacity:.75;transform:none!important}
+.lang button.on{opacity:1;background:#ffffff66}
+.card .lang{border-color:var(--bd)}.card .lang button{background:var(--bd);color:var(--tx)}.card .lang button.on{background:var(--ac);color:#fff}
+.langfix{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;z-index:50}
+.langfix .lang{margin:0;border-color:var(--bd)}.langfix .lang button{background:var(--card);color:var(--tx)}.langfix .lang button.on{background:var(--ac);color:#fff}
