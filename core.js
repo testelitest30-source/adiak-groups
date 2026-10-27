@@ -17,7 +17,7 @@ const tag=p=>!p?"":adm(p)?' <span class="chip tag">🛡 Admin</span>':p.role==="
 const PERM_TEXT={points:"give points",groups:"manage groups (add, move, remove students)",chats:"moderate chats",passwords:"see students' passwords",panel:"open the admin panel",admin:"do everything"};
 const permList=p=>["admin","points","groups","chats","passwords","panel"].filter(k=>p&&(p.is_admin||(p.perms||[]).includes("admin")||(p.perms||[]).includes(k)))
 // Sağ alt küncdəki 'Created by' kartı
-const credits=inl=>`<div class="credits${inl?" inline":""}"><small>${tr("Created by")}</small><div><b>Sübhan Camalzadə</b> <span class="chip tag">🛡 Admin</span></div><div><b>Nurəli Qasımlı</b> <span class="chip tag">🛡 Admin</span></div></div>`;
+const credits=inl=>`<div class="credits${inl?" inline":""}"><small>${tr("Created by")}</small><div><b>Nurəli Qasımlı</b> <span class="chip tag">🛡 Admin</span></div><div><b>Sübhan Camalzadə</b> <span class="chip tag">🛡 Admin</span></div></div>`;
 // Tələbələrin siyahısı (müəllim və Host daxil deyil)
 const ppl=()=>Object.values(P).filter(p=>!p.is_admin&&p.role!=="teacher").sort((a,b)=>a.name.localeCompare(b.name));
 const mem=g=>ppl().filter(p=>p.group_id===g), idle=()=>ppl().filter(p=>p.group_id===null);
