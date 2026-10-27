@@ -68,6 +68,12 @@ addEventListener("touchend",e=>{if(!phone()||screen!=="app")return;const t=e.cha
  if(dx<0&&!menuOpen&&!sp&&!pm&&tx0>innerWidth*.5){menuOpen=true;render()}else if(dx>0&&menuOpen)goBack()},{passive:true});
 // Klaviatura açılanda ekranın hündürlüyü dəyişir; yalnız telefon/masaüstü keçidində yenilə
 let lastPhone=phone();addEventListener("resize",()=>{const p=phone();if(p!==lastPhone){lastPhone=p;if(screen==="app")render()}});
+// ---- Tətbiq kimi yükləmə (PWA) ----
+let deferredPrompt=null;
+const isStandalone=()=>{try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(e){return false}};
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;if(screen==="app"&&!isTyping(document.activeElement))render()});
+addEventListener("appinstalled",()=>{deferredPrompt=null;toast(tr("App installed ✓"));if(screen==="app"&&!isTyping(document.activeElement))render()});
+async function installApp(){if(!deferredPrompt)return;const d=deferredPrompt;deferredPrompt=null;try{d.prompt();await d.userChoice}catch(e){}render()}
 // Yazı sahəsindən çıxanda gözləyən yeniləməni icra edir
 addEventListener("focusout",()=>{setTimeout(()=>{if(pendingRender&&!isTyping(document.activeElement))render()},80)});
 boot();

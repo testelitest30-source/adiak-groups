@@ -85,7 +85,7 @@ const AZ={
 "Vote opened in the group chat":"Səsvermə qrup çatında açıldı","The group limit ({n}) is reached":"Qrup limitinə ({n}) çatılıb",
 "Only idle students can create a group. Leave your group first.":"Yalnız qrupsuz tələbələr qrup yarada bilər. Əvvəlcə qrupunuzdan çıxın.",
 "You become the host.":"Qrupun rəhbəri siz olacaqsınız.","Group name":"Qrup adı","Max members":"Maksimum üzv sayı","Create":"Yarat",
-"Name saved":"Ad yadda saxlanıldı","Could not read that image":"Şəkli oxumaq mümkün olmadı"
+"Name saved":"Ad yadda saxlanıldı","Install as app":"Tətbiq kimi yüklə","Opens full screen from your home screen, like a normal app.":"Ana ekrandan tam ekranda, adi tətbiq kimi açılır.","Install":"Yüklə","On iPhone: tap Share, then Add to Home Screen.":"iPhone-da: «Paylaş» düyməsinə, sonra «Ana ekrana əlavə et»-ə toxunun.","App installed ✓":"Tətbiq yükləndi ✓","Could not read that image":"Şəkli oxumaq mümkün olmadı"
 };
 
 /* Serverdən (bazadan) gələn xəta mətnləri */

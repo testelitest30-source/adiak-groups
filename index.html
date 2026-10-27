@@ -3,6 +3,13 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#4f46e5">
+<!-- Tətbiq kimi yükləmə (PWA) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ADIAK">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ADIAK Team Maker</title>
 <link rel="stylesheet" href="style.css">
 </head><body>
@@ -17,6 +24,8 @@
 <script src="core.js"></script>
 <script src="pages.js"></script>
 <script src="main.js"></script>
+<!-- Service worker: yalnız https və localhost-da qeydə alınır; xəta olsa sayt yenə də işləyir -->
+<script>if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
 
 <!-- 3) Fayl yüklənməyibsə, boş ekran əvəzinə hansının çatışmadığını yazır -->
 <script>

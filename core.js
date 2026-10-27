@@ -124,20 +124,37 @@ const notesPage=()=>`<div class="card">${noteHead()}${noteRows()}</div>`;
 
 /* ================= MƏLUMAT YÜKLƏMƏ VƏ REAL VAXT ================= */
 // Bütün məlumatı bazadan yükləyir və səhifəni yeniləyir
-async function refresh(force){
- const [p,g,r,jb,k,kb,iv,pe,m,se]=await Promise.all([sb.from("profiles").select("id,name,avatar,points,group_id,is_admin,perms,role"),sb.from("groups").select("*").order("id"),
-  sb.from("requests").select("*"),sb.from("join_ballots").select("*"),sb.from("kicks").select("*"),sb.from("kick_ballots").select("*"),sb.from("invites").select("*"),sb.from("point_events").select("*").order("id",{ascending:false}).limit(500),
-  sb.from("messages").select("*").order("id",{ascending:false}).limit(300),sb.from("sessions").select("sid").eq("user_id",uid)]);
- if(p.error||g.error){toast(tr("Connection problem. Retrying…"),1);if(ready){clearTimeout(tm);tm=setTimeout(()=>refresh(),2500)}return false}
- if(se&&se.data&&se.data[0]&&MYSID&&se.data[0].sid!==MYSID){await kickedOut();return false}
- // Məlumat əvvəlkindən fərqlənmirsə, ekranı yeniləmirik (yazan adamın ekranı pozulmasın)
- const sg=JSON.stringify([p.data,g.data,r.data,jb.data,k.data,kb.data,iv.data,pe.data,m.data]);if(ready&&!force&&sg===lastSig)return true;lastSig=sg;
- const u0=ME(),o={pts:u0?u0.points:0,g:u0?u0.group_id:null,rqs:new Map(RQ.map(x=>[x.id,x.stage])),kk:new Set(KK.map(x=>x.id)),iv:new Set(IV.map(x=>x.id)),mx:M.length?M[M.length-1].id:0,
-  mem:new Set(u0&&u0.group_id!==null?mem(u0.group_id).map(x=>x.id):[]),my:new Set(RQ.filter(x=>x.user_id===uid).map(x=>x.id))};
- P={};p.data.forEach(x=>{P[x.id]=x});G=g.data||[];RQ=r.data||[];JB=jb.data||[];KK=k.data||[];KB=kb.data||[];IV=iv.data||[];PE=pe.data||[];M=(m.data||[]).reverse();
+// Hər cədvəlin sorğusu ayrıdır: real vaxtda yalnız dəyişən cədvəli yeniləmək üçün (10 sorğu əvəzinə 1)
+const TBL={profiles:()=>sb.from("profiles").select("id,name,avatar,points,group_id,is_admin,perms,role"),groups:()=>sb.from("groups").select("*").order("id"),
+ requests:()=>sb.from("requests").select("*"),join_ballots:()=>sb.from("join_ballots").select("*"),kicks:()=>sb.from("kicks").select("*"),kick_ballots:()=>sb.from("kick_ballots").select("*"),invites:()=>sb.from("invites").select("*"),
+ point_events:()=>sb.from("point_events").select("*").order("id",{ascending:false}).limit(500),messages:()=>sb.from("messages").select("*").order("id",{ascending:false}).limit(300),sessions:()=>sb.from("sessions").select("sid").eq("user_id",uid)};
+const ALLT=Object.keys(TBL);let SIGS={};
+// Dəyişiklikdən əvvəlki vəziyyətin şəkli (diff() bildirişləri bununla müqayisə edir)
+const snapOld=()=>{const u0=ME();return{pts:u0?u0.points:0,g:u0?u0.group_id:null,rqs:new Map(RQ.map(x=>[x.id,x.stage])),kk:new Set(KK.map(x=>x.id)),iv:new Set(IV.map(x=>x.id)),mx:M.length?M[M.length-1].id:0,
+  mem:new Set(u0&&u0.group_id!==null?mem(u0.group_id).map(x=>x.id):[]),my:new Set(RQ.filter(x=>x.user_id===uid).map(x=>x.id))}};
+// Məlumatı bazadan yükləyir və səhifəni yeniləyir. tables verilsə yalnız o cədvəllər yüklənir; force=true hamısını yükləyib mütləq yeniləyir
+async function refresh(force,tables){
+ const want=!ready||force||!tables||!tables.length?ALLT:[...new Set(tables)].filter(t=>TBL[t]);
+ if(!want.length)return true;
+ const res=await Promise.all(want.map(t=>TBL[t]())),R={};want.forEach((t,i)=>{R[t]=res[i]});
+ if((R.profiles&&R.profiles.error)||(R.groups&&R.groups.error)){toast(tr("Connection problem. Retrying…"),1);if(ready){clearTimeout(tm);tm=setTimeout(()=>refresh(),2500)}return false}
+ const se=R.sessions;if(se&&se.data&&se.data[0]&&MYSID&&se.data[0].sid!==MYSID){await kickedOut();return false}
+ // Hansı cədvəllərin məlumatı həqiqətən dəyişib? Dəyişməyibsə ekranı yeniləmirik (yazan adamın ekranı pozulmasın)
+ const ok=t=>!!(R[t]&&!R[t].error&&R[t].data),ch=[];
+ want.forEach(t=>{if(t==="sessions"||!ok(t))return;const sg=JSON.stringify(R[t].data);if(sg!==SIGS[t]){SIGS[t]=sg;ch.push(t)}});
+ if(ready&&!force&&!ch.length)return true;
+ const o=snapOld(),A=t=>(force||ch.includes(t))&&ok(t);
+ if(A("profiles")){P={};R.profiles.data.forEach(x=>{P[x.id]=x})}
+ if(A("groups"))G=R.groups.data;if(A("requests"))RQ=R.requests.data;if(A("join_ballots"))JB=R.join_ballots.data;if(A("kicks"))KK=R.kicks.data;
+ if(A("kick_ballots"))KB=R.kick_ballots.data;if(A("invites"))IV=R.invites.data;if(A("point_events"))PE=R.point_events.data;if(A("messages"))M=[...R.messages.data].reverse();
  const u=ME();if(u&&conv&&conv[0]==="g"&&u.group_id!==+conv.slice(2))conv=null;
  if(!ready){if(!Object.keys(SEEN).length)markSeen(true);ready=true;const n=inboxCount(),tx="📬 "+(n>1?tr("{n} items waiting for you",{n}):tr("1 item waiting for you"));if(n&&!(NOTES[0]&&!NOTES[0].read&&NOTES[0].t===tx))notify(tx,tr("Open Requests"),{k:"req"},"alert")}else diff(o);
  render();return true}
+// Real vaxtda gələn yeni mesajı sorğu göndərmədən birbaşa siyahıya əlavə edir (ən sürətli yol)
+function onMsg(n){if(!ready||!n||n.id==null)return false;const o=snapOld();
+ M=M.filter(m=>!(m._tmp&&n.sender===uid&&m.channel===n.channel&&m.body===n.body));
+ if(!M.some(m=>m.id===n.id)){M.push(n);M.sort((a,b)=>a.id-b.id)}if(M.length>600)M=M.slice(-400);
+ SIGS.messages=null;diff(o);render();return true}
 // Köhnə və yeni məlumatı müqayisə edib lazımi bildirişləri yaradır
 function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){sparks();notify("⭐ +"+dp+" "+tr("points!"),tr("Your total is now {n}",{n:u.points}),null,"ok")}const g=u.group_id,isHost=g!==null&&grp(g)&&grp(g).host_id===uid;
  if(o.g===null&&g!==null){party();notify("🎉 "+tr("You joined {g}",{g:gname(g)}),tr("Welcome to the group!"),{k:"group",id:g},"ok")}
@@ -157,11 +174,16 @@ function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){spar
  const vc=visibleConv();
  M.filter(m=>m.id>o.mx&&m.sender!==uid&&m.sender!==null).slice(-3).forEach(m=>{if(m.channel===vc){snd.pop();return}if(m.channel==="all")return;
   notify(m.channel[0]==="d"?tr("New message from {nm}",{nm:nameOf(m.sender)}):tr("New message in {g} from {nm}",{g:gname(+m.channel.slice(2)),nm:nameOf(m.sender)}),prev(m,60),{k:"chat",ch:m.channel},"msg")})}
-const sched=()=>{clearTimeout(tm);tm=setTimeout(refresh,150)};
+// Dəyişən cədvəllərin adını toplayıb 150 ms sonra yalnız onları yeniləyir
+let pendT=new Set(),pendAll=false;
+const sched=t=>{if(t)pendT.add(t);else pendAll=true;clearTimeout(tm);tm=setTimeout(()=>{const ts=pendAll?null:[...pendT];pendT=new Set();pendAll=false;refresh(false,ts)},150)};
 // Real vaxt bağlantısı: bazada dəyişiklik olanda avtomatik yeniləyir
 function subscribe(){if(chan)return;
  chan=sb.channel("room",{config:{presence:{key:uid}}})
-  .on("postgres_changes",{event:"*",schema:"public"},ev=>{if(ev.table==="app_settings")loadMeta().then(render);sched()})
+  .on("postgres_changes",{event:"*",schema:"public"},ev=>{const t=ev.table;
+   if(t==="app_settings"){loadMeta().then(render);return}
+   if(t==="messages"&&ev.eventType==="INSERT"&&onMsg(ev.new))return;
+   sched(t);if(t==="profiles")sched("point_events")})
   .on("presence",{event:"sync"},()=>{const n=new Set(Object.keys(chan.presenceState())),same=n.size===online.size&&[...n].every(x=>online.has(x));online=n;if(!same)render()})
   .subscribe(s=>{if(s==="SUBSCRIBED")chan.track({at:Date.now()})})}
 
