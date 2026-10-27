@@ -17,10 +17,15 @@ const tag=p=>!p?"":adm(p)?' <span class="chip tag">🛡 Admin</span>':p.role==="
 const PERM_TEXT={points:"give points",groups:"manage groups (add, move, remove students)",chats:"moderate chats",passwords:"see students' passwords",panel:"open the admin panel",admin:"do everything"};
 const permList=p=>["admin","points","groups","chats","passwords","panel"].filter(k=>p&&(p.is_admin||(p.perms||[]).includes("admin")||(p.perms||[]).includes(k)))
 // Sağ alt küncdəki 'Created by' kartı
-const credits=inl=>`<div class="credits${inl?" inline":""}"><small>${tr("Created by")}</small><div><b>Nurəli Qasımlı</b> <span class="chip tag">🛡 Admin</span></div><div><b>Sübhan Camalzadə</b> <span class="chip tag">🛡 Admin</span></div></div>`;
+const credits=inl=>`<div class="credits${inl?" inline":""}"><small>${tr("Created by")}</small><div><b>Sübhan Camalzadə</b> <span class="chip tag">🛡 Admin</span></div><div><b>Nurəli Qasımlı</b> <span class="chip tag">🛡 Admin</span></div></div>`;
 // Tələbələrin siyahısı (müəllim və Host daxil deyil)
 const ppl=()=>Object.values(P).filter(p=>!p.is_admin&&p.role!=="teacher").sort((a,b)=>a.name.localeCompare(b.name));
-const mem=g=>ppl().filter(p=>p.group_id===g), idle=()=>ppl().filter(p=>p.group_id===null);
+// Akademik qrup (class_tag): tələbə yalnız öz akademik qrupunun komandalarını və boş tələbələrini görür; müəllim/admin hamısını görür
+const viewerTag=()=>{const u=ME();return u&&u.role==="student"&&!u.is_admin?(u.class_tag||null):undefined};   // undefined = məhdudiyyət yoxdur
+const sameClass=x=>{const t=viewerTag();return t===undefined||(!!t&&x.class_tag===t)};
+const visG=()=>G.filter(sameClass);
+const needTag=()=>{const u=ME();return !!u&&u.role==="student"&&!u.is_admin&&!u.class_tag};
+const mem=g=>ppl().filter(p=>p.group_id===g), idle=()=>ppl().filter(p=>p.group_id===null&&sameClass(p));
 const gname=id=>{const g=grp(id);return g?g.name:"?"}, gcol=id=>`hsl(${(id*67+200)%360} 70% 52%)`;
 const gchip=p=>p.is_admin?`<span class="chip">${tr("host")}</span>`:p.role==="teacher"?`<span class="chip">${tr("teacher")}</span>`:p.group_id===null?`<span class="chip on">${tr("idle")}</span>`:`<span class="chip" style="background:${gcol(p.group_id)}22;color:${gcol(p.group_id)}">${esc(gname(p.group_id))}</span>`;
 const dots=(k,c,col)=>Array.from({length:c},(_,i)=>`<i class="dot" style="${i<k?"background:"+col:""}"></i>`.replace('class="dot"',i<k?'class="dot f"':'class="dot"')).join("");
@@ -125,7 +130,7 @@ const notesPage=()=>`<div class="card">${noteHead()}${noteRows()}</div>`;
 /* ================= MƏLUMAT YÜKLƏMƏ VƏ REAL VAXT ================= */
 // Bütün məlumatı bazadan yükləyir və səhifəni yeniləyir
 // Hər cədvəlin sorğusu ayrıdır: real vaxtda yalnız dəyişən cədvəli yeniləmək üçün (10 sorğu əvəzinə 1)
-const TBL={profiles:()=>sb.from("profiles").select("id,name,avatar,points,group_id,is_admin,perms,role"),groups:()=>sb.from("groups").select("*").order("id"),
+const TBL={profiles:()=>sb.from("profiles").select("id,name,avatar,points,group_id,is_admin,perms,role,class_tag"),groups:()=>sb.from("groups").select("*").order("id"),
  requests:()=>sb.from("requests").select("*"),join_ballots:()=>sb.from("join_ballots").select("*"),kicks:()=>sb.from("kicks").select("*"),kick_ballots:()=>sb.from("kick_ballots").select("*"),invites:()=>sb.from("invites").select("*"),
  point_events:()=>sb.from("point_events").select("*").order("id",{ascending:false}).limit(500),messages:()=>sb.from("messages").select("*").order("id",{ascending:false}).limit(300),sessions:()=>sb.from("sessions").select("sid").eq("user_id",uid)};
 const ALLT=Object.keys(TBL);let SIGS={};
