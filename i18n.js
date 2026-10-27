@@ -1,221 +1,154 @@
 /* =====================================================================
-   i18n.js  -  Dil keçidi: AZ (Azərbaycan) / EN (English)
-   Necə işləyir: sayt ingilis dilində yazılıb. Bu fayl ekrana çıxan hər mətni lüğətdən tapıb
-   Azərbaycan dilinə çevirir. EN seçiləndə dəyişiklik edilmir. Seçim brauzerdə yadda qalır.
-   Lüğətdə olmayan mətn (ad, mesaj, qrup adı) olduğu kimi qalır: istifadəçi məzmunu heç vaxt tərcümə olunmur.
-   Yeni mətn əlavə etmək: aşağıdakı EXACT (tam uyğun) və ya PAT (nümunəli) siyahısına bir sətir yazın.
-   Yüklənmə sırası: config.js → i18n.js → core.js → pages.js → main.js
+   i18n.js  -  Dil dəyişdirici (AZ / EN). Yüklənmə sırası: config.js → i18n.js → core.js → pages.js → main.js
+   tr("English mətn", {dəyişən:dəyər})  → seçilmiş dildə mətni qaytarır.
+   Yeni mətn əlavə etmək: ingiliscəsini kodda tr("...") ilə yaz, azərbaycancasını aşağıdakı AZ lüğətinə əlavə et.
    ===================================================================== */
-(function(){
-"use strict";
-var LANG="az";try{LANG=localStorage.getItem("lang")||"az"}catch(e){}
-if(LANG!=="az"&&LANG!=="en")LANG="az";
+let LANG="az";
+try{const s=localStorage.getItem("lang");if(s==="en"||s==="az")LANG=s}catch(e){}
+try{document.documentElement.lang=LANG}catch(e){}
 
-/* ---------- 1. TAM UYĞUN TƏRCÜMƏLƏR (ingilis → azərbaycan) ---------- */
-var EXACT={
-/* giriş və parol */
-"Build your presentation team":"Təqdimat komandanızı qurun",
-"Type your ID and password, then press Enter. Forgot it? Ask an admin to reset it.":"ID və parolunuzu yazıb Enter düyməsini basın. Unutmusunuz? Adminlərdən sıfırlamağı xahiş edin.",
-"Your ID (for example ali.m)":"ID-niz (məsələn: ali.m)","Password":"Parol","Log in":"Daxil ol","Type your ID":"ID-nizi yazın",
-"Wrong ID or password":"ID və ya parol yanlışdır","No connection to the server. Check your internet.":"Serverlə əlaqə yoxdur. İnternetinizi yoxlayın.",
-"Loading…":"Yüklənir…","Loading":"Yüklənir","Setup needed":"Quraşdırma tələb olunur",
-"Open index.html and paste your Supabase URL and anon key at the top of the script.":"index.html faylını açın və Supabase URL ilə anon açarını skriptin əvvəlinə yapışdırın.",
-"Set a new password":"Yeni parol təyin edin","Your temporary password stops working after this.":"Müvəqqəti parolunuz bundan sonra işləməyəcək.",
-"New password (min 6)":"Yeni parol (ən azı 6 simvol)","Repeat":"Təkrar yazın","Save and continue":"Yadda saxla və davam et",
-"At least 6 characters":"Ən azı 6 simvol olmalıdır","Passwords do not match":"Parollar eyni deyil",
-"ℹ️ Class admins can see your password so they can help if you forget it. Do not use a password from anywhere else.":"ℹ️ Sinif adminləri parolunuzu görə bilər ki, unutsanız kömək edə bilsinlər. Başqa yerdə işlətdiyiniz parolu yazmayın.",
-"Your profile was not found. Ask the host to check your account.":"Profiliniz tapılmadı. Hesabınızı yoxlamaq üçün adminə müraciət edin.",
-"You were signed out because this account was opened on another device.":"Bu hesaba başqa cihazdan daxil olunduğu üçün hesabdan çıxarıldınız.",
-"Log out":"Çıxış","Are you sure you want to log out?":"Hesabdan çıxmaq istədiyinizə əminsiniz?","Cancel":"Ləğv et","Yes":"Bəli","Close":"Bağla","Save":"Yadda saxla","Add":"Əlavə et","Create":"Yarat","Send":"Göndər","Back":"Geri",
-/* ana səhifə, profil, rütbələr */
-"You're idle":"Hələ qrupunuz yoxdur","Open a group and send a join request, create your own, or wait for an invitation.":"Bir qrupu açıb qoşulma müraciəti göndərin, öz qrupunuzu yaradın və ya dəvət gözləyin.",
-"Teacher account":"Müəllim hesabı","Host panel":"Host paneli","Give points in Settings. You can start a kick vote in any group.":"Xalları Ayarlar bölməsindən verin. İstənilən qrupda çıxarma səsverməsi başlada bilərsiniz.",
-"Newcomer":"Yeni başlayan","Speaker":"Çıxışçı","Orator":"Natiq","Maestro":"Maestro",
-"idle":"qrupsuz","host":"host","teacher":"müəllim","my group":"qrupum","requested":"müraciət göndərilib","online":"onlayn","Admin":"Admin","Teacher":"Müəllim","Scorer":"Xal verən","Host":"Host",
-/* xal, top, statistika */
-"Top points":"Ən çox xal","No points yet":"Hələ xal yoxdur","See all →":"Hamısına bax →","See all":"Hamısına bax","All students":"Bütün tələbələr",
-"total points":"ümumi xal","presentations":"təqdimat","best score":"ən yüksək xal","Average per presentation:":"Təqdimat üzrə orta xal:","Recent scores":"Son xallar",
-"No scores recorded yet":"Hələ xal qeydə alınmayıb","Presentation":"Təqdimat","Test bonus":"Test bonusu","Points to give":"Veriləcək xal","Add points":"Xal ver","Adding…":"Əlavə olunur…","e.g. 8":"məs. 8",
-"Give points":"Xal ver","Type a number from -100 to 100":"-100 ilə 100 arasında rəqəm yazın","Group":"Qrup","Move here":"Bura köçür","Chat with":"Yaz",
-/* qruplar */
-"Groups":"Qruplar","No groups yet. Create the first one!":"Hələ qrup yoxdur. İlk qrupu siz yaradın!","+ New group":"+ Yeni qrup","New group":"Yeni qrup","You become the host.":"Siz qrupun hostu olursunuz.",
-"Group name":"Qrupun adı","Max members":"Maksimum üzv sayı","Tap a member to see their profile":"Profilinə baxmaq üçün üzvə toxunun","Leave group":"Qrupdan çıx",
-"Request sent · tap to withdraw":"Müraciət göndərildi · geri götürmək üçün toxunun","Join request":"Qoşulma müraciəti","Group full":"Qrup doludur","Leave your group first":"Əvvəlcə qrupunuzdan çıxın",
-"Teachers do not join groups":"Müəllimlər qruplara qoşulmur","No members yet":"Hələ üzv yoxdur","Remove":"Çıxar","Kick":"Çıxarma səsverməsi",
-"Invite idle students":"Qrupsuz tələbələri dəvət et","Invite":"Dəvət et","Invited ✓ · cancel":"Dəvət edildi ✓ · ləğv et","No idle students right now":"Hazırda qrupsuz tələbə yoxdur","Nobody":"Heç kim yoxdur",
-"Are you sure you want to leave this group?":"Bu qrupdan çıxmaq istədiyinizə əminsiniz?","You left the group":"Qrupdan çıxdınız","Removed from the group":"Qrupdan çıxarıldı",
-"Only idle students can create a group. Leave your group first.":"Yalnız qrupsuz tələbələr qrup yarada bilər. Əvvəlcə qrupunuzdan çıxın.","Vote opened in the group chat":"Səsvermə qrup çatında açıldı",
-/* müraciətlər, dəvətlər, səsvermə */
-"Requests & idle":"Müraciətlər və qrupsuzlar","Requests & invites":"Müraciətlər və dəvətlər","Invitations for you":"Sizə gələn dəvətlər","Accept":"Qəbul et","Decline":"İmtina et",
-"No join requests right now":"Hazırda qoşulma müraciəti yoxdur","Kick votes":"Çıxarma səsverməsi","My sent requests":"Göndərdiyim müraciətlər","No pending requests":"Gözləyən müraciət yoxdur","Withdraw":"Geri götür",
-"Waiting for a member to open the vote":"Üzvün səsverməni açması gözlənilir","Members are voting":"Üzvlər səs verir","Approved by members · waiting for the host":"Üzvlər təsdiq edib · host gözlənilir",
-"wants to join":"qoşulmaq istəyir","Step 1 of 3 · waiting for a member to open the vote":"1/3-cü mərhələ · üzvün səsverməni açması gözlənilir","Step 3 of 3 · members approved · the host decides":"3/3-cü mərhələ · üzvlər təsdiq edib · qərarı host verir",
-"Put to vote":"Səsverməyə çıxar","Accept ✅":"Qəbul et ✅","Approve":"Təsdiq et","Reject":"Rədd et","✓ Accept":"✓ Qəbul et","✓ Approve":"✓ Təsdiq et","✗ Reject":"✗ Rədd et",
-"waiting":"gözləyir","voting":"səsvermə gedir","waiting for host":"host gözlənilir","Removing":"Çıxarılır",
-/* çat */
-"Chat":"Çat","Clear all":"Hamısını sil","Everyone":"Hamı","Only my group":"Yalnız qrupum","Say hi 👋":"Salam yazın 👋","Say hi":"Salam yazın","Voice message":"Səs mesajı","Photo":"Şəkil",
-"No messages yet. Say hi! 👋":"Hələ mesaj yoxdur. Salam yazın! 👋","No messages yet. Say hi!":"Hələ mesaj yoxdur. Salam yazın!","Message…":"Mesaj…","Send a file or photo":"Fayl və ya şəkil göndər",
-"Delete all messages in this chat":"Bu çatdakı bütün mesajları sil","Delete every chat":"Bütün çatları sil","Sent ✓":"Göndərildi ✓","Files must be under 25 MB":"Fayllar 25 MB-dan kiçik olmalıdır",
-"Microphone access was denied":"Mikrofona icazə verilmədi","Voice recording is not supported in this browser":"Bu brauzer səs yazmağı dəstəkləmir","Could not read that image":"Şəkli oxumaq alınmadı",
-"Delete ALL messages in this chat? This cannot be undone.":"Bu çatdakı BÜTÜN mesajlar silinsin? Bu əməliyyatı geri qaytarmaq olmaz.","Delete ALL chats for everyone? This cannot be undone.":"Hamı üçün BÜTÜN çatlar silinsin? Bu əməliyyatı geri qaytarmaq olmaz.",
-"Chat cleared":"Çat təmizləndi","All chats cleared":"Bütün çatlar silindi","Direct messages":"Şəxsi mesajlar",
-/* bildirişlər, menyu */
-"Notifications":"Bildirişlər","Mark all read":"Hamısını oxunmuş et","No notifications yet":"Hələ bildiriş yoxdur","just now":"indicə","Menu":"Menyu","Sounds":"Səslər",
-"Sounds on":"Səslər açıqdır","Sounds off":"Səslər bağlıdır","Open Requests":"Müraciətlərə keç","Open Requests and put it to a vote":"Müraciətlərə keçib səsverməyə çıxarın","Open Requests to accept":"Qəbul etmək üçün Müraciətlərə keçin",
-"Cast your vote in Requests":"Səsinizi Müraciətlər bölməsində verin","Your final decision is needed":"Yekun qərarınız lazımdır","Welcome to the group!":"Qrupa xoş gəlmisiniz!","Waiting for the host's final decision":"Hostun yekun qərarı gözlənilir",
-"Members are voting on your request":"Üzvlər müraciətiniz üzərində səs verir","Members approved your request":"Üzvlər müraciətinizi təsdiq etdi","Your join request was declined":"Qoşulma müraciətiniz rədd edildi","Connection problem. Retrying…":"Əlaqə problemi. Yenidən cəhd edilir…",
-/* ayarlar */
-"Settings":"Ayarlar","Display name":"Görünən ad","Open admin panel":"Admin panelini aç","Profile picture":"Profil şəkli","Change password":"Parolu dəyişdir","Password changed ✓":"Parol dəyişdirildi ✓","Name saved":"Ad yadda saxlanıldı",
-"Admin passwords are private: nobody else can see or reset yours.":"Admin parolları gizlidir: sizinkini heç kim görə və sıfırlaya bilməz.",
-"Class admins can see your password so they can help you if you forget it. Do not reuse a password from anywhere else.":"Sinif adminləri unutduqda kömək edə bilmək üçün parolunuzu görə bilər. Başqa yerdə işlətdiyiniz parolu təkrar istifadə etməyin.",
-"Created by":"Hazırlayanlar",
-/* gözləmə və fayl */
-"tap to open":"açmaq üçün toxunun","Sent":"Göndərildi",
-/* serverdən gələn xətalar (bazadakı qaydalar) */
-"Not signed in":"Hesaba daxil olmamısınız","The host account cannot join groups":"Host hesabı qruplara qoşula bilməz","Leave your current group first":"Əvvəlcə hazırkı qrupunuzdan çıxın","Group not found":"Qrup tapılmadı",
-"This group is full":"Bu qrup doludur","This request is no longer open":"Bu müraciət artıq açıq deyil","Only members of this group can vote":"Yalnız bu qrupun üzvləri səs verə bilər","Voting is not open for this request":"Bu müraciət üçün səsvermə açıq deyil",
-"Only members of this group can open a vote":"Səsvermə açmaq yalnız bu qrupun üzvlərinə aiddir","A vote was already opened for this request":"Bu müraciət üçün səsvermə artıq açılıb","Only the group host makes the final decision":"Yekun qərarı yalnız qrupun hostu verir",
-"The members have not approved this request yet":"Üzvlər bu müraciəti hələ təsdiq etməyib","The group is full":"Qrup doludur","Only idle students can create a group":"Yalnız qrupsuz tələbələr qrup yarada bilər","Size must be 1 to 10":"Üzv sayı 1 ilə 10 arasında olmalıdır",
-"Group name must be 1 to 30 characters":"Qrup adı 1-30 simvol olmalıdır","That person is not in a group":"Bu şəxs qrupda deyil","Use Leave group instead":"Bunun əvəzinə \"Qrupdan çıx\" düyməsindən istifadə edin",
-"Only the group host or admin can start a kick vote":"Çıxarma səsverməsini yalnız qrup hostu və ya admin başlada bilər","A vote is already open for this person":"Bu şəxs üçün səsvermə artıq açıqdır","This vote is closed":"Bu səsvermə bağlanıb",
-"Only the other members of this group can vote":"Yalnız qrupun digər üzvləri səs verə bilər","You do not have permission to give points":"Xal vermək icazəniz yoxdur","Points must be between -100 and 100":"Xal -100 ilə 100 arasında olmalıdır",
-"That account cannot receive points":"Bu hesab xal ala bilməz","That name is already taken":"Bu ad artıq götürülüb","Name must be 2 to 30 characters":"Ad 2-30 simvol olmalıdır","Message must be 1 to 1000 characters":"Mesaj 1-1000 simvol olmalıdır",
-"Invalid chat":"Yanlış çat","File upload not found":"Yüklənmiş fayl tapılmadı","File must be under 25 MB":"Fayl 25 MB-dan kiçik olmalıdır","Person not found":"Şəxs tapılmadı","Only the group host can invite":"Dəvəti yalnız qrup hostu göndərə bilər",
-"That person is already in a group":"Bu şəxs artıq qrupdadır","Your group is full":"Qrupunuz doludur","This invitation is no longer open":"Bu dəvət artıq açıq deyil","Leave your group first ":"Əvvəlcə qrupunuzdan çıxın","That group is full":"Bu qrup doludur",
-"You do not have permission for this action":"Bu əməliyyat üçün icazəniz yoxdur","Admins only":"Yalnız adminlər üçündür","Only students can be placed in groups":"Qruplara yalnız tələbələr yerləşdirilə bilər","That is not your current password":"Bu, hazırkı parolunuz deyil",
-"New password should be different from the old password.":"Yeni parol köhnə paroldan fərqli olmalıdır.","Password should be at least 6 characters.":"Parol ən azı 6 simvol olmalıdır.","Failed to fetch":"Serverlə əlaqə qurulmadı",
-"Group":"Qrup"};
+const AZ={
+/* --- Qrupa qəbul və kick kartları --- */
+"Put to vote":"Səsverməyə qoy","waiting":"gözləyir","Step 1 of 3 · waiting for a member to open the vote":"1-ci addım / 3 · üzvlərdən biri səsvermə açmalıdır",
+"Accept":"Qəbul et","Reject":"Rədd et","Decline":"Rədd et","you voted":"səs verdiniz","voting":"səsvermə gedir",
+"Step 2 of 3 · {y}/{need} approvals needed (majority)":"2-ci addım / 3 · {y}/{need} təsdiq lazımdır (əksəriyyət)",
+"waiting for host":"qrup rəhbəri gözlənilir","Step 3 of 3 · members approved · the host decides":"3-cü addım / 3 · üzvlər təsdiqlədi · qərarı qrup rəhbəri verir",
+"Join request":"Qoşulma müraciəti","Kick vote":"Çıxarma səsverməsi","Remove <b>{name}</b>?":"<b>{name}</b> qrupdan çıxarılsın?",
+"{y}/{need} approvals (80% of {m})":"{y}/{need} təsdiq ({m} nəfərin 80%-i)","Approve":"Təsdiq et",
+/* --- Profil, çat --- */
+"pts":"xal","points":"xal","Everyone":"Hamı","my group":"mənim qrupum","All students":"Bütün tələbələr","Only my group":"Yalnız mənim qrupum","Say hi":"Salam yaz",
+"Chat":"Çat","Delete every chat":"Bütün çatları sil","Clear all":"Hamısını təmizlə","You":"Siz","No messages yet. Say hi!":"Hələ mesaj yoxdur. Salam yazın!",
+"Delete all messages in this chat":"Bu çatdakı bütün mesajları sil","Send a file or photo":"Fayl və ya şəkil göndər","Message…":"Mesaj…","Voice message":"Səsli mesaj",
+"send":"göndər","Cancel":"Ləğv et","Send":"Göndər","Photo":"Şəkil","tap to open":"açmaq üçün toxunun","Loading…":"Yüklənir…",
+/* --- Ana səhifə --- */
+"Teacher account":"Müəllim hesabı","You can: {list}.":"Edə bilərsiniz: {list}.","chat with students":"tələbələrlə yazışmaq",
+"give points":"xal vermək","manage groups (add, move, remove students)":"qrupları idarə etmək (tələbə əlavə etmək, köçürmək, çıxarmaq)","moderate chats":"çatlara nəzarət etmək",
+"see students' passwords":"tələbələrin parollarını görmək","open the admin panel":"admin panelini açmaq","do everything":"hər şeyi etmək",
+"Host panel":"Host paneli","Give points in Settings. You can start a kick vote in any group.":"Xalları Ayarlar bölməsində verin. İstənilən qrupda çıxarma səsverməsi başlada bilərsiniz.",
+"You're in {g}":"Siz {g} qrupundasınız","{a}/{b} members":"{a}/{b} üzv","you are the host":"qrup rəhbəri sizsiniz","You're idle":"Qrupsuzsunuz",
+"Open a group and send a join request, create your own, or wait for an invitation.":"Bir qrupu açıb qoşulma müraciəti göndərin, öz qrupunuzu yaradın və ya dəvət gözləyin.",
+"requested":"müraciət göndərilib","{n} free":"{n} boş yer","Top points":"Ən çox xal","No points yet":"Hələ xal yoxdur","See all":"Hamısına bax","Close":"Bağla",
+"Invite idle students":"Qrupsuz tələbələri dəvət et","Invited":"Dəvət göndərildi","cancel":"ləğv et","Invite":"Dəvət et","No idle students right now":"Hazırda qrupsuz tələbə yoxdur",
+/* --- Qrup səhifəsi --- */
+"Leave group":"Qrupdan çıx","Request sent · tap to withdraw":"Müraciət göndərildi · geri götürmək üçün toxunun","Teachers do not join groups":"Müəllimlər qruplara qoşulmur",
+"Group full":"Qrup doludur","Leave your group first":"Əvvəlcə qrupunuzdan çıxın","Back":"Geri","{n} participants · {f} free spots":"{n} iştirakçı · {f} boş yer",
+"Tap a member to see their profile":"Profilə baxmaq üçün üzvə toxunun","Remove":"Çıxar","Kick":"Çıxarmağı təklif et","No members yet":"Hələ üzv yoxdur",
+"Groups":"Qruplar","{a}/{b} created · {n} left":"{a}/{b} yaradılıb · {n} qalıb","No groups yet. Create the first one!":"Hələ qrup yoxdur. İlk qrupu siz yaradın!","New group":"Yeni qrup",
+/* --- Müraciətlər --- */
+"Waiting for a member to open the vote":"Üzvlərdən birinin səsvermə açması gözlənilir","Members are voting":"Üzvlər səs verir",
+"Approved by members · waiting for the host":"Üzvlər təsdiqlədi · qrup rəhbəri gözlənilir","Invitations for you":"Sizə dəvətlər","from {nm}":"göndərən: {nm}",
+"People who want to join {g}":"{g} qrupuna qoşulmaq istəyənlər","No join requests right now":"Hazırda qoşulma müraciəti yoxdur","Kick votes":"Çıxarma səsvermələri",
+"My sent requests":"Göndərdiyim müraciətlər","Withdraw":"Geri götür","No pending requests":"Gözləyən müraciət yoxdur","Idle people ({n})":"Qrupsuz insanlar ({n})","Nobody":"Heç kim",
+/* --- Ayarlar --- */
+"Settings":"Ayarlar","Display name":"Görünən ad","Save":"Yadda saxla","Open admin panel":"Admin panelini aç","Profile picture":"Profil şəkli",
+"Sounds off":"Səs söndürülüb","Sounds on":"Səs açıqdır","Log out":"Çıxış","Language":"Dil","Change password":"Parolu dəyiş",
+"Admin passwords are private: nobody else can see or reset yours.":"Adminlərin parolları məxfidir: heç kim sizin parolunuzu görə və ya sıfırlaya bilməz.",
+"Class admins can see your password so they can help you if you forget it. Do not reuse a password from anywhere else.":"Sinif adminləri parolunuzu görə bilir ki, unutsanız kömək edə bilsinlər. Başqa yerdə istifadə etdiyiniz parolu burada işlətməyin.",
+"New password (min 6)":"Yeni parol (ən azı 6 simvol)","Repeat":"Təkrar","Give points":"Xal ver","Add":"Əlavə et",
+/* --- Menyu və başlıqlar --- */
+"Notifications":"Bildirişlər","Requests & invites":"Müraciətlər və dəvətlər","Menu":"Menyu","Requests & idle":"Müraciətlər və qrupsuzlar","Idle people":"Qrupsuz insanlar","Sounds":"Səs",
+/* --- Xal vermə və profil pəncərəsi --- */
+"Type a number from -100 to 100":"-100 ilə 100 arasında rəqəm yazın","Adding…":"Əlavə edilir…","Add points":"Xal əlavə et","online":"onlayn","total points":"ümumi xal",
+"presentations":"təqdimat","best score":"ən yüksək xal","Average per presentation: {n}":"Təqdimat başına orta: {n}","Recent scores":"Son xallar","Presentation":"Təqdimat",
+"Test bonus":"Test üzrə bonus","No scores recorded yet":"Hələ xal qeydə alınmayıb","Points to give":"Veriləcək xal","e.g. 8":"məs. 8","Group":"Qrup","Move here":"Bura köçür",
+/* --- Giriş --- */
+"Build your presentation team":"Təqdimat komandanı qur","Type your ID and password, then press Enter. Forgot it? Ask an admin to reset it.":"ID və parolunuzu yazıb Enter basın. Unutmusunuz? Adminə müraciət edin, parolunuzu sıfırlasın.",
+"Your ID (for example ali.m)":"ID-niz (məsələn, ali.m)","Password":"Parol","Log in":"Daxil ol","Set a new password":"Yeni parol təyin edin",
+"Your temporary password stops working after this.":"Müvəqqəti parolunuz bundan sonra işləməyəcək.","Save and continue":"Yadda saxla və davam et",
+"Class admins can see your password so they can help if you forget it. Do not use a password from anywhere else.":"Sinif adminləri parolunuzu görə bilir ki, unutsanız kömək edə bilsinlər. Başqa yerdə istifadə etdiyiniz parolu işlətməyin.",
+"Your profile was not found. Ask the host to check your account.":"Profiliniz tapılmadı. Hesabınızı yoxlamaq üçün hostdan xahiş edin.",
+"Type your ID":"ID-nizi yazın","No connection to the server. Check your internet.":"Serverlə əlaqə yoxdur. İnternetinizi yoxlayın.","Wrong ID or password":"ID və ya parol yanlışdır",
+"Connection problem. Please try again.":"Bağlantı problemi. Yenidən cəhd edin.","Connection problem. Retrying…":"Bağlantı problemi. Yenidən cəhd edilir…",
+"You were signed out because this account was opened on another device.":"Bu hesaba başqa cihazdan daxil olunduğu üçün sessiyanız bağlandı.",
+/* --- Rollar və rütbələr --- */
+"Created by":"Yaradanlar","host":"host","teacher":"müəllim","idle":"qrupsuz","Teacher":"Müəllim","Scorer":"Xal verən",
+"Newcomer":"Yeni gələn","Speaker":"Çıxışçı","Orator":"Natiq","Maestro":"Ustad",
+/* --- Fayl, səs, təsdiq --- */
+"Files must be under 25 MB":"Fayllar 25 MB-dan kiçik olmalıdır","Uploading {name}…":"{name} yüklənir…","Sent ✓":"Göndərildi ✓",
+"Voice recording is not supported in this browser":"Bu brauzer səs yazmağı dəstəkləmir","Microphone access was denied":"Mikrofona giriş icazəsi verilmədi","Yes":"Bəli",
+/* --- Bildirişlər --- */
+"{n} items waiting for you":"Sizi {n} iş gözləyir","1 item waiting for you":"Sizi 1 iş gözləyir","Open Requests":"Müraciətləri açın","points!":"xal!",
+"Your total is now {n}":"Ümumi xalınız indi {n}","You joined {g}":"Qrupa qoşuldunuz: {g}","Welcome to the group!":"Qrupa xoş gəldiniz!",
+"You are no longer in {g}":"Siz artıq bu qrupda deyilsiniz: {g}","{nm} wants to join":"{nm} qrupa qoşulmaq istəyir","Open Requests and put it to a vote":"Müraciətləri açıb səsverməyə qoyun",
+"Vote opened for {nm}":"Səsvermə açıldı: {nm}","Cast your vote in Requests":"Səsinizi Müraciətlər bölməsində verin","Majority approved {nm}":"Əksəriyyət təsdiqlədi: {nm}",
+"Your final decision is needed":"Sizin yekun qərarınız lazımdır","Kick vote for {nm}":"Çıxarma səsverməsi: {nm}","{nm} joined your group":"{nm} qrupunuza qoşuldu",
+"{g} invited you!":"{g} sizi dəvət etdi!","Open Requests to accept":"Qəbul etmək üçün Müraciətləri açın","Members are voting on your request":"Üzvlər müraciətiniz üçün səs verir",
+"Members approved your request":"Üzvlər müraciətinizi təsdiqlədi","Waiting for the host's final decision":"Qrup rəhbərinin yekun qərarı gözlənilir",
+"Your join request was declined":"Qoşulma müraciətiniz rədd edildi","New message from {nm}":"{nm} sizə yeni mesaj göndərdi","New message in {g} from {nm}":"{g} qrupunda yeni mesaj: {nm}",
+"just now":"indicə","{n} min ago":"{n} dəq əvvəl","{n} h ago":"{n} saat əvvəl","{n} d ago":"{n} gün əvvəl","No notifications yet":"Hələ bildiriş yoxdur","Mark all read":"Hamısını oxunmuş et",
+/* --- Düymə əməlləri --- */
+"Are you sure you want to leave this group?":"Bu qrupdan çıxmaq istədiyinizə əminsiniz?","You left the group":"Qrupdan çıxdınız",
+"Delete ALL messages in this chat? This cannot be undone.":"Bu çatdakı BÜTÜN mesajlar silinsin? Bunu geri qaytarmaq olmaz.","Chat cleared":"Çat təmizləndi",
+"Delete ALL chats for everyone? This cannot be undone.":"Hamı üçün BÜTÜN çatlar silinsin? Bunu geri qaytarmaq olmaz.","All chats cleared":"Bütün çatlar təmizləndi",
+"Remove {name} from the group?":"{name} qrupdan çıxarılsın?","Removed from the group":"Qrupdan çıxarıldı","At least 6 characters":"Ən azı 6 simvol",
+"Passwords do not match":"Parollar uyğun gəlmir","Password changed ✓":"Parol dəyişdirildi ✓","Are you sure you want to log out?":"Çıxış etmək istədiyinizə əminsiniz?",
+"Vote opened in the group chat":"Səsvermə qrup çatında açıldı","The group limit ({n}) is reached":"Qrup limitinə ({n}) çatılıb",
+"Only idle students can create a group. Leave your group first.":"Yalnız qrupsuz tələbələr qrup yarada bilər. Əvvəlcə qrupunuzdan çıxın.",
+"You become the host.":"Qrupun rəhbəri siz olacaqsınız.","Group name":"Qrup adı","Max members":"Maksimum üzv sayı","Create":"Yarat",
+"Name saved":"Ad yadda saxlanıldı","Install as app":"Tətbiq kimi yüklə","Opens full screen from your home screen, like a normal app.":"Ana ekrandan tam ekranda, adi tətbiq kimi açılır.","Install":"Yüklə","On iPhone: tap Share, then Add to Home Screen.":"iPhone-da: «Paylaş» düyməsinə, sonra «Ana ekrana əlavə et»-ə toxunun.","App installed ✓":"Tətbiq yükləndi ✓","Could not read that image":"Şəkli oxumaq mümkün olmadı"
+};
 
-/* "Remove " kimi sonunda boşluq olan mətnlər (adın qarşısında dayanan söz) */
-var RAW={"Remove ":"Çıxarılsın: "};
+/* Serverdən (bazadan) gələn xəta mətnləri */
+const AZ_ERR={
+"A vote is already open for this person":"Bu şəxs üçün səsvermə artıq açıqdır","A vote was already opened for this request":"Bu müraciət üçün səsvermə artıq açılıb",
+"Admin passwords are private. Only the admin can change their own password.":"Adminlərin parolları məxfidir. Yalnız admin öz parolunu dəyişə bilər.","Admins only":"Yalnız adminlər üçün",
+"Choose 1 to 12":"1-dən 12-yə qədər seçin","File must be under 25 MB":"Fayl 25 MB-dan kiçik olmalıdır","File upload not found":"Yüklənmiş fayl tapılmadı",
+"Group name must be 1 to 30 characters":"Qrup adı 1–30 simvol olmalıdır","Group not found":"Qrup tapılmadı","ID: 2-40 characters, letters, digits, dot, dash, underscore":"ID: 2–40 simvol; hərflər, rəqəmlər, nöqtə, defis və alt xətt",
+"Invalid chat":"Yanlış söhbət","Leave your current group first":"Əvvəlcə hazırkı qrupdan çıxın","Leave your group first":"Əvvəlcə qrupunuzdan çıxın",
+"Message must be 1 to 1000 characters":"Mesaj 1–1000 simvol olmalıdır","Name must be 2 to 30 characters":"Ad 2–30 simvol olmalıdır","No names given":"Heç bir ad verilməyib",
+"Not signed in":"Hesaba daxil olmamısınız","Only idle students can create a group":"Yalnız qrupsuz tələbələr qrup yarada bilər","Only members of this group can open a vote":"Yalnız bu qrupun üzvləri səsvermə aça bilər",
+"Only members of this group can vote":"Yalnız bu qrupun üzvləri səs verə bilər","Only students can be placed in groups":"Yalnız tələbələr qruplara yerləşdirilə bilər",
+"Only the group host can invite":"Yalnız qrup rəhbəri dəvət edə bilər","Only the group host makes the final decision":"Yekun qərarı yalnız qrup rəhbəri verir",
+"Only the group host or admin can start a kick vote":"Çıxarma səsverməsini yalnız qrup rəhbəri və ya admin başlada bilər","Only the other members of this group can vote":"Yalnız bu qrupun digər üzvləri səs verə bilər",
+"Person not found":"Şəxs tapılmadı","Points must be between -100 and 100":"Xal -100 ilə 100 arasında olmalıdır","Role must be student or teacher":"Rol tələbə və ya müəllim olmalıdır",
+"Size must be 1 to 10":"Say 1-dən 10-a qədər olmalıdır","That ID is already used":"Bu ID artıq istifadə olunur","That account cannot receive points":"Bu hesaba xal vermək olmaz",
+"That group is full":"Bu qrup doludur","That is not your current password":"Bu sizin hazırkı parolunuz deyil","That name is already taken":"Bu ad artıq götürülüb",
+"That person is already in a group":"Bu şəxs artıq qrupdadır","That person is not in a group":"Bu şəxs heç bir qrupda deyil","The Host account has no role":"Host hesabının rolu yoxdur",
+"The group already has more members than that":"Qrupda artıq bundan çox üzv var","The group is full":"Qrup doludur","The host account cannot join groups":"Host hesabı qruplara qoşula bilməz",
+"The host must be a member of the group":"Qrup rəhbəri qrupun üzvü olmalıdır","The members have not approved this request yet":"Üzvlər bu müraciəti hələ təsdiqləməyib",
+"There are already more groups than that":"Artıq bundan çox qrup var","This group is full":"Bu qrup doludur","This invitation is no longer open":"Bu dəvət artıq etibarlı deyil",
+"This request is no longer open":"Bu müraciət artıq etibarlı deyil","This vote is closed":"Bu səsvermə bağlanıb","Type a name":"Ad yazın","Unknown permission":"Naməlum icazə",
+"Unknown setting":"Naməlum ayar","Use Leave group instead":"Əvəzinə «Qrupdan çıx» düyməsindən istifadə edin","Voting is not open for this request":"Bu müraciət üçün səsvermə açıq deyil",
+"You cannot remove your own admin right":"Öz admin hüququnuzu ala bilməzsiniz","You do not have permission for this action":"Bu əməliyyat üçün icazəniz yoxdur",
+"You do not have permission to give points":"Xal vermək üçün icazəniz yoxdur","Your group is full":"Qrupunuz doludur",
+"New password should be different from the old password.":"Yeni parol köhnə paroldan fərqli olmalıdır.","Password should be at least 6 characters.":"Parol ən azı 6 simvol olmalıdır.",
+"Password should be at least 6 characters":"Parol ən azı 6 simvol olmalıdır","Failed to fetch":"Serverlə əlaqə yoxdur. İnternetinizi yoxlayın.","Invalid login credentials":"ID və ya parol yanlışdır"
+};
+const AZ_ERR_RE=[[/^The group limit \((\d+)\) is reached$/,"Qrup limitinə ({1}) çatılıb"]];
 
-/* ---------- 2. NÜMUNƏLİ TƏRCÜMƏLƏR (içində ad, rəqəm olanlar) ---------- */
-var PERM={"give points":"xal vermək","manage groups (add, move, remove students)":"qrupları idarə etmək (tələbələri əlavə etmək, köçürmək, çıxarmaq)","moderate chats":"çatlara nəzarət etmək","see students' passwords":"tələbələrin parollarına baxmaq","open the admin panel":"admin panelini açmaq","do everything":"hər şeyi etmək","chat with students":"tələbələrlə yazışmaq"};
-var PAT=[
-[/^You're in (.+)$/,"Siz $1 qrupundasınız"],
-[/^(\d+)\/(\d+) members( · you are the host 👑)?$/,function(m){return m[1]+"/"+m[2]+" üzv"+(m[3]?" · siz hostsunuz 👑":"")}],
-[/^(\d+)\/(\d+) created · (\d+) left$/,"$1/$2 qrup yaradılıb · $3 boş yer"],
-[/^(\d+)\/(\d+) · (\d+) free$/,"$1/$2 · $3 boş"],
-[/^(\d+) participants · (\d+) free spots$/,"$1 iştirakçı · $2 boş yer"],
-[/^Idle people \((\d+)\)$/,"Qrupsuz tələbələr ($1)"],[/^Idle people$/,"Qrupsuz tələbələr"],
-[/^(Newcomer|Speaker|Orator|Maestro) · (\d+) pts$/,function(m){return EXACT[m[1]]+" · "+m[2]+" xal"}],
-[/^(\d+) pts$/,"$1 xal"],
-[/^(.+) \(my group\)$/,"$1 (qrupum)"],
-[/^You: (.*)$/,function(m){return "Siz: "+(EXACT[m[1]]||m[1])}],
-[/^from (.+)$/,"$1 tərəfindən"],
-[/^Join request · (.+)$/,"Qoşulma müraciəti · $1"],[/^Kick vote · (.+)$/,"Çıxarma səsverməsi · $1"],
-[/^Step 2 of 3 · (\d+)\/(\d+) approvals needed \(majority\)$/,"2/3-cü mərhələ · $1/$2 razılıq lazımdır (səs çoxluğu)"],
-[/^you voted (✓|✗)$/,"səs verdiniz $1"],
-[/^(\d+)\/(\d+) approvals \(80% of (\d+)\)$/,"$1/$2 razılıq (digər $3 nəfərin 80%-i)"],
-[/^Remove (.+) from the group\?$/,"$1 qrupdan çıxarılsın?"],
-[/^Uploading (.+)…$/,"$1 yüklənir…"],
-[/^⏹ (\d+:\d+) · send$/,"⏹ $1 · göndər"],
-[/^(.+) · tap to open$/,"$1 · açmaq üçün toxunun"],
-[/^(\d+) min ago$/,"$1 dəq əvvəl"],[/^(\d+) h ago$/,"$1 saat əvvəl"],[/^(\d+) d ago$/,"$1 gün əvvəl"],
-[/^(\d+) items? waiting for you$/,"Sizi $1 iş gözləyir"],
-[/^You joined (.+)$/,"$1 qrupuna qoşuldunuz"],[/^You are no longer in (.+)$/,"Siz artıq $1 qrupunda deyilsiniz"],
-[/^(.+) wants to join$/,"$1 qoşulmaq istəyir"],[/^Vote opened for (.+)$/,"$1 üçün səsvermə açıldı"],[/^Majority approved (.+)$/,"Səs çoxluğu təsdiq etdi: $1"],
-[/^Kick vote for (.+)$/,"Çıxarma səsverməsi: $1"],[/^(.+) joined your group$/,"$1 qrupunuza qoşuldu"],[/^(.+) invited you!$/,"$1 sizi dəvət etdi!"],
-[/^New message from (.+)$/,"$1 tərəfindən yeni mesaj"],[/^New message in (.+) from (.+)$/,"$1 qrupunda yeni mesaj · $2"],
-[/^\+(\d+) points!$/,"+$1 xal!"],[/^Your total is now (\d+)$/,"Ümumi xalınız: $1"],[/^([+-]\d+) points → (.+)$/,"$1 xal → $2"],
-[/^The group limit \((\d+)\) is reached$/,"Qrup limitinə ($1) çatılıb"],
-[/^You can: (.+)\.$/,function(m){var t=m[1];Object.keys(PERM).sort(function(a,b){return b.length-a.length}).forEach(function(k){t=t.split(k).join(PERM[k])});return "Edə bilərsiniz: "+t+"."}],
-/* qrup çatında görünən sistem mesajları */
-[/^(.+) joined the group 🎉$/,"$1 qrupa qoşuldu 🎉"],[/^The group is full\.$/,"Qrup doldu."],
-[/^(.+) wants to join\. A member can put the request to a vote\.$/,"$1 qoşulmaq istəyir. Üzvlərdən biri müraciəti səsverməyə çıxara bilər."],
-[/^(.+) wants to join\. Members: please vote\.$/,"$1 qoşulmaq istəyir. Üzvlər, zəhmət olmasa səs verin."],
-[/^Vote opened: should (.+) join\? Members, please vote\.$/,"Səsvermə açıldı: $1 qrupa qoşulsun? Üzvlər, zəhmət olmasa səs verin."],
-[/^Majority approved (.+)\. Waiting for the host's final decision\.$/,"Səs çoxluğu təsdiq etdi: $1. Hostun yekun qərarı gözlənilir."],
-[/^Request from (.+) was declined by the vote\.$/,"Müraciət səsvermə ilə rədd edildi: $1."],[/^Request from (.+) was declined\.$/,"Müraciət rədd edildi: $1."],
-[/^The host declined (.+)\.$/,"Host rədd etdi: $1."],[/^(.+) left the group\.$/,"$1 qrupdan çıxdı."],[/^(.+) created the group\.$/,"$1 qrupu yaratdı."],
-[/^Kick vote started for (.+)\. 80% of the other members must approve\.$/,"$1 üçün çıxarma səsverməsi başladı. Digər üzvlərin 80%-i razı olmalıdır."],
-[/^(.+) was removed from the group \(vote passed\)\.$/,"$1 qrupdan çıxarıldı (səsvermə keçdi)."],[/^Vote to remove (.+) failed\.$/,"Çıxarma səsverməsi uğursuz oldu: $1."],
-[/^(.+) was removed from the group( by an admin)?\.$/,"$1 qrupdan çıxarıldı."],[/^(.+) was (?:added to this group|moved here by an admin)\.$/,"$1 bu qrupa əlavə edildi."],
-[/^(.+) invited (.+)\.$/,"$1 dəvət etdi: $2."],[/^(.+) declined the invitation\.$/,"$1 dəvəti rədd etdi."]
+/* Qrup çatındakı sistem mesajları (bazada ingiliscə saxlanılır, burada göstərilərkən tərcümə olunur) */
+const AZ_SYS=[
+[/^(.+) joined the group 🎉$/,"{1} qrupa qoşuldu 🎉"],
+[/^The group is full\.$/,"Qrup doludur."],
+[/^Majority approved (.+)\. Waiting for the host's final decision\.$/,"Əksəriyyət {1} üçün razılaşdı. Qrup rəhbərinin yekun qərarı gözlənilir."],
+[/^Request from (.+) was declined by the vote\.$/,"{1} üçün müraciət səsvermə ilə rədd edildi."],
+[/^(.+) was removed from the group \(vote passed\)\.$/,"{1} səsvermə nəticəsində qrupdan çıxarıldı."],
+[/^Vote to remove (.+) failed\.$/,"{1} üçün çıxarma səsverməsi keçmədi."],
+[/^(.+) was added to this group\.$/,"{1} bu qrupa əlavə edildi."],
+[/^(.+) was removed from the group\.$/,"{1} qrupdan çıxarıldı."],
+[/^(.+) created the group\.$/,"{1} qrupu yaratdı."],
+[/^The host declined (.+)\.$/,"Qrup rəhbəri {1} üçün müraciəti rədd etdi."],
+[/^(.+) left the group\.$/,"{1} qrupdan çıxdı."],
+[/^Vote opened: should (.+) join\? Members, please vote\.$/,"Səsvermə açıldı: {1} qrupa qoşulsun? Üzvlər, zəhmət olmasa səs verin."],
+[/^(.+) wants to join\. A member can put the request to a vote\.$/,"{1} qrupa qoşulmaq istəyir. Üzvlərdən biri müraciəti səsverməyə qoya bilər."],
+[/^(.+) declined the invitation\.$/,"{1} dəvəti rədd etdi."],
+[/^Kick vote started for (.+)\. 80% of the other members must approve\.$/,"{1} üçün çıxarma səsverməsi başladı. Digər üzvlərin 80%-i təsdiq etməlidir."],
+[/^(.+) invited (.+)\.$/,"{1} dəvət göndərdi: {2}."]
 ];
 
-/* ---------- 3. TƏRCÜMƏ FUNKSİYASI ---------- */
-// Əvvəl və sonundakı emoji/oxları ayırır ki, "🔔 Notifications" kimi mətnlər də tapılsın
-var SYM="[\\s\\u2190-\\u21FF\\u2022\\u00B7\\u2713\\u2717\\u2716\\u2714\\uFE0F\\u200D\\u23F9\\u2B50\\u2705\\u{1F000}-\\u{1FAFF}\\u{2600}-\\u{27BF}]";
-var EDGE=new RegExp("^("+SYM+"*)([\\s\\S]*?)("+SYM+"*)$","u");
-var cache=new Map();
-function lookup(c){
- if(Object.prototype.hasOwnProperty.call(EXACT,c))return EXACT[c];
- for(var i=0;i<PAT.length;i++){var m=PAT[i][0].exec(c);if(m)return typeof PAT[i][1]==="function"?PAT[i][1](m):c.replace(PAT[i][0],PAT[i][1])}
- return null}
-function compute(s){
- var m=/^(\s*)([\s\S]*?)(\s*)$/.exec(s),lead=m[1],core=m[2],trail=m[3];if(!core)return s;
- if(trail&&RAW[s]!==undefined)return RAW[s];
- var out=lookup(core);
- if(out===null){var e=EDGE.exec(core);if(e&&e[2]&&(e[1]||e[3])){var x=lookup(e[2]);if(x!==null)out=e[1]+x+e[3]}}
- return out===null?s:lead+out+trail}
-// Bir mətni Azərbaycan dilinə çevirir (tapılmasa olduğu kimi qaytarır)
-function trText(s){if(LANG!=="az"||!s)return s;var r=cache.get(s);if(r!==undefined)return r;r=compute(s);if(cache.size>3000)cache.clear();cache.set(s,r);return r}
-function trForce(s){var r=compute(s);return r}
+const _fill=(s,v)=>v?s.replace(/\{(\w+)\}/g,(m,n)=>n in v?v[n]:m):s;
+/* Əsas tərcümə funksiyası */
+const tr=(k,v)=>_fill(LANG==="az"&&Object.prototype.hasOwnProperty.call(AZ,k)?AZ[k]:k,v);
+/* Serverdən gələn xəta mətni */
+const trErr=m=>{m=String(m==null?"":m);if(LANG!=="az")return m;if(Object.prototype.hasOwnProperty.call(AZ_ERR,m))return AZ_ERR[m];
+ for(const [re,s] of AZ_ERR_RE){const x=re.exec(m);if(x)return s.replace(/\{(\d)\}/g,(q,i)=>x[i])}return m};
+/* Qrup çatındakı sistem mesajı */
+const trSys=m=>{m=String(m==null?"":m);if(LANG!=="az")return m;
+ for(const [re,s] of AZ_SYS){const x=re.exec(m);if(x)return s.replace(/\{(\d)\}/g,(q,i)=>x[i])}return m};
 
-/* ---------- 4. EKRANA TƏTBİQ ---------- */
-var ATTR=["placeholder","title","aria-label"],SKIPTAG={SCRIPT:1,STYLE:1,TEXTAREA:1,INPUT:1,CODE:1};
-var orig=new WeakMap();          // mətn qovşağı → {en, az}: ingilis variantına qayıtmaq üçün
-var PV_OK={"All students":1,"Only my group":1,"Say hi 👋":1,"Voice message":1,"🎤 Voice message":1,"🖼️ Photo":1};
-// İstifadəçi məzmunu (çat mesajları) tərcümə olunmur. Sistem mesajları və səsvermə kartları olunur.
-function userArea(n){var p=n.parentNode;if(!p)return true;if(SKIPTAG[p.tagName])return true;var c=p.classList;
- if(c&&c.contains("b")&&!c.contains("sys")&&!c.contains("vote"))return true;return false}
-function nodeTr(n,v){var p=n.parentNode,c=p&&p.classList;
- if(c&&c.contains("pv")){ // çat siyahısındakı son mesaj: yalnız "Siz: " və hazır ifadələr
-  var t=v.trim();if(t.indexOf("You: ")===0)return v.replace(t,"Siz: "+(EXACT[t.slice(5)]||(PV_OK[t.slice(5)]?trText(t.slice(5)):t.slice(5))));
-  return PV_OK[t]?trText(v):v}
- return trText(v)}
-function translateNode(n){if(LANG!=="az"||userArea(n))return;var v=n.nodeValue;if(!v||!/[A-Za-z]/.test(v))return;var o=orig.get(n);if(o&&o.az===v)return;
- var t=nodeTr(n,v);if(t!==v){orig.set(n,{en:v,az:t});n.nodeValue=t}}
-function translateAttrs(el){if(LANG!=="az"||!el.getAttribute)return;for(var i=0;i<ATTR.length;i++){var a=ATTR[i],v=el.getAttribute(a);if(!v)continue;var o=el.__i18n&&el.__i18n[a];if(o&&o.az===v)continue;var t=trText(v);if(t!==v){(el.__i18n=el.__i18n||{})[a]={en:v,az:t};el.setAttribute(a,t)}}}
-function walk(n,fn){if(!n)return;if(n.nodeType===3){fn.text(n);return}if(n.nodeType!==1||SKIPTAG[n.tagName]&&n.tagName!=="INPUT"&&n.tagName!=="TEXTAREA")return;fn.attr(n);var ch=n.childNodes||[];for(var i=0;i<ch.length;i++)walk(ch[i],fn)}
-function translateTree(root){walk(root,{text:translateNode,attr:translateAttrs})}
-function restoreTree(root){walk(root,{text:function(n){var o=orig.get(n);if(o&&n.nodeValue===o.az){n.nodeValue=o.en}orig.delete(n)},
- attr:function(el){var o=el.__i18n;if(!o)return;for(var a in o)if(el.getAttribute(a)===o[a].az)el.setAttribute(a,o[a].en);el.__i18n=null}})}
-
-/* ---------- 5. DİL DÜYMƏSİ ---------- */
-function isPhone(){try{return window.matchMedia("(max-width:800px)").matches}catch(e){return window.innerWidth<=800}}
-function switchHtml(){return '<button class="lbtn'+(LANG==="az"?" on":"")+'" data-l="az" onclick="setLang(\'az\')">AZ</button><button class="lbtn'+(LANG==="en"?" on":"")+'" data-l="en" onclick="setLang(\'en\')">EN</button>'}
-function mk(tag,id,cls,html){var e=document.createElement(tag);e.id=id;e.className=cls;e.innerHTML=html;return e}
-// Düyməni lazımi yerlərə qoyur: masaüstündə başlığın sağ üstünə, hər yerdə Ayarlar kartına, giriş ekranında sağ üst küncə
-function ensureUI(){
- if(!document.body)return;
- var hd=document.querySelector(".hd .row"),floating=document.getElementById("langfloat");
- if(hd&&!isPhone()&&!document.getElementById("langhd"))hd.insertBefore(mk("span","langhd","lang",switchHtml()),hd.firstChild);
- if((!hd||isPhone())&&document.getElementById("langhd")){var x=document.getElementById("langhd");x.parentNode.removeChild(x)}
- var nn=document.getElementById("nn");
- if(nn&&!document.getElementById("langset")){var card=nn.closest?nn.closest(".card"):null,b=card&&card.querySelector("b");
-  if(card&&b)card.insertBefore(mk("div","langset","langrow",'<span>Dil / Language</span><span class="lang">'+switchHtml()+'</span>'),b.nextSibling)}
- var loginScreen=document.querySelector(".stage"),showFloat=!!loginScreen&&!document.querySelector(".hd");
- if(showFloat&&!floating)document.body.appendChild(mk("div","langfloat","lang",switchHtml()));
- if(!showFloat&&floating)floating.parentNode.removeChild(floating)}
-function syncButtons(){var bs=document.querySelectorAll?document.querySelectorAll(".lbtn"):[];for(var i=0;i<bs.length;i++){var on=bs[i].getAttribute("data-l")===LANG;bs[i].className="lbtn"+(on?" on":"")}}
-var css=".lang{display:inline-flex;gap:2px;padding:2px;border-radius:11px;background:var(--bg);border:1px solid var(--bd)}"
- +".lang .lbtn{background:transparent!important;background-image:none!important;box-shadow:none!important;color:var(--mu)!important;padding:5px 10px!important;border-radius:9px!important;font-size:12px!important;font-weight:700!important;border:0!important;transform:none!important}"
- +".lang .lbtn.on{background:var(--ac)!important;color:#fff!important}"
- +".hd .lang{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.25)}.hd .lang .lbtn{color:#fff!important}.hd .lang .lbtn.on{background:#fff!important;color:#4f46e5!important}"
- +".langrow{display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px;color:var(--mu)}"
- +"#langfloat{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:50;box-shadow:0 6px 18px -8px rgba(0,0,0,.4);background:var(--card)}";
-
-/* ---------- 6. DİLİ DƏYİŞMƏK ---------- */
-function setLang(l){if(l!=="az"&&l!=="en")return;LANG=l;try{localStorage.setItem("lang",l)}catch(e){}
- if(document.documentElement)document.documentElement.lang=l;
- if(l==="az")translateTree(document.body);else restoreTree(document.body);
- syncButtons();
- if(typeof window.render==="function")window.render()} // tətbiq səhifəni yenidən çəkir; mətnlər yeni dildə çıxır
-function init(){
- var st=document.createElement("style");st.id="i18n-style";st.textContent=css;document.head.appendChild(st);
- if(document.documentElement)document.documentElement.lang=LANG;
- if(window.MutationObserver){new MutationObserver(function(list){
-   if(LANG==="az")for(var i=0;i<list.length;i++){var m=list[i];
-    if(m.type==="childList")for(var j=0;j<m.addedNodes.length;j++)translateTree(m.addedNodes[j]);
-    else if(m.type==="characterData")translateNode(m.target);
-    else if(m.type==="attributes")translateAttrs(m.target)}
-   ensureUI();syncButtons()}).observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:ATTR})}
- translateTree(document.body);ensureUI();
- // Brauzer sistem bildirişləri (sağ üst kənarda çıxan) də Azərbaycan dilində olsun
- if(window.Notification){var N=window.Notification;var W=function(t,o){o=o||{};return new N(trText(t),Object.assign({},o,{body:trText(o.body||"")}))};
-  W.requestPermission=function(){return N.requestPermission.apply(N,arguments)};Object.defineProperty(W,"permission",{get:function(){return N.permission}});window.Notification=W}}
-window.setLang=setLang;window.I18N={trText:trText,trForce:trForce,translateTree:translateTree,restoreTree:restoreTree,ensureUI:ensureUI,EXACT:EXACT,PAT:PAT,get lang(){return LANG},set lang(v){LANG=v}};
-if(typeof document!=="undefined"&&document.body&&window.MutationObserver!==undefined)init();
-})();
+/* AZ | EN düyməsi (masaüstündə yuxarı sağda, telefonda Ayarlarda, giriş səhifəsində yuxarı sağda) */
+const langSw=()=>`<span class="lang"><button class="s${LANG==="az"?" on":""}" onclick="setLang('az')" title="Azərbaycanca">AZ</button><button class="s${LANG==="en"?" on":""}" onclick="setLang('en')" title="English">EN</button></span>`;
+function setLang(l){if((l!=="az"&&l!=="en")||l===LANG)return;LANG=l;try{localStorage.setItem("lang",l)}catch(e){}try{document.documentElement.lang=l}catch(e){}
+ try{const a=document.activeElement;if(a&&a.blur)a.blur()}catch(e){}pmSig="";closeStatic();if(typeof render==="function")render()}
+/* Açıq statik pəncərələri (təsdiq, yeni qrup) bağlayır, çünki onların mətni dəyişmir */
+function closeStatic(){try{const m=document.querySelector("#modal");if(m&&!pm)m.innerHTML=""}catch(e){}}
