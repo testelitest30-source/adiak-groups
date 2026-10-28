@@ -12,17 +12,19 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <!-- 2) Ortaq ayarlar (şagird saytı ilə eyni fayl) + panelin kodu -->
 <script src="config.js"></script>
+<script src="i18n.js"></script>
+<script src="i18n-admin.js"></script>
 <script src="admin.js"></script>
 
 <!-- 3) Fayl yüklənməyibsə, hansının çatışmadığını yazır -->
 <script>
 (function(){
-  var need=[["config.js",typeof SUPABASE_URL],["admin.js",typeof boot]];
+  var need=[["config.js",typeof SUPABASE_URL],["i18n.js",typeof tr],["i18n-admin.js",typeof admX],["admin.js",typeof boot]];
   var miss=need.filter(function(x){return x[1]==="undefined"}).map(function(x){return x[0]});
   if(miss.length||!window.supabase){
     document.getElementById("root").innerHTML='<div style="max-width:440px;margin:12vh auto;padding:20px;font:16px system-ui;border:2px solid #dc2626;border-radius:16px">'
      +'<h3 style="margin-top:0;color:#dc2626">Bəzi fayllar tapılmadı</h3><p>'+(miss.length?'Tapılmayan: <b>'+miss.join(", ")+'</b>.':'Supabase kitabxanası yüklənmədi.')+'</p>'
-     +'<p>GitHub-da bütün faylları eyni qovluğa yükləyin: admin.html, admin.css, admin.js, config.js (+ şagird saytı üçün index.html, style.css, core.js, pages.js, main.js).</p></div>';
+     +'<p>GitHub-da bütün faylları eyni qovluğa yükləyin: admin.html, admin.css, admin.js, i18n.js, i18n-admin.js, config.js (+ şagird saytı üçün index.html, style.css, core.js, pages.js, main.js).</p></div>';
   }
 })();
 </script>

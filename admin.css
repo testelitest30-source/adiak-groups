@@ -99,3 +99,9 @@ label.l{display:block;font-size:13px;font-weight:600;color:var(--mu);margin:14px
  .me{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.me .row{margin:0}.me button{width:auto}.me a{margin:0}
  .main{padding:18px 14px 60px}.chats{grid-template-columns:1fr}.plist,.gcards{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== Dil düyməsi (AZ | EN) ===== */
+.lang-a{display:flex;gap:6px;margin:12px 0 0}
+.lang-a button{flex:1;padding:7px 10px;border-radius:10px;background:#ffffff26;color:#fff;box-shadow:none;border:0;opacity:.7;font-weight:700}
+.lang-a button.on{opacity:1;background:#ffffff59}
+.panel .lang-a{margin:0 0 10px;justify-content:flex-end}.panel .lang-a button{flex:none;background:var(--soft);color:var(--tx);border:1px solid var(--bd);opacity:1}.panel .lang-a button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
