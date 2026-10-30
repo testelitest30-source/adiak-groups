@@ -6,7 +6,7 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let pressing=false,pressTs=0,pmSig="",SET={max_groups:6},menuOpen=false,MYSID=null,navStack=[],restoring=false,lastSnap=null,pmDrawn=null,wasNotes=false,URLS={},needUrls=new Set(),rec=null,pendingRender=false,PE=[],pm=null,sb=null,chan=null,uid=null,screen="boot",err="",roster=[],P={},G=[],RQ=[],JB=[],KK=[],KB=[],IV=[],M=[],online=new Set(),SEEN={};
-let lastSig="",NOTES=[],notesOpen=false,tab="groups",openG=null,conv=null,sheet=false,sp=null,tm=null,tt=null,ready=false,quietUntil=0,lastKey="",lastMax=0,muted=false,AC=null;
+let lastSig="",ACLASS=null,CLS=[],CHOICES=null,chartMode="students",NOTES=[],notesOpen=false,tab="home",openG=null,conv=null,sheet=false,sp=null,tm=null,tt=null,ready=false,quietUntil=0,lastKey="",lastMax=0,muted=false,AC=null;
 try{muted=localStorage.getItem("mute")==="1"}catch(e){}
 const phone=()=>innerWidth<=800, ME=()=>P[uid], grp=id=>G.find(g=>g.id===id), nameOf=id=>P[id]?P[id].name:"?";
 // Bu hesabın verilmiş yetkisi varmı? (admin hər şeyi edə bilər)
@@ -19,12 +19,16 @@ const permList=p=>["admin","points","groups","chats","passwords","panel"].filter
 // Sağ alt küncdəki 'Created by' kartı
 const credits=inl=>`<div class="credits${inl?" inline":""}"><small>${tr("Created by")}</small><div><b>Sübhan Camalzadə</b> <span class="chip tag">🛡 Admin</span></div><div><b>Nurəli Qasımlı</b> <span class="chip tag">🛡 Admin</span></div></div>`;
 // Tələbələrin siyahısı (müəllim və Host daxil deyil)
-const ppl=()=>Object.values(P).filter(p=>!p.is_admin&&p.role!=="teacher").sort((a,b)=>a.name.localeCompare(b.name));
+const ppl=()=>Object.values(P).filter(p=>!p.is_admin&&p.role!=="teacher"&&!(p.perms||[]).includes("admin")&&(viewerTag()===undefined||p.class_tag===viewerTag())).sort((a,b)=>a.name.localeCompare(b.name));
 // Akademik qrup (class_tag): tələbə yalnız öz akademik qrupunun komandalarını və boş tələbələrini görür; müəllim/admin hamısını görür
-const viewerTag=()=>{const u=ME();return u&&u.role==="student"&&!u.is_admin?(u.class_tag||null):undefined};   // undefined = məhdudiyyət yoxdur
+// Heyət (müəllim/admin): açdığı sinfə baxır (ACLASS). Tələbə: yalnız öz sinfinə. undefined = məhdudiyyət yoxdur
+const isStaff=u=>!!u&&(u.role==="teacher"||u.is_admin||(u.perms||[]).includes("admin"));
+const viewerTag=()=>{const u=ME();if(!u)return undefined;if(isStaff(u))return ACLASS||undefined;return u.role==="student"?(u.class_tag||null):undefined};
+// Heyət üçün: başqa sinfin ümumi çat mesajları görünmür
+const mIn=m=>m.channel!=="all"||!isStaff(ME())||!ACLASS||m.class_tag===ACLASS;
 const sameClass=x=>{const t=viewerTag();return t===undefined||(!!t&&x.class_tag===t)};
 const visG=()=>G.filter(sameClass);
-const needTag=()=>{const u=ME();return !!u&&u.role==="student"&&!u.is_admin&&!u.class_tag};
+const needTag=()=>{const u=ME();return !!u&&u.role==="student"&&!isStaff(u)&&!u.class_tag};
 const mem=g=>ppl().filter(p=>p.group_id===g), idle=()=>ppl().filter(p=>p.group_id===null&&sameClass(p));
 const gname=id=>{const g=grp(id);return g?g.name:"?"}, gcol=id=>`hsl(${(id*67+200)%360} 70% 52%)`;
 const gchip=p=>p.is_admin?`<span class="chip">${tr("host")}</span>`:p.role==="teacher"?`<span class="chip">${tr("teacher")}</span>`:p.group_id===null?`<span class="chip on">${tr("idle")}</span>`:`<span class="chip" style="background:${gcol(p.group_id)}22;color:${gcol(p.group_id)}">${esc(gname(p.group_id))}</span>`;
@@ -89,7 +93,7 @@ function party(){for(let i=0;i<34;i++){const e=document.createElement("span");e.
 const loadSeen=()=>{try{SEEN=JSON.parse(localStorage.getItem("seen:"+uid))||{}}catch(e){SEEN={}}};
 const saveSeen=()=>{try{localStorage.setItem("seen:"+uid,JSON.stringify(SEEN))}catch(e){}};
 // Bir çatdakı oxunmamış mesajların sayı
-const unread=ch=>M.filter(m=>m.channel===ch&&m.sender!==null&&m.sender!==uid&&m.id>(SEEN[ch]||0)).length;
+const unread=ch=>M.filter(m=>m.channel===ch&&mIn(m)&&m.sender!==null&&m.sender!==uid&&m.id>(SEEN[ch]||0)).length;
 const totalUnread=()=>{let n=0;new Set(M.map(m=>m.channel)).forEach(c=>{n+=unread(c)});return n};
 const visibleConv=()=>conv&&(!phone()||(sheet&&sp==="chat"))?conv:null;
 // Açıq çatı oxunmuş kimi qeyd edir
@@ -119,9 +123,12 @@ function go(a){if(notesOpen)readNotes();notesOpen=false;if(!a){render();return}
  if(a.k==="req"){if(phone()){sheet=true;sp="req"}else{tab="req";openG=null}render();return}
  if(a.k==="group"){openG=a.id;if(phone()){sheet=false;sp=null}else tab="groups";render()}}
 // Verilmiş çatı açır (telefonda tam səhifə)
-function openChat(ch){if(pm)closeM();conv=ch;notesOpen=false;menuOpen=false;if(phone()){sheet=true;sp="chat"}render()}
+function openChat(ch){if(pm)closeM();conv=ch;notesOpen=false;menuOpen=false;if(phone()){sheet=true;sp="chat"}else tab="chat";render()}
+// Yan menyudan / sürətli keçiddən bölməyə keçir (g = açılacaq qrupun nömrəsi)
+function goTab(k,g){if(tab==="notes"||(phone()&&sp==="notes"))readNotes();notesOpen=false;menuOpen=false;
+ if(phone()){if(k==="home"){sheet=false;sp=null}else{sheet=true;sp=k}}else tab=k;openG=g||null;render()}
 const openDM=id=>openChat(dmKey(uid,id));
-function toggleNotes(){if(notesOpen)readNotes();notesOpen=!notesOpen;render()}
+function toggleNotes(){goTab("notes")}
 const noteRows=()=>NOTES.length?NOTES.map((n,i)=>`<div class="nrow${n.read?"":" un"}" onclick="go(NOTES[${i}].act)"><b>${esc(n.t)}</b>${n.b?`<br><span class="mu">${esc(n.b)}</span>`:""}<br><small>${ago(n.time)}</small></div>`).join(""):"<p class='mu'>"+tr("No notifications yet")+"</p>";
 const noteHead=()=>`<div class="row sp"><b>🔔 ${tr("Notifications")}</b><button class="s" onclick="readNotes();render()">${tr("Mark all read")}</button></div>`;
 const notesPanel=()=>`<div id="notes" class="card">${noteHead()}${noteRows()}</div>`;

@@ -25,6 +25,15 @@ function kick(t){rpc("start_kick",{t}).then(ok=>{if(ok)toast(tr("Vote opened in 
 function newGroupForm(){const u=ME();if(visG().length>=maxG()){toast(tr("The group limit ({n}) is reached",{n:maxG()}),1);snd.err();return}if(u.is_admin||u.role==="teacher"||u.group_id!==null){toast(tr("Only idle students can create a group. Leave your group first."),1);snd.err();return}
  $("#modal").innerHTML=`<div class="ov"><div class="card" style="max-width:340px"><b>${tr("New group")}</b><p class="mu">${tr("You become the host.")}</p><input id="gname" placeholder="${tr("Group name")}" maxlength="30" style="width:100%;margin-bottom:8px"><div class="row"><span>${tr("Max members")}</span><select id="gcap">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<option ${n===5?"selected":""}>${n}</option>`).join("")}</select></div><div class="row" style="margin-top:12px"><button class="s" style="flex:1" onclick="closeM()">${tr("Cancel")}</button><button style="flex:1" onclick="makeGroup()">${tr("Create")}</button></div></div></div>`}
 // Yeni qrupu bazada yaradır
+// ---- Sinif seçimi ----
+async function loadClasses(){try{const {data}=await sb.rpc("staff_classes");CLS=data||[]}catch(e){CLS=[]}}
+async function loadChoices(){try{const {data}=await sb.rpc("class_choices");CHOICES=data||[]}catch(e){CHOICES=[]}}
+// Giriş zamanı: heyət üçün sinif siyahısı (bir sinif varsa avtomatik açılır), sinfi olmayan tələbə üçün hazır siniflər
+async function prepClass(){const u=ME();if(!u)return;if(isStaff(u)){await loadClasses();ACLASS=CLS.length===1?CLS[0].tag:null}else if(needTag())await loadChoices()}
+function enterClass(t){ACLASS=t;try{localStorage.setItem("lastClass",t)}catch(e){}screen="app";tab="home";conv=null;openG=null;sp=null;sheet=false;menuOpen=false;render()}
+async function leaveClass(){ACLASS=null;conv=null;openG=null;sp=null;sheet=false;menuOpen=false;screen="classes";render();await loadClasses();render()}
+// Tələbə siyahıdan sinfini seçir (bir dəfə; təsdiqdən sonra)
+function pickClass(t){ask(tr("Your class group number will be <b>{tag}</b>. You cannot change it yourself later. Continue?",{tag:esc(t)}),async()=>{try{if(document.activeElement&&document.activeElement.blur)document.activeElement.blur()}catch(e){}if(await rpc("set_my_class_tag",{t}))snd.ok()})}
 // Akademik qrup nömrəsini bir dəfə yazır (təsdiqdən sonra)
 function setMyTag(){const v=($("#ctag")?$("#ctag").value:"").trim().toLowerCase().replace(/\s+/g,"");
  if(!/^[a-z0-9][a-z0-9_-]{0,11}$/.test(v)){toast(tr("Class group number: 1 to 12 letters or digits, for example 636s"),1);snd.err();return}
@@ -54,10 +63,10 @@ async function start(user,fresh){uid=user.id;ready=false;loadSeen();loadNotes();
  try{MYSID=fresh?null:localStorage.getItem("sid")}catch(e){MYSID=null}
  if(!MYSID){MYSID=Math.random().toString(36).slice(2)+Date.now().toString(36);try{localStorage.setItem("sid",MYSID)}catch(e){}await sb.rpc("claim_session",{s:MYSID})}
  screen="boot";render();await loadMeta();let ok=await refresh(true);for(let i=0;!ok&&screen==="boot"&&i<3;i++){await new Promise(r=>setTimeout(r,1000));ok=await refresh(true)}
- if(screen!=="boot")return;if(!ok){err=tr("Connection problem. Please try again.");screen="login";return render()}screen="app";render();subscribe()}
+ if(screen!=="boot")return;if(!ok){err=tr("Connection problem. Please try again.");screen="login";return render()}await prepClass();if(screen!=="boot")return;screen=(isStaff(ME())&&!ACLASS)?"classes":"app";render();subscribe()}
 async function loadLogin(){screen="login";render()}
 // Çıxış edir
-async function logout(){if(chan){await sb.removeChannel(chan);chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}try{localStorage.removeItem("sid")}catch(e){}MYSID=null;uid=null;conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();await loadLogin()}
+async function logout(){if(chan){await sb.removeChannel(chan);chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}try{localStorage.removeItem("sid")}catch(e){}MYSID=null;uid=null;ACLASS=null;CLS=[];CHOICES=null;tab="home";conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();await loadLogin()}
 // Sayt açılanda ilk işləyən funksiya
 async function boot(){if(SUPABASE_URL.includes("PASTE")){screen="setup";return render()}
  sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);const {data}=await sb.auth.getSession();if(data.session)return start(data.session.user);await loadLogin()}
