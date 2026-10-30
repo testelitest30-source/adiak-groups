@@ -13,7 +13,13 @@ const phone=()=>innerWidth<=800, ME=()=>P[uid], grp=id=>G.find(g=>g.id===id), na
 const can=p=>{const u=ME(),a=(u&&u.perms)||[];return !!u&&(u.is_admin||a.includes("admin")||a.includes(p))};
 const adm=p=>!!p&&(p.is_admin||(p.perms||[]).includes("admin"));
 // Adın yanındakı rol nişanı (Admin, Teacher, Scorer)
-const tag=p=>!p?"":adm(p)?' <span class="chip tag">🛡 Admin</span>':p.role==="teacher"?' <span class="chip tag3">👩‍🏫 '+tr("Teacher")+'</span>':(p.perms||[]).includes("points")?' <span class="chip tag2">⭐ '+tr("Scorer")+'</span>':"";
+let TG=[],UT=[];
+const mytags=p=>UT.filter(x=>x.user_id===p.id).map(x=>TG.find(t=>t.id===x.tag_id)).filter(Boolean);
+const tchip=t=>`<span class="chip utag" style="--tc:${t.color}" title="${esc(t.descr||t.name)}">${esc(t.emoji)} ${esc(t.name)}</span>`;
+const tchips=(p,n)=>{const L=mytags(p);return L.slice(0,n).map(t=>" "+tchip(t)).join("")+(L.length>n?` <span class="chip">+${L.length-n}</span>`:"")};
+const tagBox=p=>{const L=mytags(p);return L.length?`<div class="tbox">${L.map(t=>`<div class="trow">${tchip(t)}<span class="mu">${esc(t.descr||"")}${t.reward>0?" · +"+t.reward+" "+tr("pts"):""}</span></div>`).join("")}</div>`:""};
+const tag0=p=>!p?"":adm(p)?' <span class="chip tag">🛡 Admin</span>':p.role==="teacher"?' <span class="chip tag3">👩‍🏫 '+tr("Teacher")+'</span>':(p.perms||[]).includes("points")?' <span class="chip tag2">⭐ '+tr("Scorer")+'</span>':"";
+const tag=p=>!p?"":tag0(p)+tchips(p,2);
 const PERM_TEXT={points:"give points",groups:"manage groups (add, move, remove students)",chats:"moderate chats",passwords:"see students' passwords",panel:"open the admin panel",admin:"do everything"};
 const permList=p=>["admin","points","groups","chats","passwords","panel"].filter(k=>p&&(p.is_admin||(p.perms||[]).includes("admin")||(p.perms||[]).includes(k)))
 // Sağ alt küncdəki 'Created by' kartı
@@ -140,6 +146,7 @@ const notesPage=()=>`<div class="card">${noteHead()}${noteRows()}</div>`;
 const TBL={profiles:()=>sb.from("profiles").select("id,name,avatar,points,group_id,is_admin,perms,role,class_tag"),groups:()=>sb.from("groups").select("*").order("id"),
  requests:()=>sb.from("requests").select("*"),join_ballots:()=>sb.from("join_ballots").select("*"),kicks:()=>sb.from("kicks").select("*"),kick_ballots:()=>sb.from("kick_ballots").select("*"),invites:()=>sb.from("invites").select("*"),
  point_events:()=>sb.from("point_events").select("*").order("id",{ascending:false}).limit(500),messages:()=>sb.from("messages").select("*").order("id",{ascending:false}).limit(300),sessions:()=>sb.from("sessions").select("sid").eq("user_id",uid)};
+TBL.tags=()=>sb.from("tags").select("*").order("id");TBL.user_tags=()=>sb.from("user_tags").select("*");
 const ALLT=Object.keys(TBL);let SIGS={};
 // Dəyişiklikdən əvvəlki vəziyyətin şəkli (diff() bildirişləri bununla müqayisə edir)
 const snapOld=()=>{const u0=ME();return{pts:u0?u0.points:0,g:u0?u0.group_id:null,rqs:new Map(RQ.map(x=>[x.id,x.stage])),kk:new Set(KK.map(x=>x.id)),iv:new Set(IV.map(x=>x.id)),mx:M.length?M[M.length-1].id:0,
@@ -158,7 +165,8 @@ async function refresh(force,tables){
  const o=snapOld(),A=t=>(force||ch.includes(t))&&ok(t);
  if(A("profiles")){P={};R.profiles.data.forEach(x=>{P[x.id]=x})}
  if(A("groups"))G=R.groups.data;if(A("requests"))RQ=R.requests.data;if(A("join_ballots"))JB=R.join_ballots.data;if(A("kicks"))KK=R.kicks.data;
- if(A("kick_ballots"))KB=R.kick_ballots.data;if(A("invites"))IV=R.invites.data;if(A("point_events"))PE=R.point_events.data;if(A("messages"))M=[...R.messages.data].reverse();
+ if(A("kick_ballots"))KB=R.kick_ballots.data;const ot=new Set(UT.filter(x=>x.user_id===uid).map(x=>x.tag_id));if(A("tags"))TG=R.tags.data;if(A("user_tags"))UT=R.user_tags.data;
+ if(ready){const nt=mytags({id:uid}).filter(t=>!ot.has(t.id))[0];if(nt){party();notify("🏷️ "+tr("New tag!"),nt.emoji+" "+nt.name,null,"ok")}}if(A("invites"))IV=R.invites.data;if(A("point_events"))PE=R.point_events.data;if(A("messages"))M=[...R.messages.data].reverse();
  const u=ME();if(u&&conv&&conv[0]==="g"&&u.group_id!==+conv.slice(2))conv=null;
  if(!ready){if(!Object.keys(SEEN).length)markSeen(true);ready=true;const n=inboxCount(),tx="📬 "+(n>1?tr("{n} items waiting for you",{n}):tr("1 item waiting for you"));if(n&&!(NOTES[0]&&!NOTES[0].read&&NOTES[0].t===tx))notify(tx,tr("Open Requests"),{k:"req"},"alert")}else diff(o);
  render();return true}

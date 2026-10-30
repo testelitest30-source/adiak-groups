@@ -61,7 +61,7 @@ const AZ={
 "Connection problem. Please try again.":"Bağlantı problemi. Yenidən cəhd edin.","Connection problem. Retrying…":"Bağlantı problemi. Yenidən cəhd edilir…",
 "You were signed out because this account was opened on another device.":"Bu hesaba başqa cihazdan daxil olunduğu üçün sessiyanız bağlandı.",
 /* --- Rollar və rütbələr --- */
-"Created by":"Yaradanlar","host":"host","teacher":"müəllim","idle":"qrupsuz","Teacher":"Müəllim","Scorer":"Xal verən",
+"Created by":"Yaradanlar","host":"host","teacher":"müəllim","idle":"qrupsuz","Teacher":"Müəllim","Scorer":"Xal verən","New tag!":"Yeni tag!","Tags":"Taglar",
 "Newcomer":"Yeni gələn","Speaker":"Çıxışçı","Orator":"Natiq","Maestro":"Ustad",
 /* --- Fayl, səs, təsdiq --- */
 "Files must be under 25 MB":"Fayllar 25 MB-dan kiçik olmalıdır","Uploading {name}…":"{name} yüklənir…","Sent ✓":"Göndərildi ✓",

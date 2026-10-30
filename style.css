@@ -158,3 +158,6 @@ body{background-image:var(--pat);background-size:520px 520px;background-attachme
 .hello{font-size:17px}
 .cl-wrap>.row.sp{margin-top:36px;gap:12px}
 @media(max-width:800px){#main{padding-bottom:86px}}
+
+.chip.utag{background:color-mix(in srgb,var(--tc) 14%,transparent);color:var(--tc);border:1px solid color-mix(in srgb,var(--tc) 40%,transparent);font-weight:600}
+.tbox{margin:10px 0 0}.trow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}.trow .mu{font-size:12px}

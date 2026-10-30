@@ -18,7 +18,7 @@ const cards=()=>conv[0]==="g"?RQ.filter(r=>r.group_id===+conv.slice(2)).map(join
 
 /* ================= SƏHİFƏLƏR (profil, çat, qruplar, müraciətlər, ayarlar, menyu) ================= */
 // Sol üstdəki profil kartı
-function profile(){const u=ME(),rk=rank(u.points);return`<div class="card"><div class="row">${av(u,"big")}<div style="flex:1"><b>${esc(u.name)}</b>${tag(u)}${u.class_tag?` <span class="chip" title="${tr("Class group")}">${esc(u.class_tag)}</span>`:""}<br><span class="mu">${rk.name} · ${u.points} ${tr("pts")}</span><div class="bar"><i style="width:${rk.pct}%"></i></div>${gchip(u)}</div></div></div>`}
+function profile(){const u=ME(),rk=rank(u.points);return`<div class="card"><div class="row">${av(u,"big")}<div style="flex:1"><b>${esc(u.name)}</b>${tag(u)}${u.class_tag?` <span class="chip" title="${tr("Class group")}">${esc(u.class_tag)}</span>`:""}<br><span class="mu">${rk.name} · ${u.points} ${tr("pts")}</span><div class="bar"><i style="width:${rk.pct}%"></i></div>${gchip(u)}</div></div>${tagBox(u)}</div>`}
 const convOther=k=>{const x=k.split(":");return x[1]===uid?x[2]:x[1]};
 function convTitle(k){if(k==="all")return tr("Everyone");if(k[0]==="g")return gname(+k.slice(2))+" ("+tr("my group")+")";const x=k.split(":");return nameOf(x[1]===uid?x[2]:x[1])}
 function openC(k){conv=k;render()}
@@ -164,7 +164,7 @@ function pointsFx(n,from,to){const b=$("#ptsbig"),raf=typeof requestAnimationFra
 function drawProfile(first){const p=P[pm];if(!p){closeM();return}const me=ME(),st=statsOf(p.id),rk=rank(p.points),mine=p.id===uid,gv=$("#gp")?$("#gp").value:"",
  myG=me.group_id!==null?grp(me.group_id):null,canInvite=!p.is_admin&&p.group_id===null&&!!myG&&myG.host_id===uid&&mem(myG.id).length<myG.capacity&&!IV.some(x=>x.user_id===p.id&&x.group_id===myG.id);
  $("#modal").innerHTML=`<div class="ov${first?"":" still"}" onclick="if(event.target===this)closeProfile()"><div class="card pm" style="max-width:360px;width:100%;max-height:88vh;overflow:auto;margin:0">
-  <div style="text-align:center">${av(p,"huge")}<h3 style="margin:8px 0 2px">${esc(p.name)}</h3><div style="margin-bottom:4px">${tag(p)}</div><span class="mu">${rk.name}</span> ${gchip(p)}${online.has(p.id)?' <span class="chip on">'+tr("online")+'</span>':""}</div>
+  <div style="text-align:center">${av(p,"huge")}<h3 style="margin:8px 0 2px">${esc(p.name)}</h3><div style="margin-bottom:4px">${tag0(p)}</div>${tagBox(p)}<span class="mu">${rk.name}</span> ${gchip(p)}${online.has(p.id)?' <span class="chip on">'+tr("online")+'</span>':""}</div>
   <div class="bar"><i style="width:${rk.pct}%"></i></div>
   <div class="stat"><div><b id="ptsbig">${p.points}</b><span class="mu">${tr("total points")}</span></div><div><b>${st.n}</b><span class="mu">${tr("presentations")}</span></div><div><b>${st.best}</b><span class="mu">${tr("best score")}</span></div></div>
   ${st.avg?`<p class="mu" style="text-align:center;margin:8px 0 0">${tr("Average per presentation: {n}",{n:"<b>"+st.avg+"</b>"})}</p>`:""}
