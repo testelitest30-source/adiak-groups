@@ -105,3 +105,12 @@ label.l{display:block;font-size:13px;font-weight:600;color:var(--mu);margin:14px
 .lang-a button{flex:1;padding:7px 10px;border-radius:10px;background:#ffffff26;color:#fff;box-shadow:none;border:0;opacity:.7;font-weight:700}
 .lang-a button.on{opacity:1;background:#ffffff59}
 .panel .lang-a{margin:0 0 10px;justify-content:flex-end}.panel .lang-a button{flex:none;background:var(--soft);color:var(--tx);border:1px solid var(--bd);opacity:1}.panel .lang-a button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+
+/* Sinif kartları, fayl düyməsi və ana səhifə arxa fonu */
+.main{background:radial-gradient(700px 420px at 90% -5%,#7c3aed2e,transparent 65%) fixed,radial-gradient(560px 400px at 8% 105%,#ec48992b,transparent 65%) fixed,radial-gradient(var(--bd,#e1e6f0) 1px,transparent 1px) 0 0/24px 24px fixed}
+.cls-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.cls-card{background:var(--card,#fff);border:1px solid var(--bd,#e1e6f0);border-radius:18px;padding:16px;cursor:pointer;box-shadow:var(--sh,0 6px 20px #4f46e522);transition:transform .15s,box-shadow .2s}
+.cls-card:hover{transform:translateY(-3px)}
+.cls-tag{font-size:28px;font-weight:800;background:linear-gradient(120deg,var(--ac,#4f46e5),var(--ac2,#7c3aed));-webkit-background-clip:text;background-clip:text;color:transparent}
+.cls-n{margin:8px 0}
+.fbtn{display:inline-block;padding:9px 12px;border-radius:12px;background:var(--bd,#e1e6f0);cursor:pointer}

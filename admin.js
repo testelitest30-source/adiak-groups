@@ -77,22 +77,22 @@ async function load(tables){
   (has("chats")||has("admin"))&&w("archives")?sb.from("archives").select("*").order("id",{ascending:false}):none,
   tab==="pass"&&has("passwords")&&(all||w("profiles")||w("password_vault"))?sb.rpc("admin_list_passwords"):none]);
  if(p.error){toast(p.error.message,1);return}
- if(p.data)P=p.data;if(g.data)G=g.data;(s.data||[]).forEach(x=>{SET[x.key]=x.value});if(m.data)M=[...m.data].reverse();if(a.data)AR=a.data;if(pw.data)PW=pw.data;ME=P.find(x=>x.id===uid)||ME;
+ if(p.data)P=p.data;if(g.data)G=g.data;(s.data||[]).forEach(x=>{SET[x.key]=x.value});if(m.data)M=[...m.data].reverse();if(a.data)AR=a.data;if(pw.data)PW=pw.data;ME=P.find(x=>x.id===uid)||ME;if(all||tables.includes("profiles"))await loadCls();
  if(tab==="day"&&(all||w("archives")||w("archived_messages")))for(const x of AR){try{const r=await sb.from("archived_messages").select("id",{count:"exact",head:true}).eq("archive_id",x.id);x.n=r.count||0}catch(e){x.n=0}}
- const sig=JSON.stringify([P.map(x=>[x.id,x.name,x.points,x.group_id,x.login,x.role,(x.perms||[]).join(),x.is_admin,x.pw_updated_at]),G.map(x=>[x.id,x.name,x.capacity,x.host_id]),M.length,M.length?M[M.length-1].id:0,AR.map(x=>[x.id,x.n]),SET.max_groups,PW.map(x=>[x.user_id,x.source,x.updated_at])]);
+ const sig=JSON.stringify([P.map(x=>[x.id,x.name,x.points,x.group_id,x.login,x.role,(x.perms||[]).join(),x.is_admin,x.pw_updated_at]),G.map(x=>[x.id,x.name,x.capacity,x.host_id]),M.length,M.length?M[M.length-1].id:0,AR.map(x=>[x.id,x.n]),SET.max_groups,JSON.stringify([SC,CS,P.map(x=>x.class_tag)]),PW.map(x=>[x.user_id,x.source,x.updated_at])]);
  if(sig!==lastSig){lastSig=sig;draw()}
 }
 
 /* ---------- 4. ÜMUMİ GÖRÜNÜŞ ---------- */
 // Hər tab üçün lazım olan yetki
-const TABS=[["dash","📊","Dashboard","panel"],["people","👥","People","panel"],["groups","🧩","Groups","panel"],["chats","💬","Chats","chats"],["pass","🔑","Passwords","passwords"],["day","🗂️","Close the day","admin"],["import","📥","Import names","admin"],["settings","⚙️","Settings","admin"]];
-const visibleTabs=()=>TABS.filter(t=>has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
+const TABS=[["dash","📊","Dashboard","panel"],["people","👥","People","panel"],["groups","🧩","Groups","panel"],["classes","🏫","Classes","classes"],["chats","💬","Chats","chats"],["pass","🔑","Passwords","passwords"],["day","🗂️","Close the day","admin"],["import","📥","Import names","admin"],["settings","⚙️","Settings","admin"]];
+const visibleTabs=()=>isStar()?[{k:"classes",i:"🏫",t:"My classes"}]:TABS.filter(t=>t[3]==="classes"?has("admin"):has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
 const switchTab=k=>{tab=k;if(k==="pass"||k==="day")lastSig="";draw();if(k==="pass"||k==="day")load()};
 // Yan menyu + seçilmiş səhifə. Düymə basılarkən gözləyir ki, klik itməsin.
 function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=true;return}if(typingNow()){pendingDraw=true;return}pendingDraw=false;
  const sy=window.scrollY,mn=$(".main"),ms=mn?mn.scrollTop:0;
  const tabs=visibleTabs();if(!tabs.find(t=>t.k===tab))tab=tabs[0].k;
- const page={dash,people,groups,chats,pass:passPage,day,import:imp,settings}[tab]();
+ const page={dash,people,groups,chats,pass:passPage,day,import:imp,settings,classes:clsPage}[tab]();
  $("#root").innerHTML=`<div class="app"><aside class="side"><div class="brand"><div class="logo">🛠️</div><div><b>ADIAK Admin</b><small>Team Maker control panel</small></div></div>
   <nav class="nav">${tabs.map(t=>`<button class="${tab===t.k?"on":""}" onclick="switchTab('${t.k}')"><span class="i">${t.i}</span>${t.t}</button>`).join("")}</nav>
   ${admLang()}<div class="me"><div class="row">${avatar(ME)}<div class="grow"><b>${esc(ME.name)}</b><div style="margin-top:3px">${roleChip(ME)}</div></div></div><button onclick="signOut()">Sign out</button><a href="index.html">← Student site</a></div></aside>
@@ -113,7 +113,7 @@ function dash(){const st=P.filter(isStudent),te=P.filter(p=>p.role==="teacher"),
  <div class="panel"><h3>Team &amp; permissions</h3><p class="hint">Who can do what. Open a person to change it with the switches.</p>
   <div class="plist">${staff.map(p=>`<div class="pc" onclick="person('${p.id}')">${avatar(p)}<div class="grow"><b>${esc(p.name)}</b><div class="chips">${roleChip(p)}${permChips(p)}</div></div></div>`).join("")||empty("👥","No staff yet")}</div></div>
  <div class="panel"><h3>Quick actions</h3><p class="hint">Shortcuts to the things you do most.</p><div class="row wrap">
-  ${has("panel")?`<button onclick="switchTab('people')">👥 People</button>`:""}${has("admin")?`<button onclick="switchTab('import')">📥 Import names</button><button class="s" onclick="switchTab('day')">🗂️ Close the day</button>`:""}${has("passwords")?`<button class="s" onclick="switchTab('pass')">🔑 Passwords</button>`:""}${has("admin")?`<button class="s" onclick="addPerson()">➕ Add person</button>`:""}</div></div>
+  ${has("panel")?`<button onclick="switchTab('people')">👥 People</button>`:""}${has("admin")?`<button onclick="switchTab('import')">📥 Import names</button><button class="s" onclick="switchTab('day')">🗂️ Close the day</button>`:""}${has("passwords")?`<button class="s" onclick="switchTab('pass')">🔑 Passwords</button>`:""}${has("admin")?`<button class="s" onclick="addPerson()">➕ Add person</button><button class="s" onclick="switchTab('classes')">🏫 Classes</button>`:""}</div></div>
  ${has("chats")?`<div class="panel"><h3>Latest messages</h3>${last.map(m=>`<div class="msg"><div><b>${esc(nm(m.sender))}</b> <small>${esc(title(m.channel))}</small><br>${esc(m.body||"📎 "+(m.file_name||"file"))}</div></div>`).join("")||empty("💬","No messages yet")}</div>`:""}`}
 
 /* ---------- 6. İNSANLAR ---------- */
@@ -245,6 +245,37 @@ function settings(){return head("Settings","Rules of the site")+
   <div class="panel" style="border-color:var(--bad)"><h3 style="color:var(--bad)">Danger zone</h3><p class="hint">Deletes ALL messages, archives, point history and groups, and sets every score to 0. Accounts and passwords stay. Use it once, to clear test data before launch.</p><button class="d" onclick="resetAll()">Clear all data…</button></div>`}
 const saveMax=()=>call("admin_set_setting",{k:"max_groups",v:val("mg")},"Saved");
 function resetAll(){modal(`<div class="sheet-h"><h3 style="margin:0;color:var(--bad)">Clear all data?</h3></div><div class="sheet-b"><p>${tr("This cannot be undone. Type <b>RESET</b> to confirm.")}</p><input id="rs" placeholder="RESET"><div class="row" style="margin-top:16px"><button class="s" onclick="closeM()">Cancel</button><button class="d" onclick="if(val('rs')==='RESET'){closeM();call('admin_reset_all',{},'Everything cleared')}else toast('Type RESET exactly',1)">Clear everything</button></div></div>`,true)}
+
+/* ---------- 9b. SİNİFLƏR (admin: hamısı · starosta: yalnız öz sinfi) ---------- */
+let SC=[],CS=[];
+const isStar=()=>!!ME&&ME.role==="student"&&!has("admin");
+async function loadCls(){try{const a=await sb.rpc("staff_classes");SC=a.data||[];const b=await sb.from("class_staff").select("*");CS=b.data||[]}catch(e){SC=[];CS=[]}}
+const canC=(t,p)=>has("admin")||!!((SC.find(c=>c.tag===t)||{}).perms||[]).includes(p);
+const CPERMS=[["points","⭐","Give points"],["groups","👥","Manage groups"],["chats","💬","Moderate chats"],["passwords","🔑","Passwords"],["accounts","➕","Add students"]];
+function clsPage(){return head("Classes",has("admin")?"Every class group. Open one to manage its students and class reps.":"The classes you manage.",has("admin")?`<button onclick="addClass()">➕ Add class</button>`:"")+
+ `<div class="cls-grid">${SC.map(c=>{const r=CS.filter(x=>x.class_tag===c.tag&&x.role==="starosta");return`<div class="cls-card" onclick="openCls('${c.tag}')"><div class="cls-tag">${esc(c.tag)}</div><div class="mu">${esc(c.title||"")}</div><div class="cls-n"><b>${c.students}</b> <span>students</span></div>${r.map(x=>`<span class="chip">⭐ ${esc(nm(x.user_id))}</span>`).join("")}</div>`}).join("")||empty("🏫","No classes yet")}</div>`}
+// Sinif əlavə etmə: yazaraq və ya .txt/.md faylı ilə (hər sətir: 636s  və ya  636s | Ad)
+function addClass(){modal(`<div class="sheet-h"><h3 style="margin:0">🏫 Add class</h3><p class="mu" style="margin:6px 0 0">Type a class number, or upload a .txt / .md file with one class per line (for example 636s or 636s | Title).</p></div><div class="sheet-b"><label class="l">Class number</label><input id="ct" placeholder="636s" maxlength="12" autocapitalize="none"><label class="l">Title (optional)</label><input id="ctt"><div class="row wrap" style="margin-top:14px"><button onclick="makeClasses([[val('ct').toLowerCase().replace(/\\s+/g,''),val('ctt').trim()]])">Add</button><label class="fbtn">📄 Upload .txt / .md<input type="file" accept=".txt,.md,text/plain,text/markdown" style="display:none" onchange="classFile(this)"></label><button class="s" onclick="closeM()">Cancel</button></div></div>`,true)}
+const parseCls=t=>{const out=[],seen=new Set();String(t).split(/\r?\n/).forEach(l=>{if(/^\s*#/.test(l))return;l=l.replace(/^[\s>*+-]+/,"");const m=l.split(/\s*[|,;\t:–—]\s*|\s+-\s+/),tag=(m[0]||"").toLowerCase().replace(/\s+/g,"");if(/^[a-z0-9][a-z0-9_-]{0,11}$/.test(tag)&&!seen.has(tag)){seen.add(tag);out.push([tag,m.slice(1).join(" ").trim()])}});return out};
+function classFile(i){const f=i.files[0];if(!f)return;f.text().then(t=>{const L=parseCls(t);if(!L.length){toast("No class numbers found in the file",1);return}confirmBox(tr("Add <b>{n}</b> classes: {l}?",{n:L.length,l:esc(L.map(x=>x[0]).join(", "))}),()=>makeClasses(L),"Add")})}
+async function makeClasses(L){let ok=0,bad=[];for(const [t,ttl] of L){const {error}=await sb.rpc("admin_create_class",{t,ttl:ttl||null});if(error)bad.push(t+": "+error.message);else ok++}closeM();await load();toast(ok+" class(es) added"+(bad.length?" · "+bad.length+" skipped ("+bad[0]+")":""),!ok)}
+// Sinifin səhifəsi: starosta/müəllimlər + tələbələr
+function openCls(tag){const c=SC.find(x=>x.tag===tag);if(!c)return;const S=P.filter(p=>isStudent(p)&&p.class_tag===tag),st=CS.filter(x=>x.class_tag===tag),A=has("admin");
+ modal(`<div class="sheet-h"><h3 style="margin:0">🏫 ${esc(tag)} ${c.title?"· "+esc(c.title):""}</h3><p class="mu" style="margin:6px 0 0">${S.length} students</p></div><div class="sheet-b"><div class="row wrap">${canC(tag,"accounts")?`<button onclick="addStu('${tag}')">➕ Add students</button>`:""}${A?`<button class="s" onclick="repForm('${tag}')">⭐ Set class rep</button>`:""}</div>
+ <p style="margin:16px 0 6px"><b>Class reps &amp; teachers</b></p>${st.map(x=>`<div class="msg"><div><b>${esc(nm(x.user_id))}</b> <span class="chip">${x.role==="starosta"?"⭐ Class rep":"👩‍🏫 Teacher"}</span> ${(x.perms||[]).map(k=>`<span class="chip">${esc(k)}</span>`).join("")}</div>${A?`<button class="s" onclick="rmStaff('${x.user_id}','${tag}')">Remove</button>`:""}</div>`).join("")||`<p class="mu">None yet</p>`}
+ <p style="margin:16px 0 6px"><b>Students</b></p><div class="scroll" style="max-height:34vh"><table class="tbl"><tr><th>Name</th><th>ID</th><th>Group</th><th>Points</th></tr>${S.map(p=>`<tr><td>${esc(p.name)}</td><td class="mono">${esc(short(p.login))}</td><td>${esc(gname(p.group_id))}</td><td>${p.points}</td></tr>`).join("")}</table></div>
+ <div class="row" style="margin-top:14px"><button class="s" style="flex:1" onclick="closeM()">Close</button></div></div>`)}
+function addStu(tag){modal(`<div class="sheet-h"><h3 style="margin:0">➕ Add students · ${esc(tag)}</h3><p class="mu" style="margin:6px 0 0">One full name per line, or upload a .txt / .md file. IDs and temporary passwords are created automatically.</p></div><div class="sheet-b"><textarea id="sn" rows="8" placeholder="Əli Məmmədov&#10;Aysel Hüseynova"></textarea><div class="row wrap" style="margin-top:12px"><button onclick="doAddStu('${tag}')">Create IDs and passwords</button><label class="fbtn">📄 Upload .txt / .md<input type="file" accept=".txt,.md" style="display:none" onchange="nameFile(this)"></label><button class="s" onclick="openCls('${tag}')">Cancel</button></div></div>`)}
+function nameFile(i){const f=i.files[0];if(f)f.text().then(t=>{$("#sn").value=t.split(/\r?\n/).map(l=>l.replace(/^[\s>*#+-]+/,"").trim()).filter(Boolean).join("\n")})}
+async function doAddStu(tag){const names=val("sn").split("\n").map(s=>s.trim()).filter(Boolean);if(!names.length){toast("Paste at least one name",1);return}const {data,error}=await sb.rpc("admin_add_students",{cls:tag,names});if(error){toast(error.message,1);return}await load();showImport(data||[])}
+// Starosta / müəllim təyini (yalnız admin)
+function repForm(tag){const L=[...P.filter(p=>isStudent(p)&&p.class_tag===tag),...P.filter(p=>p.role==="teacher"&&!p.is_admin)];
+ modal(`<div class="sheet-h"><h3 style="margin:0">⭐ Set class rep · ${esc(tag)}</h3><p class="mu" style="margin:6px 0 0">The person can only manage this class, with the permissions you tick.</p></div><div class="sheet-b"><label class="l">Person</label><select id="rp">${L.map(p=>`<option value="${p.id}">${esc(p.name)}${p.role==="teacher"?" (teacher)":""}</option>`).join("")}</select>
+ <div style="margin-top:12px">${CPERMS.map(x=>`<label class="row" style="cursor:pointer;margin:6px 0"><input type="checkbox" id="pm_${x[0]}" style="width:auto" ${x[0]!=="passwords"?"checked":""}> ${x[1]} ${x[2]}</label>`).join("")}</div>
+ <div class="row" style="margin-top:14px"><button class="s" onclick="openCls('${tag}')">Cancel</button><button onclick="saveRep('${tag}')">Save</button></div></div>`,true)}
+async function saveRep(tag){const u=val("rp");if(!u){toast("No one to choose",1);return}const p=CPERMS.map(x=>x[0]).filter(k=>$("#pm_"+k).checked),r=(P.find(x=>x.id===u)||{}).role==="teacher"?"teacher":"starosta";if(await call("admin_set_staff",{u,cls:tag,r,p},"Saved"))openCls(tag)}
+async function rmStaff(u,cls){if(await call("admin_remove_staff",{u,cls},"Removed"))openCls(cls)}
+Object.assign(ADM,{"Classes":"Siniflər","My classes":"Mənim siniflərim","🏫 Classes":"🏫 Siniflər","➕ Add class":"➕ Sinif əlavə et","Every class group. Open one to manage its students and class reps.":"Bütün siniflər. Tələbələri və starostaları idarə etmək üçün birini açın.","The classes you manage.":"İdarə etdiyiniz siniflər.","No classes yet":"Hələ sinif yoxdur","Class number":"Sinif nömrəsi","Title (optional)":"Ad (istəyə bağlı)","Add":"Əlavə et","📄 Upload .txt / .md":"📄 .txt / .md yüklə","Class reps & teachers":"Starostalar və müəllimlər","⭐ Class rep":"⭐ Starosta","None yet":"Hələ yoxdur","➕ Add students":"➕ Tələbə əlavə et","⭐ Set class rep":"⭐ Starosta təyin et","Create IDs and passwords":"ID və parol yarat","Person":"Şəxs","Save":"Yadda saxla"});
 
 /* ---------- 11. BAŞLANĞIC ---------- */
 // Düymə basılarkən canlı yenilənmə gözləyir (klik itməsin)
