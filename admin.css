@@ -114,3 +114,4 @@ label.l{display:block;font-size:13px;font-weight:600;color:var(--mu);margin:14px
 .cls-tag{font-size:28px;font-weight:800;background:linear-gradient(120deg,var(--ac,#4f46e5),var(--ac2,#7c3aed));-webkit-background-clip:text;background-clip:text;color:transparent}
 .cls-n{margin:8px 0}
 .fbtn{display:inline-block;padding:9px 12px;border-radius:12px;background:var(--bd,#e1e6f0);cursor:pointer}
+.tchip{display:inline-block;padding:4px 12px;border-radius:99px;font-weight:700;font-size:14px;color:var(--tc);background:color-mix(in srgb,var(--tc) 14%,transparent);border:1px solid color-mix(in srgb,var(--tc) 40%,transparent)}

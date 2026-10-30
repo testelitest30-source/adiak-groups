@@ -79,20 +79,20 @@ async function load(tables){
  if(p.error){toast(p.error.message,1);return}
  if(p.data)P=p.data;if(g.data)G=g.data;(s.data||[]).forEach(x=>{SET[x.key]=x.value});if(m.data)M=[...m.data].reverse();if(a.data)AR=a.data;if(pw.data)PW=pw.data;ME=P.find(x=>x.id===uid)||ME;if(all||tables.includes("profiles"))await loadCls();
  if(tab==="day"&&(all||w("archives")||w("archived_messages")))for(const x of AR){try{const r=await sb.from("archived_messages").select("id",{count:"exact",head:true}).eq("archive_id",x.id);x.n=r.count||0}catch(e){x.n=0}}
- const sig=JSON.stringify([P.map(x=>[x.id,x.name,x.points,x.group_id,x.login,x.role,(x.perms||[]).join(),x.is_admin,x.pw_updated_at]),G.map(x=>[x.id,x.name,x.capacity,x.host_id]),M.length,M.length?M[M.length-1].id:0,AR.map(x=>[x.id,x.n]),SET.max_groups,JSON.stringify([SC,CS,P.map(x=>x.class_tag)]),PW.map(x=>[x.user_id,x.source,x.updated_at])]);
+ const sig=JSON.stringify([P.map(x=>[x.id,x.name,x.points,x.group_id,x.login,x.role,(x.perms||[]).join(),x.is_admin,x.pw_updated_at]),G.map(x=>[x.id,x.name,x.capacity,x.host_id]),M.length,M.length?M[M.length-1].id:0,AR.map(x=>[x.id,x.n]),SET.max_groups,JSON.stringify([TG,UT,SC,CS,P.map(x=>x.class_tag)]),PW.map(x=>[x.user_id,x.source,x.updated_at])]);
  if(sig!==lastSig){lastSig=sig;draw()}
 }
 
 /* ---------- 4. ÜMUMİ GÖRÜNÜŞ ---------- */
 // Hər tab üçün lazım olan yetki
-const TABS=[["dash","📊","Dashboard","panel"],["people","👥","People","panel"],["groups","🧩","Groups","panel"],["classes","🏫","Classes","classes"],["chats","💬","Chats","chats"],["pass","🔑","Passwords","passwords"],["day","🗂️","Close the day","admin"],["import","📥","Import names","admin"],["settings","⚙️","Settings","admin"]];
-const visibleTabs=()=>isStar()?[{k:"classes",i:"🏫",t:"My classes"}]:TABS.filter(t=>t[3]==="classes"?has("admin"):has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
+const TABS=[["dash","📊","Dashboard","panel"],["people","👥","People","panel"],["groups","🧩","Groups","panel"],["classes","🏫","Classes","classes"],["tags","🏷️","Tags","tags"],["chats","💬","Chats","chats"],["pass","🔑","Passwords","passwords"],["day","🗂️","Close the day","admin"],["import","📥","Import names","admin"],["settings","⚙️","Settings","admin"]];
+const visibleTabs=()=>isStar()?[{k:"classes",i:"🏫",t:"My classes"}]:TABS.filter(t=>(t[3]==="classes"||t[3]==="tags")?has("admin"):has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
 const switchTab=k=>{tab=k;if(k==="pass"||k==="day")lastSig="";draw();if(k==="pass"||k==="day")load()};
 // Yan menyu + seçilmiş səhifə. Düymə basılarkən gözləyir ki, klik itməsin.
 function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=true;return}if(typingNow()){pendingDraw=true;return}pendingDraw=false;
  const sy=window.scrollY,mn=$(".main"),ms=mn?mn.scrollTop:0;
  const tabs=visibleTabs();if(!tabs.find(t=>t.k===tab))tab=tabs[0].k;
- const page={dash,people,groups,chats,pass:passPage,day,import:imp,settings,classes:clsPage}[tab]();
+ const page={dash,people,groups,chats,pass:passPage,day,import:imp,settings,classes:clsPage,tags:tagPage}[tab]();
  $("#root").innerHTML=`<div class="app"><aside class="side"><div class="brand"><div class="logo">🛠️</div><div><b>ADIAK Admin</b><small>Team Maker control panel</small></div></div>
   <nav class="nav">${tabs.map(t=>`<button class="${tab===t.k?"on":""}" onclick="switchTab('${t.k}')"><span class="i">${t.i}</span>${t.t}</button>`).join("")}</nav>
   ${admLang()}<div class="me"><div class="row">${avatar(ME)}<div class="grow"><b>${esc(ME.name)}</b><div style="margin-top:3px">${roleChip(ME)}</div></div></div><button onclick="signOut()">Sign out</button><a href="index.html">← Student site</a></div></aside>
@@ -247,9 +247,9 @@ const saveMax=()=>call("admin_set_setting",{k:"max_groups",v:val("mg")},"Saved")
 function resetAll(){modal(`<div class="sheet-h"><h3 style="margin:0;color:var(--bad)">Clear all data?</h3></div><div class="sheet-b"><p>${tr("This cannot be undone. Type <b>RESET</b> to confirm.")}</p><input id="rs" placeholder="RESET"><div class="row" style="margin-top:16px"><button class="s" onclick="closeM()">Cancel</button><button class="d" onclick="if(val('rs')==='RESET'){closeM();call('admin_reset_all',{},'Everything cleared')}else toast('Type RESET exactly',1)">Clear everything</button></div></div>`,true)}
 
 /* ---------- 9b. SİNİFLƏR (admin: hamısı · starosta: yalnız öz sinfi) ---------- */
-let SC=[],CS=[];
+let SC=[],CS=[],TG=[],UT=[];
 const isStar=()=>!!ME&&ME.role==="student"&&!has("admin");
-async function loadCls(){try{const a=await sb.rpc("staff_classes");SC=a.data||[];const b=await sb.from("class_staff").select("*");CS=b.data||[]}catch(e){SC=[];CS=[]}}
+async function loadCls(){try{const a=await sb.rpc("staff_classes");SC=a.data||[];const b=await sb.from("class_staff").select("*");CS=b.data||[];const c=await sb.from("tags").select("*").order("id"),d=await sb.from("user_tags").select("*");TG=c.data||[];UT=d.data||[]}catch(e){SC=[];CS=[];TG=[];UT=[]}}
 const canC=(t,p)=>has("admin")||!!((SC.find(c=>c.tag===t)||{}).perms||[]).includes(p);
 const CPERMS=[["points","⭐","Give points"],["groups","👥","Manage groups"],["chats","💬","Moderate chats"],["passwords","🔑","Passwords"],["accounts","➕","Add students"]];
 function clsPage(){return head("Classes",has("admin")?"Every class group. Open one to manage its students and class reps.":"The classes you manage.",has("admin")?`<button onclick="addClass()">➕ Add class</button>`:"")+
@@ -276,6 +276,30 @@ function repForm(tag){const L=[...P.filter(p=>isStudent(p)&&p.class_tag===tag),.
 async function saveRep(tag){const u=val("rp");if(!u){toast("No one to choose",1);return}const p=CPERMS.map(x=>x[0]).filter(k=>$("#pm_"+k).checked),r=(P.find(x=>x.id===u)||{}).role==="teacher"?"teacher":"starosta";if(await call("admin_set_staff",{u,cls:tag,r,p},"Saved"))openCls(tag)}
 async function rmStaff(u,cls){if(await call("admin_remove_staff",{u,cls},"Removed"))openCls(cls)}
 Object.assign(ADM,{"Classes":"Siniflər","My classes":"Mənim siniflərim","🏫 Classes":"🏫 Siniflər","➕ Add class":"➕ Sinif əlavə et","Every class group. Open one to manage its students and class reps.":"Bütün siniflər. Tələbələri və starostaları idarə etmək üçün birini açın.","The classes you manage.":"İdarə etdiyiniz siniflər.","No classes yet":"Hələ sinif yoxdur","Class number":"Sinif nömrəsi","Title (optional)":"Ad (istəyə bağlı)","Add":"Əlavə et","📄 Upload .txt / .md":"📄 .txt / .md yüklə","Class reps & teachers":"Starostalar və müəllimlər","⭐ Class rep":"⭐ Starosta","None yet":"Hələ yoxdur","➕ Add students":"➕ Tələbə əlavə et","⭐ Set class rep":"⭐ Starosta təyin et","Create IDs and passwords":"ID və parol yarat","Person":"Şəxs","Save":"Yadda saxla"});
+
+/* ---------- 9c. TAGLAR ---------- */
+const TRULES=[["manual","Only admins give it"],["points","Automatic: reaches N points"],["team","Automatic: joins a team"],["host","Automatic: becomes a team host"]];
+const tagChip=t=>`<span class="tchip" style="--tc:${t.color}">${esc(t.emoji)} ${esc(t.name)}</span>`;
+const ruleTxt=t=>t.rule==="points"?tr("Automatic at {n} points",{n:t.rule_n}):(TRULES.find(r=>r[0]===t.rule)||TRULES[0])[1];
+function tagPage(){return head("Tags","Badges for students. Describe what it means, what it gives and how it is earned.",`<button onclick="tagForm()">➕ New tag</button>`)+
+ `<div class="cls-grid">${TG.map(t=>`<div class="cls-card" onclick="tagView(${t.id})">${tagChip(t)}<p class="mu" style="margin:10px 0 6px">${esc(t.descr||"")}</p><div>${t.reward>0?`🎁 +${t.reward} points`:"📝 Text only"}</div><div class="mu">${esc(ruleTxt(t))}</div><div class="cls-n"><b>${UT.filter(x=>x.tag_id===t.id).length}</b> <span>students</span></div></div>`).join("")||empty("🏷️","No tags yet")}</div>`}
+function tagForm(id){const t=TG.find(x=>x.id===id)||{name:"",emoji:"🏷️",color:"#7c3aed",descr:"",reward:0,rule:"manual",rule_n:100};
+ modal(`<div class="sheet-h"><h3 style="margin:0">${id?"✏️ Edit tag":"🏷️ New tag"}</h3></div><div class="sheet-b"><label class="l">Name</label><input id="tn" maxlength="24" value="${esc(t.name)}"><div class="row"><div style="flex:1"><label class="l">Emoji</label><input id="te" maxlength="4" value="${esc(t.emoji)}"></div><div><label class="l">Color</label><input id="tc" type="color" value="${t.color}" style="width:64px;padding:2px"></div></div>
+ <label class="l">Description (what it means and why it is given)</label><textarea id="td" rows="3" maxlength="300">${esc(t.descr)}</textarea>
+ <label class="l">Reward points (0 = just a text badge)</label><input id="tr" type="number" min="0" max="1000" value="${t.reward}">
+ <label class="l">How is it earned?</label><select id="tl" onchange="$('#tnw').style.display=this.value==='points'?'':'none'">${TRULES.map(r=>`<option value="${r[0]}" ${r[0]===t.rule?"selected":""}>${r[1]}</option>`).join("")}</select>
+ <div id="tnw" style="display:${t.rule==="points"?"":"none"}"><label class="l">Points needed</label><input id="tp" type="number" min="1" value="${t.rule_n||100}"></div>
+ <div class="row" style="margin-top:14px"><button class="s" onclick="closeM()">Cancel</button><button onclick="saveTag(${id||"null"})">Save</button></div></div>`,true)}
+async function saveTag(i){const a={i,nm:val("tn"),em:val("te"),col:val("tc"),ds:val("td"),rw:+val("tr")||0,rl:val("tl"),rn:val("tl")==="points"?+val("tp")||0:0};if(await call("admin_save_tag",a,"Saved"))closeM()}
+function tagView(id){const t=TG.find(x=>x.id===id);if(!t)return;const H=UT.filter(x=>x.tag_id===id),held=new Set(H.map(x=>x.user_id)),C=P.filter(p=>isStudent(p)&&!held.has(p.id));
+ modal(`<div class="sheet-h"><h3 style="margin:0">${tagChip(t)}</h3><p class="mu" style="margin:8px 0 0">${esc(t.descr||"")}</p><p style="margin:6px 0 0">${t.reward>0?`🎁 +${t.reward} points`:"📝 Text only"} · ${esc(ruleTxt(t))}</p></div><div class="sheet-b">
+ <p style="margin:0 0 6px"><b>Give to a student</b></p><div class="row"><select id="gs">${C.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select><button onclick="giveTag(${id})">Give</button></div>
+ <p style="margin:16px 0 6px"><b>Holders</b> (${H.length})</p><div class="scroll" style="max-height:30vh">${H.map(x=>`<div class="msg"><div><b>${esc(nm(x.user_id))}</b> <span class="chip">${x.source==="auto"?"⚡ Automatic":"✋ Manual"}</span></div><button class="s" onclick="takeTag('${x.user_id}',${id})">Take back</button></div>`).join("")||`<p class="mu">None yet</p>`}</div>
+ <div class="row" style="margin-top:14px"><button class="s" onclick="confirmBox('Delete this tag?',()=>delTag(${id}),'Delete')">🗑 Delete</button><button class="s" onclick="tagForm(${id})">✏️ Edit</button><button class="s" style="flex:1" onclick="closeM()">Close</button></div></div>`)}
+async function giveTag(t){const u=val("gs");if(u&&await call("admin_give_tag",{u,t},"Given"))tagView(t)}
+async function takeTag(u,t){if(await call("admin_take_tag",{u,t},"Taken back"))tagView(t)}
+async function delTag(i){await call("admin_delete_tag",{i},"Deleted")}
+Object.assign(ADM,{"Tags":"Taglar","🏷️ New tag":"🏷️ Yeni tag","✏️ Edit tag":"✏️ Tagı redaktə et","➕ New tag":"➕ Yeni tag","No tags yet":"Hələ tag yoxdur","Badges for students. Describe what it means, what it gives and how it is earned.":"Tələbələr üçün nişanlar. Nə demək olduğunu, nə verdiyini və necə qazanıldığını yazın.","Name":"Ad","Emoji":"Emoji","Color":"Rəng","Description (what it means and why it is given)":"Təsvir (nə deməkdir və nə üçün verilir)","Reward points (0 = just a text badge)":"Mükafat xalı (0 = yalnız yazı nişanı)","How is it earned?":"Necə qazanılır?","Only admins give it":"Yalnız adminlər verir","Automatic: reaches N points":"Avtomatik: müəyyən xal toplayanda","Automatic: joins a team":"Avtomatik: komandaya qoşulanda","Automatic: becomes a team host":"Avtomatik: komanda başçısı olanda","Points needed":"Lazım olan xal","📝 Text only":"📝 Yalnız yazı","Give to a student":"Tələbəyə ver","Give":"Ver","Holders":"Sahibləri","Take back":"Geri al","⚡ Automatic":"⚡ Avtomatik","✋ Manual":"✋ Əl ilə","🗑 Delete":"🗑 Sil","✏️ Edit":"✏️ Redaktə","Delete this tag?":"Bu tag silinsin?"});
 
 /* ---------- 11. BAŞLANĞIC ---------- */
 // Düymə basılarkən canlı yenilənmə gözləyir (klik itməsin)
