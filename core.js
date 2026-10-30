@@ -13,7 +13,7 @@ const phone=()=>innerWidth<=800, ME=()=>P[uid], grp=id=>G.find(g=>g.id===id), na
 const can=p=>{const u=ME(),a=(u&&u.perms)||[];return !!u&&(u.is_admin||a.includes("admin")||a.includes(p))};
 const adm=p=>!!p&&(p.is_admin||(p.perms||[]).includes("admin"));
 // Adın yanındakı rol nişanı (Admin, Teacher, Scorer)
-let TG=[],UT=[];
+let TG=[],UT=[],RX=[];
 const mytags=p=>UT.filter(x=>x.user_id===p.id).map(x=>TG.find(t=>t.id===x.tag_id)).filter(Boolean);
 const tchip=t=>`<span class="chip utag" style="--tc:${t.color}" title="${esc(t.descr||t.name)}">${esc(t.emoji)} ${esc(t.name)}</span>`;
 const tchips=(p,n)=>{const L=mytags(p);return L.slice(0,n).map(t=>" "+tchip(t)).join("")+(L.length>n?` <span class="chip">+${L.length-n}</span>`:"")};
@@ -52,14 +52,15 @@ function tone(f,d,t="sine",v=.08,at=0){if(muted)return;try{AC=AC||new(window.Aud
 const snd={msg:()=>{tone(784,.1,"sine",.09);tone(1047,.22,"sine",.09,.11)},click:()=>tone(520,.04,"triangle",.04),pop:()=>tone(660,.09,"triangle"),ding:()=>{tone(880,.12);tone(1320,.2,"sine",.06,.09)},
  ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.2,"triangle",.09,i*.09)),alert:()=>{tone(740,.1,"square",.035);tone(988,.16,"square",.035,.12)},err:()=>{tone(180,.28,"sawtooth",.06)}};
 const cb=n=>n?`<span class="ub">${n>99?"99+":n}</span>`:"";
-const prev=(m,n=34)=>m.file_path?(/^image\//.test(m.file_type)?"🖼️ "+tr("Photo"):/^audio\//.test(m.file_type)?"🎤 "+tr("Voice message"):"📎 "+m.file_name):(m.sender===null?trSys(m.body):m.body).slice(0,n);
+const prev=(m,n=34)=>m.deleted?"🚫 "+tr("Message deleted"):m.file_path?(m.file_type==="sticker"?"🎭 "+tr("Sticker"):/^image\//.test(m.file_type)?"🖼️ "+tr("Photo"):/^audio\//.test(m.file_type)?"🎤 "+tr("Voice message"):"📎 "+m.file_name):(m.sender===null?trSys(m.body):m.body).slice(0,n);
 const fsize=n=>n<1024?n+" B":n<1048576?Math.round(n/1024)+" KB":(n/1048576).toFixed(1)+" MB";
 const ficon=(t,n)=>/powerpoint|presentation|\.pptx?$/i.test(t+n)?"📊":/pdf/i.test(t+n)?"📕":/word|document|\.docx?$/i.test(t+n)?"📝":/excel|sheet|\.xlsx?$/i.test(t+n)?"📈":/zip|rar|7z/i.test(t+n)?"🗜️":"📎";
 function urlFor(p){const c=URLS[p];if(c&&c.exp>Date.now())return c.url;needUrls.add(p);return""}
-async function fetchUrls(){if(!needUrls.size||!sb)return;const paths=[...needUrls];needUrls.clear();let d=null;try{d=(await sb.storage.from("chat-files").createSignedUrls(paths,3600)).data}catch(e){}
- paths.forEach((p,i)=>{URLS[p]=d&&d[i]&&d[i].signedUrl?{url:d[i].signedUrl,exp:Date.now()+3300000}:{url:"",exp:Date.now()+20000}});if(paths.some(p=>URLS[p].url))render()}
+async function fetchUrls(){if(!needUrls.size||!sb)return;const paths=[...needUrls];needUrls.clear();let d=null;try{const sp=paths.filter(p=>p.startsWith("s/")),cp=paths.filter(p=>!p.startsWith("s/")),[a,b]=await Promise.all([cp.length?sb.storage.from("chat-files").createSignedUrls(cp,3600):{data:[]},sp.length?sb.storage.from("stickers").createSignedUrls(sp.map(p=>p.slice(2)),3600):{data:[]}]),m={};cp.forEach((p,i)=>m[p]=a.data&&a.data[i]);sp.forEach((p,i)=>m[p]=b.data&&b.data[i]);d=paths.map(p=>m[p])}catch(e){}
+ paths.forEach((p,i)=>{URLS[p]=d&&d[i]&&d[i].signedUrl?{url:d[i].signedUrl,exp:Date.now()+3300000}:{url:"",exp:Date.now()+20000}});if(paths.some(p=>URLS[p].url)){render();if(typeof apDraw==="function")apDraw()}}
 // Mesajdakı fayl, şəkil və ya səsin HTML-i
 function fileHtml(m){if(!m.file_path)return"";const u=urlFor(m.file_path),t=m.file_type||"";
+ if(t==="sticker")return u?`<img class="stk" src="${esc(u)}" alt="sticker" >`:`<div class="stk ld">🎭</div>`;
  if(/^image\//.test(t))return u?`<img class="ph" src="${esc(u)}" alt="${esc(m.file_name)}" onclick="window.open(this.src)">`:`<div class="file">🖼️ ${tr("Loading…")}</div>`;
  if(/^audio\//.test(t))return u?`<audio controls preload="metadata" src="${esc(u)}"></audio>`:`<div class="file">🎤 ${tr("Loading…")}</div>`;
  return`<a class="file" ${u?`href="${esc(u)}" target="_blank" rel="noopener"`:""}><span class="ic">${ficon(t,m.file_name)}</span><span style="min-width:0"><b>${esc(m.file_name)}</b><br><small class="mu">${fsize(m.file_size||0)}${u?" · "+tr("tap to open"):""}</small></span></a>`}
@@ -146,7 +147,7 @@ const notesPage=()=>`<div class="card">${noteHead()}${noteRows()}</div>`;
 const TBL={profiles:()=>sb.from("profiles").select("id,name,avatar,points,group_id,is_admin,perms,role,class_tag"),groups:()=>sb.from("groups").select("*").order("id"),
  requests:()=>sb.from("requests").select("*"),join_ballots:()=>sb.from("join_ballots").select("*"),kicks:()=>sb.from("kicks").select("*"),kick_ballots:()=>sb.from("kick_ballots").select("*"),invites:()=>sb.from("invites").select("*"),
  point_events:()=>sb.from("point_events").select("*").order("id",{ascending:false}).limit(500),messages:()=>sb.from("messages").select("*").order("id",{ascending:false}).limit(300),sessions:()=>sb.from("sessions").select("sid").eq("user_id",uid)};
-TBL.tags=()=>sb.from("tags").select("*").order("id");TBL.user_tags=()=>sb.from("user_tags").select("*");
+TBL.tags=()=>sb.from("tags").select("*").order("id");TBL.user_tags=()=>sb.from("user_tags").select("*");TBL.msg_reactions=()=>sb.from("msg_reactions").select("*").limit(3000);
 const ALLT=Object.keys(TBL);let SIGS={};
 // Dəyişiklikdən əvvəlki vəziyyətin şəkli (diff() bildirişləri bununla müqayisə edir)
 const snapOld=()=>{const u0=ME();return{pts:u0?u0.points:0,g:u0?u0.group_id:null,rqs:new Map(RQ.map(x=>[x.id,x.stage])),kk:new Set(KK.map(x=>x.id)),iv:new Set(IV.map(x=>x.id)),mx:M.length?M[M.length-1].id:0,
@@ -165,7 +166,7 @@ async function refresh(force,tables){
  const o=snapOld(),A=t=>(force||ch.includes(t))&&ok(t);
  if(A("profiles")){P={};R.profiles.data.forEach(x=>{P[x.id]=x})}
  if(A("groups"))G=R.groups.data;if(A("requests"))RQ=R.requests.data;if(A("join_ballots"))JB=R.join_ballots.data;if(A("kicks"))KK=R.kicks.data;
- if(A("kick_ballots"))KB=R.kick_ballots.data;const ot=new Set(UT.filter(x=>x.user_id===uid).map(x=>x.tag_id));if(A("tags"))TG=R.tags.data;if(A("user_tags"))UT=R.user_tags.data;
+ if(A("kick_ballots"))KB=R.kick_ballots.data;const ot=new Set(UT.filter(x=>x.user_id===uid).map(x=>x.tag_id));if(A("tags"))TG=R.tags.data;if(A("user_tags"))UT=R.user_tags.data;if(A("msg_reactions"))RX=R.msg_reactions.data;
  if(ready){const nt=mytags({id:uid}).filter(t=>!ot.has(t.id))[0];if(nt){party();notify("🏷️ "+tr("New tag!"),nt.emoji+" "+nt.name,null,"ok")}}if(A("invites"))IV=R.invites.data;if(A("point_events"))PE=R.point_events.data;if(A("messages"))M=[...R.messages.data].reverse();
  const u=ME();if(u&&conv&&conv[0]==="g"&&u.group_id!==+conv.slice(2))conv=null;
  if(!ready){if(!Object.keys(SEEN).length)markSeen(true);ready=true;const n=inboxCount(),tx="📬 "+(n>1?tr("{n} items waiting for you",{n}):tr("1 item waiting for you"));if(n&&!(NOTES[0]&&!NOTES[0].read&&NOTES[0].t===tx))notify(tx,tr("Open Requests"),{k:"req"},"alert")}else diff(o);
@@ -203,6 +204,7 @@ function subscribe(){if(chan)return;
   .on("postgres_changes",{event:"*",schema:"public"},ev=>{const t=ev.table;
    if(t==="app_settings"){loadMeta().then(render);return}
    if(t==="messages"&&ev.eventType==="INSERT"&&onMsg(ev.new))return;
+   if(t==="messages"&&ev.eventType==="UPDATE"&&ev.new&&ev.new.id!=null){const i=M.findIndex(x=>x.id===ev.new.id);if(i>=0){M[i]={...M[i],...ev.new};render();return}}
    sched(t);if(t==="profiles")sched("point_events")})
   .on("presence",{event:"sync"},()=>{const n=new Set(Object.keys(chan.presenceState())),same=n.size===online.size&&[...n].every(x=>online.has(x));online=n;if(!same)render()})
   .subscribe(s=>{if(s==="SUBSCRIBED")chan.track({at:Date.now()})})}

@@ -87,14 +87,40 @@ const classesScreen=()=>{const u=ME(),last=(()=>{try{return localStorage.getItem
  return`<div class="cl-wrap"><div class="row sp"><div><h2 style="margin:0">${tr("Choose a class")}</h2><p class="mu" style="margin:4px 0 0">${tr("Welcome, {name}",{name:esc(u.name)})} · ${tr("Choose the class you want to open.")}</p></div><button class="s" onclick="confirmLogout()">${tr("Log out")}</button></div>
   <div class="clgrid">${CLS.map(c=>`<button class="clcard${c.tag===last?" last":""}" onclick="enterClass('${esc(c.tag)}')"><div class="cltag">${esc(c.tag)}</div>${c.title?`<div>${esc(c.title)}</div>`:""}<div class="mu">${tr("{n} students",{n:c.students})}</div><span class="chip on">${c.role==="admin"?tr("Admin"):c.role==="starosta"?tr("Class rep"):tr("Teacher")}</span></button>`).join("")||`<div class="card mu">${tr("No classes yet. An admin must create one.")}</div>`}</div>
   ${can("panel")?`<p><a class="navlink" href="admin.html" target="_blank">🛠 ${tr("Admin panel")}</a></p>`:""}</div>`};
-function msgsHtml(){const L=M.filter(m=>m.channel===conv&&mIn(m));return L.map(m=>{const nw=lastMax>0&&m.id>lastMax?" new":"";return m.sender===null?`<div class="b sys${nw}">${esc(trSys(m.body))}</div>`:`<div class="b ${m.sender===uid?"me":""}${nw}">${m.sender===uid?"":`<small class="pl" onclick="showProfile('${m.sender}')">${esc(nameOf(m.sender))}${tag(P[m.sender])}</small>`}${fileHtml(m)}${m.body?esc(m.body):""}<time>${hm(m.created_at)}</time></div>`}).join("")||"<span class='mu'>"+tr("No messages yet. Say hi!")+" 👋</span>"}
+const dayLbl=iso=>{const d=new Date(iso),n=new Date(),y=new Date(n-864e5),s=x=>x.toDateString();return s(d)===s(n)?tr("Today"):s(d)===s(y)?tr("Yesterday"):d.toLocaleDateString(LANG==="az"?"az":"en",{day:"numeric",month:"long"})};
+const lnk=s=>esc(s).replace(/(https?:\/\/[^\s<]+)/g,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+function rxHtml(m){const R=RX.filter(r=>r.msg_id===m.id);if(!R.length)return"";const g={};R.forEach(r=>(g[r.emoji]=g[r.emoji]||[]).push(r.user_id));return`<div class="rx">${Object.keys(g).map(e=>`<span class="rxc${g[e].includes(uid)?" me":""}" onclick="react(${m.id},'${e}')">${e}${g[e].length>1?" "+g[e].length:""}</span>`).join("")}</div>`}
+function msgsHtml(){const L=M.filter(m=>m.channel===conv&&mIn(m));let last="",ps=null;
+ return L.map(m=>{const nw=lastMax>0&&m.id>lastMax?" new":"",dk=new Date(m.created_at).toDateString(),sep=dk!==last?`<div class="dsep">${dayLbl(m.created_at)}</div>`:"";last=dk;
+  if(m.sender===null){ps=null;return sep+`<div class="b sys${nw}">${esc(trSys(m.body))}</div>`}
+  const me=m.sender===uid,cn=!!ps&&ps.sender===m.sender&&!sep&&Math.abs(new Date(m.created_at)-new Date(ps.created_at))<3e5;ps=m;
+  const rep=m.reply_to?M.find(x=>x.id===m.reply_to):null,rq=m.reply_to?`<div class="rq" onclick="jumpTo(${m.reply_to})"><b>${rep&&rep.sender?esc(nameOf(rep.sender)):""}</b><span>${rep?esc(prev(rep,60)):tr("Message")}</span></div>`:"";
+  const inner=m.deleted?`<i class="del">🚫 ${tr("This message was deleted")}</i>`:fileHtml(m)+(m.body?lnk(m.body):"");
+  return sep+`<div class="b ${me?"me":""}${nw}${cn?" cn":""}" id="m${m.id}" onclick="bubTap(event,${m.id})" oncontextmenu="event.preventDefault();msgMenu(${m.id})">${me||cn?"":`<small class="pl" onclick="showProfile('${m.sender}')">${esc(nameOf(m.sender))}${tag(P[m.sender])}</small>`}${rq}${inner}<time>${m.edited_at&&!m.deleted?tr("edited")+" · ":""}${hm(m.created_at)}</time>${m.deleted?"":rxHtml(m)}</div>`}).join("")||"<span class='mu'>"+tr("No messages yet. Say hi!")+" 👋</span>"}
 function thread(){
- return`<div class="card"><div class="row sp"><button class="s" onclick="goBack()">←</button><b${conv[0]==="d"?` class="pl" onclick="showProfile('${convOther(conv)}')"`:""}>${esc(convTitle(conv))}</b>${can("chats")?`<button class="s" onclick="clearChat()" title="${tr("Delete all messages in this chat")}">🗑</button>`:"<span></span>"}</div>${cards()}<div id="msgs">${msgsHtml()}</div><div class="row"><input type="file" id="fi" style="display:none" onchange="pickFile(this)"><button class="s" onmousedown="event.preventDefault()" onclick="$('#fi').click()" title="${tr("Send a file or photo")}">📎</button><input id="tx" style="flex:1;min-width:0" maxlength="1000" placeholder="${tr("Message…")}" onkeydown="if(event.key==='Enter')send()"><button id="micbtn" class="s${rec?" rec":""}" onclick="toggleRec()" title="${tr("Voice message")}">${rec?"⏹ "+recTime()+" · "+tr("send"):"🎤"}</button>${rec?`<button class="s" onclick="cancelRec()" title="${tr("Cancel")}">✖</button>`:`<button onmousedown="event.preventDefault()" onclick="send()">${tr("Send")}</button>`}</div></div>`}
+ return`<div class="card"><div class="row sp"><button class="s" onclick="goBack()">←</button><b${conv[0]==="d"?` class="pl" onclick="showProfile('${convOther(conv)}')"`:""}>${esc(convTitle(conv))}</b>${can("chats")?`<button class="s" onclick="clearChat()" title="${tr("Delete all messages in this chat")}">🗑</button>`:"<span></span>"}</div>${cards()}<div id="msgs">${msgsHtml()}</div>${barHtml()}<div class="row"><input type="file" id="fi" style="display:none" onchange="pickFile(this)"><button class="s" onmousedown="event.preventDefault()" onclick="apOn?apClose():apOpen()" title="${tr("Stickers, emoji and files")}">📎</button><input id="tx" style="flex:1;min-width:0" maxlength="1000" placeholder="${tr("Message…")}" onkeydown="if(event.key==='Enter')send()"><button id="micbtn" class="s${rec?" rec":""}" onclick="toggleRec()" title="${tr("Voice message")}">${rec?"⏹ "+recTime()+" · "+tr("send"):"🎤"}</button>${rec?`<button class="s" onclick="cancelRec()" title="${tr("Cancel")}">✖</button>`:`<button onmousedown="event.preventDefault()" onclick="send()">${tr("Send")}</button>`}</div></div>`}
 // Mesajı dərhal ekranda göstərir (gözləmədən), sonra bazaya göndərir
 async function send(){const i=$("#tx"),x=i.value.trim();if(!x||!conv)return;i.value="";i.focus();snd.pop();
- const ch=conv,tmp={id:(M.length?M[M.length-1].id:0)+0.5,channel:ch,sender:uid,body:x,created_at:new Date().toISOString(),_tmp:1};M.push(tmp);render();
- const ok=await rpc("send_message",{ch,body:x,cls:ACLASS||null});
+ if(EDT){const e=EDT;EDT=null;barDraw();const ok=await rpc("edit_message",{mid:e.id,b:x});if(!ok){const n=$("#tx");if(n&&!n.value)n.value=x}return}
+ const ch=conv,rp=RPL&&RPL.ch===ch?RPL:null;RPL=null;barDraw();
+ const tmp={id:(M.length?M[M.length-1].id:0)+0.5,channel:ch,sender:uid,body:x,created_at:new Date().toISOString(),reply_to:rp?rp.id:null,_tmp:1};M.push(tmp);render();
+ const ok=rp?await rpc("send_reply",{ch,body:x,cls:ACLASS||null,rep:rp.id}):await rpc("send_message",{ch,body:x,cls:ACLASS||null});
  if(!ok){M=M.filter(m=>m!==tmp);const n=$("#tx");if(n&&conv===ch&&!n.value)n.value=x;render()}}
+/* --- WhatsApp tipli mesaj əməliyyatları --- */
+let RPL=null,EDT=null;
+function barHtml(){const r=RPL&&RPL.ch===conv?RPL:null,e=EDT&&EDT.ch===conv?EDT:null;if(!r&&!e)return"";return`<div id="rpb" class="rpb"><span>${e?"✏️":"↩️"}</span><div><b>${e?tr("Editing message"):esc(r.name)}</b><br><span class="mu">${esc(e?e.text:r.text)}</span></div><button class="s" onclick="barCancel()">✕</button></div>`}
+function barDraw(){const o=$("#rpb");if(o)o.remove();const t=$("#tx"),h=barHtml();if(t&&h)t.parentElement.insertAdjacentHTML("beforebegin",h)}
+function barCancel(){if(EDT){const t=$("#tx");if(t)t.value=""}RPL=EDT=null;barDraw()}
+function bubTap(e,id){if(e.target.closest("img.ph,a,audio,.pl,.rq,.rxc"))return;msgMenu(id)}
+function msgMenuClose(){const d=$("#mm");if(d)d.remove()}
+function msgMenu(id){const m=M.find(x=>x.id===id);if(!m||m._tmp||m.sender===null||m.deleted)return;msgMenuClose();const me=m.sender===uid,mine=RX.find(r=>r.msg_id===id&&r.user_id===uid),d=document.createElement("div");d.id="mm";d.onclick=e=>{if(e.target===d)msgMenuClose()};
+ d.innerHTML=`<div class="mmbox"><div class="mmr">${["👍","❤️","😂","😮","😢","🙏"].map(e=>`<button class="${mine&&mine.emoji===e?"on":""}" onclick="react(${id},'${e}');msgMenuClose()">${e}</button>`).join("")}</div><button class="s mmb" onclick="msgReply(${id})">↩️ ${tr("Reply")}</button>${m.body?`<button class="s mmb" onclick="msgCopy(${id})">📋 ${tr("Copy")}</button>`:""}${me&&m.body&&!m.file_path?`<button class="s mmb" onclick="msgEdit(${id})">✏️ ${tr("Edit")}</button>`:""}${m.file_type==="sticker"&&!me?`<button class="s mmb" onclick="msgMenuClose();saveStk('${esc(m.file_path)}')">➕ ${tr("Add to my stickers")}</button>`:""}${me||ME().is_admin?`<button class="s mmb" onclick="msgDel(${id})">🗑 ${tr("Delete")}</button>`:""}<button class="s mmb" onclick="msgMenuClose()">${tr("Cancel")}</button></div>`;document.body.appendChild(d)}
+function msgReply(id){msgMenuClose();const m=M.find(x=>x.id===id);if(!m)return;EDT=null;RPL={id,ch:conv,name:nameOf(m.sender),text:prev(m,80)};barDraw();const t=$("#tx");if(t)t.focus()}
+function msgEdit(id){msgMenuClose();const m=M.find(x=>x.id===id);if(!m)return;RPL=null;EDT={id,ch:conv,text:m.body};barDraw();const t=$("#tx");if(t){t.value=m.body;t.focus()}}
+function msgCopy(id){msgMenuClose();const m=M.find(x=>x.id===id);if(!m)return;const ok=()=>toast(tr("Copied"));try{navigator.clipboard.writeText(m.body).then(ok,()=>{})}catch(e){}}
+async function msgDel(id){msgMenuClose();if(!confirm(tr("Delete this message for everyone?")))return;const m=M.find(x=>x.id===id);if(m){m.deleted=true;m.body="";m.file_path=null;render()}await rpc("delete_message",{mid:id})}
+async function react(mid,e){const i=RX.findIndex(r=>r.msg_id===mid&&r.user_id===uid),same=i>=0&&RX[i].emoji===e;RX=RX.filter((r,k)=>k!==i);if(!same)RX.push({msg_id:mid,user_id:uid,emoji:e});render();await rpc("toggle_reaction",{mid,e})}
+function jumpTo(id){const e=$("#m"+id);if(e){e.scrollIntoView({block:"center",behavior:"smooth"});e.classList.add("hl");setTimeout(()=>e.classList.remove("hl"),1300)}}
 const chatPage=()=>conv===null?chatList():thread();
 // Ana səhifənin üstündəki qısa vəziyyət kartı
 function hero(){const u=ME();if(u.role==="teacher")return`<div class="card hero"><b>👩‍🏫 ${tr("Teacher account")}</b><br><span class="mu">${tr("You can: {list}.",{list:permList(u).filter(k=>k!=="admin").map(k=>tr(PERM_TEXT[k])).join(", ")||tr("chat with students")})}</span></div>`;if(u.is_admin)return`<div class="card hero"><b>👑 ${tr("Host panel")}</b><br><span class="mu">${tr("Give points in Settings. You can start a kick vote in any group.")}</span></div>`;
@@ -211,3 +237,33 @@ function render(){const holding=pressing&&Date.now()-pressTs<2500;if(holding||(d
  const mb=$("#msgs");if(mb)mb.scrollTop=mb.scrollHeight;
  if(screen==="app"&&ME()){const n=totalUnread()+inboxCount();document.title=(n?"("+n+") ":"")+"ADIAK Team Maker"}
  if(needUrls.size)fetchUrls();lastMax=M.length?M[M.length-1].id:0;lastSnap=snap()}
+
+/* ---------- STİKER / EMOJI / FAYL PANELİ (📎) ---------- */
+let STK=[],apTab="stk",apOn=false;
+const EMO="😀 😃 😄 😁 😆 😅 😂 🤣 😊 😇 🙂 😉 😍 🥰 😘 😋 😜 🤪 😎 🤩 🥳 😏 😒 😞 😔 😢 😭 😤 😡 🤯 😱 😨 😰 😓 🤗 🤔 🤭 🤫 😐 😑 😶 🙄 😬 😴 🤤 😷 🤒 🤕 🤢 🥵 🥶 😵 🤠 👍 👎 👌 🤞 🤟 🤘 👏 🙌 🙏 💪 👀 🧠 ❤️ 🧡 💛 💚 💙 💜 🖤 💔 💯 🔥 ✨ ⭐ 🌟 🎉 🎊 🎁 🏆 🥇 📚 ✏️ 💡 ✅ ❌ ❓ ❗ ⚡ 🚀 ☕ 🍕 🍔 🍿 🎮 🎧 ⚽ 🏀 🐱 🐶 🦊 🐼 🌈 ☀️ 🌙".split(" ");
+function apOpen(){if(!conv)return;apOn=true;apTab="stk";apDraw();loadStk()}
+function apClose(){apOn=false;const x=$("#apx");if(x)x.remove()}
+async function loadStk(){const r=await sb.from("stickers").select("*").order("id",{ascending:false});STK=r.data||[];apDraw()}
+function apDraw(){if(!apOn)return;const t=$("#tx");if(!t){apClose();return}
+ let x=$("#apx");if(!x){x=document.createElement("div");x.id="apx";document.body.appendChild(x)}
+ const c=t.parentElement.getBoundingClientRect();x.style.left=c.left+"px";x.style.width=c.width+"px";x.style.bottom=(innerHeight-c.top+6)+"px";
+ const T=[["stk","🎭",tr("Stickers")],["emo","😀","Emoji"],["fil","📎",tr("File")]];let b="";
+ if(apTab==="stk"){STK.forEach(s=>urlFor("s/"+s.path));fetchUrls();
+  b=`<div class="stkgrid"><label class="stkadd">＋<input type="file" accept="image/*" style="display:none" onchange="addStk(this)"></label>${STK.map(s=>{const u=urlFor("s/"+s.path);return`<div class="stkc">${u?`<img src="${esc(u)}" onclick="sendStk(${s.id})">`:`<div class="stkadd">…</div>`}<button class="stkx" onclick="delStk(${s.id})">✕</button></div>`}).join("")}</div>${STK.length?"":`<p class="mu">${tr("Add your own stickers with ＋. Tap one to send it.")}</p>`}`}
+ else if(apTab==="emo")b=`<div class="emogrid">${EMO.map(e=>`<button onclick="insEmo('${e}')">${e}</button>`).join("")}</div>`;
+ else b=`<div class="row wrap"><button onclick="$('#fi').click();apClose()">📁 ${tr("File or photo")}</button><label class="fbtn">📷 ${tr("Camera")}<input type="file" id="fc" accept="image/*" capture="environment" style="display:none" onchange="pickFile(this);apClose()"></label></div>`;
+ x.innerHTML=`<div class="aptabs">${T.map(k=>`<button class="s${apTab===k[0]?" on":""}" onclick="apTab='${k[0]}';apDraw()">${k[1]} ${k[2]}</button>`).join("")}<button class="s" onclick="apClose()">✕</button></div>${b}`}
+function insEmo(e){const i=$("#tx");if(!i)return;const a=i.selectionStart==null?i.value.length:i.selectionStart,z=i.selectionEnd==null?a:i.selectionEnd;i.value=i.value.slice(0,a)+e+i.value.slice(z);i.selectionStart=i.selectionEnd=a+e.length}
+async function sendStk(id){if(!conv)return;snd.pop();apClose();await rpc("send_sticker",{ch:conv,sid:id,cls:ACLASS||null})}
+async function delStk(id){if(await rpc("delete_sticker",{sid:id}))loadStk()}
+// Şəkli 512px-ə kiçildir (GIF animasiyası saxlanır), yükləyir və kolleksiyaya əlavə edir
+async function addStk(inp){const f=inp.files[0];inp.value="";if(!f)return;if(!/^image\//.test(f.type)){toast(tr("Choose an image"),1);return}
+ let blob=f,ext=(f.type.split("/")[1]||"png").replace("jpeg","jpg");
+ if(!(f.type==="image/gif"&&f.size<=900000)){try{const bm=await createImageBitmap(f),k=Math.min(1,512/Math.max(bm.width,bm.height)),c=document.createElement("canvas");c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext("2d").drawImage(bm,0,0,c.width,c.height);blob=await new Promise(r=>c.toBlob(r,"image/webp",.85));if(!blob)throw 0;ext=blob.type==="image/png"?"png":"webp"}catch(e){toast(tr("Could not read this image"),1);return}}
+ if(blob.size>1000000){toast(tr("Sticker is too large"),1);return}
+ toast(tr("Uploading…"));const path=uid+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,7)+"."+ext,up=await sb.storage.from("stickers").upload(path,blob,{contentType:blob.type||"image/"+ext});
+ if(up.error){toast(trErr(up.error.message),1);snd.err();return}
+ if(await rpc("add_sticker",{pth:path})){toast(tr("Sticker added ✓"));loadStk()}}
+// Çatda başqasının stikerinə toxunanda öz kolleksiyana əlavə et
+async function saveStk(p){const q=p.slice(2);if(STK.some(s=>s.path===q))return;if(confirm(tr("Add this sticker to your collection?")))if(await rpc("add_sticker",{pth:q})){toast(tr("Sticker added ✓"));loadStk()}}
+setInterval(()=>{if(apOn&&!$("#tx"))apClose()},700);
