@@ -24,7 +24,7 @@ function convTitle(k){if(k==="all")return tr("Everyone");if(k[0]==="g")return gn
 function openC(k){conv=k;render()}
 const ub=n=>n?`<span class="badge">${n}</span>`:"";
 // Çat siyahısı (ən son yazışma yuxarıda, oxunmamış sayı dairədə)
-function chatList(){const u=ME(),LAST={};M.forEach(m=>{LAST[m.channel]=m});
+function chatList(){const u=ME(),LAST={};M.forEach(m=>{if(mIn(m))LAST[m.channel]=m});
  const items=[{ch:"all",t:tr("Everyone"),d:tr("All students"),a:`<div class="av" style="background:#4f46e5">🌍</div>`,c:""}];
  if(u.group_id!==null)items.push({ch:"g:"+u.group_id,t:gname(u.group_id),d:tr("Only my group"),a:`<div class="av" style="background:${gcol(u.group_id)}">👥</div>`,c:""});
  Object.values(P).filter(p=>p.id!==uid).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>items.push({ch:dmKey(uid,p.id),t:p.name,d:tr("Say hi")+" 👋",a:av(p),c:gchip(p),g:tag(p)}));
@@ -39,17 +39,61 @@ const installBox=()=>{if(isStandalone())return"";
  if(/iphone|ipad|ipod/i.test(navigator.userAgent))return`<hr><b>${tr("Install as app")}</b><p class="mu" style="margin:4px 0">${tr("On iPhone: tap Share, then Add to Home Screen.")}</p>`;
  return""};
 // Akademik qrup nömrəsi soruşan ekran (tələbənin nömrəsi yoxdursa, sayta girməzdən əvvəl)
-const classTagCard=()=>{const tags=[...new Set(Object.values(P).filter(x=>x.class_tag&&!x.is_admin&&x.role!=="teacher").map(x=>x.class_tag))].sort();
- return`<div class="card login"><div class="big-logo">🎓</div><h2>${tr("Your class group number")}</h2><p class="mu">${tr("Teams are made only from students of the same class group. You can set it only once; an admin can change it later.")}</p>
-  ${tags.length?`<div class="row" style="flex-wrap:wrap;gap:6px;margin-bottom:8px">${tags.map(x=>`<button class="s" onclick="$('#ctag').value='${esc(x)}'">${esc(x)}</button>`).join("")}</div>`:""}
-  <input id="ctag" placeholder="${tr("e.g. 636s")}" maxlength="12" autocapitalize="none" autocomplete="off" onkeydown="if(event.key==='Enter')setMyTag()"><button onclick="setMyTag()">${tr("Continue")}</button><button class="s" onclick="logout()">${tr("Log out")}</button></div>`};
-function msgsHtml(){const L=M.filter(m=>m.channel===conv);return L.map(m=>{const nw=lastMax>0&&m.id>lastMax?" new":"";return m.sender===null?`<div class="b sys${nw}">${esc(trSys(m.body))}</div>`:`<div class="b ${m.sender===uid?"me":""}${nw}">${m.sender===uid?"":`<small class="pl" onclick="showProfile('${m.sender}')">${esc(nameOf(m.sender))}${tag(P[m.sender])}</small>`}${fileHtml(m)}${m.body?esc(m.body):""}<time>${hm(m.created_at)}</time></div>`}).join("")||"<span class='mu'>"+tr("No messages yet. Say hi!")+" 👋</span>"}
+const classTagCard=()=>{if(CHOICES===null&&!window.__ld){window.__ld=1;loadChoices().then(()=>{window.__ld=0;render()})}
+ const ch=CHOICES||[];
+ return`<div class="card login"><div class="big-logo">🎓</div><h2>${tr("Choose your class")}</h2><p class="mu">${tr("Pick the class you study in. You can set it only once; an admin can change it later.")}</p>
+  ${CHOICES===null?`<p class="mu">${tr("Loading…")}</p>`:ch.length?`<div class="clgrid" style="margin-top:8px">${ch.map(c=>`<button class="clcard" onclick="pickClass('${esc(c.tag)}')"><div class="cltag">${esc(c.tag)}</div>${c.title?`<div class="mu">${esc(c.title)}</div>`:""}</button>`).join("")}</div>`:`<p class="mu">${tr("No classes have been created yet. Ask your class representative or an admin.")}</p>`}
+  <button class="s" onclick="logout()">${tr("Log out")}</button></div>`};
+/* ================= ANA SƏHİFƏ (dashboard), YAN MENYU, SİNİF SEÇİMİ ================= */
+const myRank=()=>{const i=ranked().findIndex(x=>x.id===uid);return i<0?null:i+1};
+const teamPts=g=>mem(g.id).reduce((a,x)=>a+x.points,0);
+function setChart(m){chartMode=m;render()}
+const chartData=()=>{const u=ME();
+ if(chartMode==="teams")return visG().map(g=>({label:g.name,v:teamPts(g),me:u.group_id===g.id,click:`goTab('groups',${g.id})`})).sort((a,b)=>b.v-a.v).slice(0,8);
+ return ranked().slice(0,8).map(x=>({label:x.name.split(" ")[0],v:x.points,me:x.id===uid,click:`showProfile('${x.id}')`}))};
+// Yuxarıdakı profil kartı: salam, nişanlar, statistika
+const hcard=()=>{const u=ME(),st=isStaff(u),rk=rank(u.points),n=ppl().length,id=idle().length,pos=st?null:myRank();
+ const sum=ppl().reduce((a,x)=>a+x.points,0);
+ const tiles=st?[[n,tr("Students")],[visG().length,tr("Teams")],[id,tr("Idle")],[n?Math.round(sum/n):0,tr("Avg points")]]
+  :[[u.points,tr("Points")],[pos?pos+"/"+n:"—",tr("Class rank")],[u.group_id!==null&&grp(u.group_id)?esc(grp(u.group_id).name):"—",tr("Team")],[id,tr("Idle")]];
+ return`<div class="card hcard"><div class="hc-top">${av(u,"huge")}<div class="hc-info"><div class="hello">${tr("Welcome, {name}",{name:"<b>"+esc(u.name)+"</b>"})} 👋</div>
+  <div class="chips">${tag(u)}${st?(ACLASS?` <span class="chip on">🏫 ${esc(ACLASS)}</span>`:""):(u.class_tag?` <span class="chip on">🏫 ${esc(u.class_tag)}</span>`:"")}${st?"":` <span class="chip">${rk.name}</span>`}</div>
+  ${st?"":`<div class="bar"><i style="width:${rk.pct}%"></i></div>`}</div></div>
+  <div class="tiles">${tiles.map(([v,l])=>`<div class="tile"><b>${v}</b><span>${l}</span></div>`).join("")}</div></div>`};
+// Reytinq qrafiki (tələbələr / qruplar)
+const chartCard=()=>{const d=chartData(),mx=Math.max(1,...d.map(x=>x.v));
+ return`<div class="card chartc"><div class="row sp"><b>📊 ${tr("Class ranking")}</b><span class="seg"><button class="${chartMode==="students"?"on":""}" onclick="setChart('students')">${tr("Students")}</button><button class="${chartMode==="teams"?"on":""}" onclick="setChart('teams')">${tr("Teams")}</button></span></div>
+  <div class="bars">${d.length?d.map((x,i)=>`<div class="bcol${x.me?" me":""}" onclick="${x.click}"><span class="bv">${x.v}</span><div class="bar-w"><i style="height:${Math.max(5,Math.round(x.v/mx*100))}%;animation-delay:${i*70}ms"></i></div><span class="bl">${esc(x.label)}</span></div>`).join(""):`<div class="mu" style="margin:auto">${tr("No data yet")}</div>`}</div></div>`};
+// Alt kartlar: qrup / sinif vəziyyəti və sürətli keçidlər
+const homeCards=()=>{const u=ME(),st=isStaff(u);let a;
+ if(st)a=`<div class="card"><b>🏫 ${tr("Class")} ${esc(ACLASS||"")}</b><p class="mu">${tr("You are viewing this class. Everything you see belongs to it.")}</p>${CLS.length>1?`<button onclick="leaveClass()">⇄ ${tr("Switch class")}</button>`:""}</div>`;
+ else if(u.group_id!==null&&grp(u.group_id)){const g=grp(u.group_id);a=`<div class="card" style="border-left:5px solid ${gcol(g.id)}"><b>${esc(g.name)}</b>${g.host_id===uid?" 👑":""}<div class="avs">${mem(g.id).map(x=>av(x)).join("")}</div><p class="mu">${tr("{a}/{b} members",{a:mem(g.id).length,b:g.capacity})}</p><button onclick="goTab('groups',${g.id})">${tr("Open team")}</button></div>`}
+ else a=`<div class="card"><b>👋 ${tr("You're idle")}</b><p class="mu">${tr("Open a group and send a join request, create your own, or wait for an invitation.")}</p><button onclick="goTab('groups')">${tr("Groups")}</button></div>`;
+ return`<div class="grid2">${a}<div class="card"><b>⚡ ${tr("Quick links")}</b><div class="quick"><button class="s" onclick="goTab('chat')">💬 ${tr("Chat")}${ub(totalUnread())}</button><button class="s" onclick="goTab('req')">📨 ${tr("Requests & idle")}${ub(inboxCount())}</button><button class="s" onclick="goTab('notes')">🔔 ${tr("Notifications")}${ub(unreadNotes())}</button></div></div></div>`};
+const homePage=()=>hcard()+chartCard()+homeCards();
+const NAV=()=>[["home","🏠",tr("Home"),""],["groups","👥",tr("Groups"),""],["chat","💬",tr("Chat"),ub(totalUnread())],["req","📨",tr("Requests & idle"),ub(inboxCount())],["notes","🔔",tr("Notifications"),ub(unreadNotes())],["settings","⚙️",tr("Settings"),""]];
+// Masaüstü yan menyu
+const sideNav=()=>{const u=ME(),st=isStaff(u);
+ return`<aside class="side"><div class="brand"><span class="blogo">👥</span><div><b>ADIAK</b><small>Team Maker</small></div></div>
+  ${st&&ACLASS?`<button class="clsbtn" ${CLS.length>1?'onclick="leaveClass()"':""}><span>🏫 ${esc(ACLASS)}</span>${CLS.length>1?"<span>⇄</span>":""}</button>`:""}
+  <nav class="nav">${NAV().map(([k,i,t,b])=>`<button class="${tab===k?"on":""}" onclick="goTab('${k}')"><span class="ni">${i}</span><span>${t}</span>${b}</button>`).join("")}</nav>
+  <div class="sgrow"></div>
+  ${can("panel")?`<a class="navlink" href="admin.html" target="_blank">🛠 ${tr("Admin panel")}</a>`:""}
+  <div class="sfoot"><div class="sme" onclick="showProfile('${u.id}')">${av(u)}<div><b>${esc(u.name)}</b><small>${st?tr("Staff"):rank(u.points).name}</small></div></div><div class="srow">${langSw()}<button class="s" onclick="toggleMute()" title="${tr("Sounds")}">${muted?"🔇":"🔊"}</button><button class="s" onclick="confirmLogout()" title="${tr("Log out")}">⏻</button></div></div></aside>`};
+const chatDesk=()=>`<div class="chat2"><div>${chatList()}</div><div>${conv?thread():`<div class="card mu" style="text-align:center;padding:44px 16px">💬 ${tr("Select a chat")}</div>`}</div></div>`;
+const bodyOf=k=>({home:homePage,groups:groupsPage,chat:chatDesk,req:()=>reqPage()+idlePage(),notes:notesPage,settings:settingsPage}[k]||homePage)();
+// Heyət üçün sinif seçmə ekranı
+const classesScreen=()=>{const u=ME(),last=(()=>{try{return localStorage.getItem("lastClass")}catch(e){return null}})();
+ return`<div class="cl-wrap"><div class="row sp"><div><h2 style="margin:0">${tr("Choose a class")}</h2><p class="mu" style="margin:4px 0 0">${tr("Welcome, {name}",{name:esc(u.name)})} · ${tr("Choose the class you want to open.")}</p></div><button class="s" onclick="confirmLogout()">${tr("Log out")}</button></div>
+  <div class="clgrid">${CLS.map(c=>`<button class="clcard${c.tag===last?" last":""}" onclick="enterClass('${esc(c.tag)}')"><div class="cltag">${esc(c.tag)}</div>${c.title?`<div>${esc(c.title)}</div>`:""}<div class="mu">${tr("{n} students",{n:c.students})}</div><span class="chip on">${c.role==="admin"?tr("Admin"):c.role==="starosta"?tr("Class rep"):tr("Teacher")}</span></button>`).join("")||`<div class="card mu">${tr("No classes yet. An admin must create one.")}</div>`}</div>
+  ${can("panel")?`<p><a class="navlink" href="admin.html" target="_blank">🛠 ${tr("Admin panel")}</a></p>`:""}</div>`};
+function msgsHtml(){const L=M.filter(m=>m.channel===conv&&mIn(m));return L.map(m=>{const nw=lastMax>0&&m.id>lastMax?" new":"";return m.sender===null?`<div class="b sys${nw}">${esc(trSys(m.body))}</div>`:`<div class="b ${m.sender===uid?"me":""}${nw}">${m.sender===uid?"":`<small class="pl" onclick="showProfile('${m.sender}')">${esc(nameOf(m.sender))}${tag(P[m.sender])}</small>`}${fileHtml(m)}${m.body?esc(m.body):""}<time>${hm(m.created_at)}</time></div>`}).join("")||"<span class='mu'>"+tr("No messages yet. Say hi!")+" 👋</span>"}
 function thread(){
  return`<div class="card"><div class="row sp"><button class="s" onclick="goBack()">←</button><b${conv[0]==="d"?` class="pl" onclick="showProfile('${convOther(conv)}')"`:""}>${esc(convTitle(conv))}</b>${can("chats")?`<button class="s" onclick="clearChat()" title="${tr("Delete all messages in this chat")}">🗑</button>`:"<span></span>"}</div>${cards()}<div id="msgs">${msgsHtml()}</div><div class="row"><input type="file" id="fi" style="display:none" onchange="pickFile(this)"><button class="s" onmousedown="event.preventDefault()" onclick="$('#fi').click()" title="${tr("Send a file or photo")}">📎</button><input id="tx" style="flex:1;min-width:0" maxlength="1000" placeholder="${tr("Message…")}" onkeydown="if(event.key==='Enter')send()"><button id="micbtn" class="s${rec?" rec":""}" onclick="toggleRec()" title="${tr("Voice message")}">${rec?"⏹ "+recTime()+" · "+tr("send"):"🎤"}</button>${rec?`<button class="s" onclick="cancelRec()" title="${tr("Cancel")}">✖</button>`:`<button onmousedown="event.preventDefault()" onclick="send()">${tr("Send")}</button>`}</div></div>`}
 // Mesajı dərhal ekranda göstərir (gözləmədən), sonra bazaya göndərir
 async function send(){const i=$("#tx"),x=i.value.trim();if(!x||!conv)return;i.value="";i.focus();snd.pop();
  const ch=conv,tmp={id:(M.length?M[M.length-1].id:0)+0.5,channel:ch,sender:uid,body:x,created_at:new Date().toISOString(),_tmp:1};M.push(tmp);render();
- const ok=await rpc("send_message",{ch,body:x});
+ const ok=await rpc("send_message",{ch,body:x,cls:ACLASS||null});
  if(!ok){M=M.filter(m=>m!==tmp);const n=$("#tx");if(n&&conv===ch&&!n.value)n.value=x;render()}}
 const chatPage=()=>conv===null?chatList():thread();
 // Ana səhifənin üstündəki qısa vəziyyət kartı
@@ -90,7 +134,7 @@ const pages={notes:notesPage,chat:chatPage,idle:idlePage,groups:groupsPage,setti
 const snap=()=>({tab,openG,conv,sheet,sp,menuOpen,pm});
 const mItems=()=>[["notes","🔔",tr("Notifications"),ub(unreadNotes())],["chat","💬",tr("Chat"),ub(totalUnread())],["idle","🧍",tr("Idle people ({n})",{n:idle().length}),""],["groups","👥",tr("Groups"),""],["settings","⚙️",tr("Settings"),""],["req","📨",tr("Requests & invites"),ub(inboxCount())]];
 // Telefonda sağdan açılan menyu
-const drawer=()=>{const u=ME(),rk=rank(u.points);return`<div id="scrim" onclick="goBack()"></div><div id="drawer"><div class="dh">${av(u,"big")}<div><b>${esc(u.name)}</b><br><span class="mu">${rk.name} · ${u.points} ${tr("pts")}</span></div></div>${mItems().map(([k,i,t,b])=>`<div class="gr" onclick="menuOpen=false;sheet=true;sp='${k}';render()"><span>${i} ${t} ${b}</span><span>›</span></div>`).join("")}<div class="gr" onclick="confirmLogout()"><span>🚪 ${tr("Log out")}</span></div></div>`};
+const drawer=()=>{const u=ME(),rk=rank(u.points);return`<div id="scrim" onclick="goBack()"></div><div id="drawer"><div class="dh">${av(u,"big")}<div><b>${esc(u.name)}</b><br><span class="mu">${rk.name} · ${u.points} ${tr("pts")}</span></div></div>${mItems().map(([k,i,t,b])=>`<div class="gr" onclick="menuOpen=false;sheet=true;sp='${k}';render()"><span>${i} ${t} ${b}</span><span>›</span></div>`).join("")}${isStaff(u)&&CLS.length>1?`<div class="gr" onclick="leaveClass()"><span>🏫 ${tr("Switch class")}</span></div>`:""}${can("panel")?`<a class="gr" href="admin.html" target="_blank" style="text-decoration:none;color:inherit"><span>🛠 ${tr("Admin panel")}</span></a>`:""}<div class="gr" onclick="confirmLogout()"><span>🚪 ${tr("Log out")}</span></div></div>`};
 // Geri: əvvəlki pəncərəyə qayıdır (proqramdan çıxmır)
 function goBack(){if(navStack.length)history.back();else{openG=null;conv=null;sp=null;sheet=false;menuOpen=false;pm=null;$("#modal").innerHTML="";render()}}
 
@@ -141,11 +185,11 @@ function view(){
   <input id="p1" type="password" placeholder="${tr("New password (min 6)")}"><input id="p2" type="password" placeholder="${tr("Repeat")}"><div class="err">${esc(err)}</div><button onclick="setPw()">${tr("Save and continue")}</button><p class="mu" style="font-size:12px;margin:8px 0 0">ℹ️ ${tr("Class admins can see your password so they can help if you forget it. Do not use a password from anywhere else.")}</p></div>`);
  if(!ME()&&!ready)return stage(`<div class="card login" style="text-align:center"><div class="big-logo">👥</div><p class="mu">${tr("Loading…")}</p></div>`);
  if(needTag())return stage(classTagCard());
+ if(screen==="classes")return stage(classesScreen());
  if(!ME())return`<div class="card login"><p>${tr("Your profile was not found. Ask the host to check your account.")}</p><button onclick="logout()">${tr("Log out")}</button></div>`;
- const hd=`<div class="hd"><b class="logo">👥 ADIAK Team Maker</b><span class="row">${phone()?"":langSw()}${phone()?"":`<button onclick="toggleNotes()" title="${tr("Notifications")}">🔔${ub(unreadNotes())}</button>`}<button onclick="toggleMute()" title="${tr("Sounds")}">${muted?"🔇":"🔊"}</button><button onclick="confirmLogout()">${tr("Log out")}</button></span></div>${!phone()&&notesOpen?notesPanel():""}`;
  if(phone()){const T={notes:tr("Notifications"),chat:tr("Chat"),idle:tr("Idle people"),groups:tr("Groups"),settings:tr("Settings"),req:tr("Requests & invites")}[sp]||tr("Menu"),bn=unreadNotes();
-  return hd+`<div id="main">${profile()}${groupsPage()}${credits(true)}</div><button id="fab" onclick="menuOpen=true;render()">⋮${ub(bn)}</button>${menuOpen?drawer():""}<div id="sheet" style="display:${sheet&&sp?"block":"none"}"><div class="hd"><b>${T}</b><button onclick="goBack()">← ${tr("Back")}</button></div>${sheet&&sp?pages[sp]():""}</div>`}
- return hd+`<div id="app"><div>${profile()}${chatPage()}</div><div id="main"><div class="tabs">${[["settings",tr("Settings"),""],["groups",tr("Groups"),""],["req",tr("Requests & idle"),ub(inboxCount())]].map(([k,t,b])=>`<button class="${tab===k?"on":""}" onclick="tab='${k}';openG=null;render()">${t}${b}</button>`).join("")}</div>${tab==="settings"?settingsPage():tab==="req"?reqPage()+idlePage():groupsPage()}</div></div>${credits(false)}`}
+  return`<div id="main">${homePage()}${groupsPage()}${credits(true)}</div><button id="fab" onclick="menuOpen=true;render()">☰${ub(bn)}</button>${menuOpen?drawer():""}<div id="sheet" style="display:${sheet&&sp?"block":"none"}"><div class="hd"><b>${T}</b><button onclick="goBack()">← ${tr("Back")}</button></div>${sheet&&sp?pages[sp]():""}</div>`}
+ return`<div id="shell">${sideNav()}<main id="main2">${bodyOf(tab)}${credits(false)}</main></div>`}
 // Yazı sahəsində yazılıb-yazılmadığını yoxlayır (klaviatura açıq ola bilər)
 const isTyping=a=>!!a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=="file"&&a.type!=="button"&&!!$("#root")&&$("#root").contains(a);
 // Yazı zamanı ekranı silmir: yalnız mesajlar siyahısını yeniləyir, qalanı yazı bitəndə yenilənir
