@@ -79,20 +79,20 @@ async function load(tables){
  if(p.error){toast(p.error.message,1);return}
  if(p.data)P=p.data;if(g.data)G=g.data;(s.data||[]).forEach(x=>{SET[x.key]=x.value});if(m.data)M=[...m.data].reverse();if(a.data)AR=a.data;if(pw.data)PW=pw.data;ME=P.find(x=>x.id===uid)||ME;if(all||tables.includes("profiles"))await loadCls();
  if(tab==="day"&&(all||w("archives")||w("archived_messages")))for(const x of AR){try{const r=await sb.from("archived_messages").select("id",{count:"exact",head:true}).eq("archive_id",x.id);x.n=r.count||0}catch(e){x.n=0}}
- const sig=JSON.stringify([P.map(x=>[x.id,x.name,x.points,x.group_id,x.login,x.role,(x.perms||[]).join(),x.is_admin,x.pw_updated_at]),G.map(x=>[x.id,x.name,x.capacity,x.host_id]),M.length,M.length?M[M.length-1].id:0,AR.map(x=>[x.id,x.n]),SET.max_groups,JSON.stringify([TG,UT,SC,CS,P.map(x=>x.class_tag)]),PW.map(x=>[x.user_id,x.source,x.updated_at])]);
+ const sig=JSON.stringify([P.map(x=>[x.id,x.name,x.points,x.group_id,x.login,x.role,(x.perms||[]).join(),x.is_admin,x.pw_updated_at]),G.map(x=>[x.id,x.name,x.capacity,x.host_id]),M.length,M.length?M[M.length-1].id:0,AR.map(x=>[x.id,x.n]),SET.max_groups,JSON.stringify([FB,TG,UT,SC,CS,P.map(x=>x.class_tag)]),PW.map(x=>[x.user_id,x.source,x.updated_at])]);
  if(sig!==lastSig){lastSig=sig;draw()}
 }
 
 /* ---------- 4. ÜMUMİ GÖRÜNÜŞ ---------- */
 // Hər tab üçün lazım olan yetki
-const TABS=[["dash","📊","Dashboard","panel"],["people","👥","People","panel"],["groups","🧩","Groups","panel"],["classes","🏫","Classes","classes"],["tags","🏷️","Tags","tags"],["chats","💬","Chats","chats"],["pass","🔑","Passwords","passwords"],["day","🗂️","Close the day","admin"],["import","📥","Import names","admin"],["settings","⚙️","Settings","admin"]];
-const visibleTabs=()=>isStar()?[{k:"classes",i:"🏫",t:"My classes"}]:TABS.filter(t=>(t[3]==="classes"||t[3]==="tags")?has("admin"):has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
+const TABS=[["dash","📊","Dashboard","panel"],["people","👥","People","panel"],["groups","🧩","Groups","panel"],["classes","🏫","Classes","classes"],["tags","🏷️","Tags","tags"],["feedback","💬","Feedback","feedback"],["chats","💬","Chats","chats"],["pass","🔑","Passwords","passwords"],["day","🗂️","Close the day","admin"],["import","📥","Import names","admin"],["settings","⚙️","Settings","admin"]];
+const visibleTabs=()=>isStar()?[{k:"classes",i:"🏫",t:"My classes"}]:TABS.filter(t=>(t[3]==="classes"||t[3]==="tags"||t[3]==="feedback")?has("admin"):has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
 const switchTab=k=>{tab=k;if(k==="pass"||k==="day")lastSig="";draw();if(k==="pass"||k==="day")load()};
 // Yan menyu + seçilmiş səhifə. Düymə basılarkən gözləyir ki, klik itməsin.
 function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=true;return}if(typingNow()){pendingDraw=true;return}pendingDraw=false;
  const sy=window.scrollY,mn=$(".main"),ms=mn?mn.scrollTop:0;
  const tabs=visibleTabs();if(!tabs.find(t=>t.k===tab))tab=tabs[0].k;
- const page={dash,people,groups,chats,pass:passPage,day,import:imp,settings,classes:clsPage,tags:tagPage}[tab]();
+ const page={dash,people,groups,chats,pass:passPage,day,import:imp,settings,classes:clsPage,tags:tagPage,feedback:fbPage}[tab]();
  $("#root").innerHTML=`<div class="app"><aside class="side"><div class="brand"><div class="logo">🛠️</div><div><b>ADIAK Admin</b><small>Team Maker control panel</small></div></div>
   <nav class="nav">${tabs.map(t=>`<button class="${tab===t.k?"on":""}" onclick="switchTab('${t.k}')"><span class="i">${t.i}</span>${t.t}</button>`).join("")}</nav>
   ${admLang()}<div class="me"><div class="row">${avatar(ME)}<div class="grow"><b>${esc(ME.name)}</b><div style="margin-top:3px">${roleChip(ME)}</div></div></div><button onclick="signOut()">Sign out</button><a href="index.html">← Student site</a></div></aside>
@@ -247,9 +247,9 @@ const saveMax=()=>call("admin_set_setting",{k:"max_groups",v:val("mg")},"Saved")
 function resetAll(){modal(`<div class="sheet-h"><h3 style="margin:0;color:var(--bad)">Clear all data?</h3></div><div class="sheet-b"><p>${tr("This cannot be undone. Type <b>RESET</b> to confirm.")}</p><input id="rs" placeholder="RESET"><div class="row" style="margin-top:16px"><button class="s" onclick="closeM()">Cancel</button><button class="d" onclick="if(val('rs')==='RESET'){closeM();call('admin_reset_all',{},'Everything cleared')}else toast('Type RESET exactly',1)">Clear everything</button></div></div>`,true)}
 
 /* ---------- 9b. SİNİFLƏR (admin: hamısı · starosta: yalnız öz sinfi) ---------- */
-let SC=[],CS=[],TG=[],UT=[];
+let SC=[],CS=[],TG=[],UT=[],FB=[];
 const isStar=()=>!!ME&&ME.role==="student"&&!has("admin");
-async function loadCls(){try{const a=await sb.rpc("staff_classes");SC=a.data||[];const b=await sb.from("class_staff").select("*");CS=b.data||[];const c=await sb.from("tags").select("*").order("id"),d=await sb.from("user_tags").select("*");TG=c.data||[];UT=d.data||[]}catch(e){SC=[];CS=[];TG=[];UT=[]}}
+async function loadCls(){try{const a=await sb.rpc("staff_classes");SC=a.data||[];const b=await sb.from("class_staff").select("*");CS=b.data||[];const c=await sb.from("tags").select("*").order("id"),d=await sb.from("user_tags").select("*");TG=c.data||[];UT=d.data||[];const e2=await sb.from("feedback").select("*").order("id",{ascending:false}).limit(200);FB=e2.data||[]}catch(e){SC=[];CS=[];TG=[];UT=[];FB=[]}}
 const canC=(t,p)=>has("admin")||!!((SC.find(c=>c.tag===t)||{}).perms||[]).includes(p);
 const CPERMS=[["points","⭐","Give points"],["groups","👥","Manage groups"],["chats","💬","Moderate chats"],["passwords","🔑","Passwords"],["accounts","➕","Add students"]];
 function clsPage(){return head("Classes",has("admin")?"Every class group. Open one to manage its students and class reps.":"The classes you manage.",has("admin")?`<button onclick="addClass()">➕ Add class</button>`:"")+
@@ -303,6 +303,11 @@ Object.assign(ADM,{"Tags":"Taglar","🏷️ New tag":"🏷️ Yeni tag","✏️ 
 
 function delUser(id){const p=P.find(x=>x.id===id);if(!p)return;confirmBox(tr("Delete <b>{name}</b> permanently? Their account, points, tags and messages are removed. This cannot be undone.",{name:esc(p.name)}),async()=>{await call("admin_delete_user",{u:id},"Deleted")},"Delete")}
 Object.assign(ADM,{"Delete <b>{name}</b> permanently? Their account, points, tags and messages are removed. This cannot be undone.":"<b>{name}</b> həmişəlik silinsin? Hesabı, xalları, tagları və mesajları silinəcək. Bunu geri qaytarmaq olmaz.","Deleted":"Silindi","Delete":"Sil"});
+
+/* ---------- 9d. FEEDBACK ---------- */
+function fbPage(){const n=FB.filter(x=>x.status==="new").length;return head("Feedback",n+" new",`<button class="s" onclick="load()">🔄</button>`)+(FB.map(f=>`<div class="panel"><div class="row sp"><div><b>${esc(nm(f.user_id)||"?")}</b> ${f.class_tag?`<span class="chip">${esc(f.class_tag)}</span>`:""} <span class="chip ${f.status==="new"?"":"ok"}">${f.status==="new"?"🆕 New":"✅ Done"}</span></div><span class="mu">${esc(new Date(f.created_at).toLocaleString())}</span></div><p style="white-space:pre-wrap;margin:8px 0">${esc(f.body)}</p><div class="row wrap">${f.file_path?`<button class="s sm" onclick="fbFileOpen('${f.id}')">📎 ${esc(f.file_name||"file")}</button>`:""}<button class="s sm" onclick="call('admin_set_feedback',{i:${f.id},s:'${f.status==="new"?"done":"new"}'},'Saved')">${f.status==="new"?"✅ Mark done":"↩️ Reopen"}</button><button class="s sm" onclick="call('admin_delete_feedback',{i:${f.id}},'Deleted')">🗑</button></div></div>`).join("")||empty("💬","No feedback yet"))}
+async function fbFileOpen(id){const f=FB.find(x=>String(x.id)===String(id));if(!f)return;const r=await sb.storage.from("feedback").createSignedUrl(f.file_path,300);if(r.data)window.open(r.data.signedUrl,"_blank");else toast("Could not open the file",1)}
+Object.assign(ADM,{"Feedback":"Rəy və problemlər","No feedback yet":"Hələ feedback yoxdur","🆕 New":"🆕 Yeni","✅ Done":"✅ Həll olunub","✅ Mark done":"✅ Həll olundu","↩️ Reopen":"↩️ Yenidən aç"});
 
 /* ---------- 11. BAŞLANĞIC ---------- */
 // Düymə basılarkən canlı yenilənmə gözləyir (klik itməsin)

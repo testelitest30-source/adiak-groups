@@ -155,7 +155,7 @@ const idlePage=()=>`<div class="card"><b>${tr("Idle people ({n})",{n:idle().leng
 function settingsPage(){const u=ME();return`<div class="card"><b>${tr("Settings")}</b><p class="mu">${tr("Display name")}</p><div class="row"><input id="nn" value="${esc(u.name)}" maxlength="30" style="flex:1;min-width:0"><button onclick="saveName()">${tr("Save")}</button></div>
  ${can("panel")?'<p><a class="chip on" href="admin.html" target="_blank" style="text-decoration:none">🛠 '+tr("Open admin panel")+'</a></p>':""}<p class="mu">${tr("Profile picture")}</p><input type="file" accept="image/*" onchange="pic(this)"><p class="row"><button class="s" onclick="toggleMute()">${muted?"🔇 "+tr("Sounds off"):"🔊 "+tr("Sounds on")}</button><button class="s" onclick="confirmLogout()">${tr("Log out")}</button></p>
  ${phone()?`<hr><b>${tr("Language")}</b><p>${langSw()}</p>`:""}${installBox()}<hr><b>${tr("Change password")}</b><p class="mu" style="margin:4px 0">${can("admin")?tr("Admin passwords are private: nobody else can see or reset yours."):tr("Class admins can see your password so they can help you if you forget it. Do not reuse a password from anywhere else.")}</p><input id="cp1" type="password" placeholder="${tr("New password (min 6)")}" autocomplete="new-password"><input id="cp2" type="password" placeholder="${tr("Repeat")}" autocomplete="new-password" style="margin-top:6px"><button style="margin-top:8px" onclick="changePw()">${tr("Change password")}</button>
- ${can("points")?`<hr><b>${tr("Give points")}</b><div class="row" style="margin-top:8px"><select id="ps">${ppl().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select><input id="pp" type="number" value="1" min="-100" max="100" style="width:80px"><button onclick="rpc('add_points',{u:$('#ps').value,n:+$('#pp').value})">${tr("Add")}</button></div>`:""}</div>`}
+ ${can("points")?`<hr><b>${tr("Give points")}</b><div class="row" style="margin-top:8px"><select id="ps">${ppl().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select><input id="pp" type="number" value="1" min="-100" max="100" style="width:80px"><button onclick="rpc('add_points',{u:$('#ps').value,n:+$('#pp').value})">${tr("Add")}</button></div>`:""}</div>${feedbackCard()}`}
 const pages={notes:notesPage,chat:chatPage,idle:idlePage,groups:groupsPage,settings:settingsPage,req:()=>reqPage()};
 const snap=()=>({tab,openG,conv,sheet,sp,menuOpen,pm});
 const mItems=()=>[["notes","🔔",tr("Notifications"),ub(unreadNotes())],["chat","💬",tr("Chat"),ub(totalUnread())],["idle","🧍",tr("Idle people ({n})",{n:idle().length}),""],["groups","👥",tr("Groups"),""],["settings","⚙️",tr("Settings"),""],["req","📨",tr("Requests & invites"),ub(inboxCount())]];
@@ -265,7 +265,7 @@ function apDraw(){if(!apOn)return;const t=$("#tx");if(!t){apClose();return}
  if(apTab==="stk"){STK.forEach(s=>urlFor("s/"+s.path));fetchUrls();
   b=`<div class="stkgrid"><label class="stkadd">＋<input type="file" accept="image/*" style="display:none" onchange="addStk(this)"></label>${STK.map(s=>{const u=urlFor("s/"+s.path);return`<div class="stkc">${u?`<img src="${esc(u)}" onclick="sendStk(${s.id})">`:`<div class="stkadd">…</div>`}<button class="stkx" onclick="delStk(${s.id})">✕</button></div>`}).join("")}</div>${STK.length?"":`<p class="mu">${tr("Add your own stickers with ＋. Tap one to send it.")}</p>`}`}
  else if(apTab==="emo")b=`<div class="emogrid">${EMO.map(e=>`<button onclick="insEmo('${e}')">${e}</button>`).join("")}</div>`;
- else b=`<div class="row wrap"><button onclick="$('#fi').click();apClose()">📁 ${tr("File or photo")}</button><label class="fbtn">📷 ${tr("Camera")}<input type="file" id="fc" accept="image/*" capture="environment" style="display:none" onchange="pickFile(this);apClose()"></label></div>`;
+ else b=`<div class="row wrap"><button onclick="$('#fi').click();apClose()">📁 ${tr("File or photo")}</button><button onclick="camOpen()">📷 ${tr("Camera")}</button></div>`;
  x.innerHTML=`<div class="aptabs">${T.map(k=>`<button class="s${apTab===k[0]?" on":""}" onclick="apTab='${k[0]}';apDraw()">${k[1]} ${k[2]}</button>`).join("")}<button class="s" onclick="apClose()">✕</button></div>${b}`}
 function insEmo(e){const i=$("#tx");if(!i)return;const a=i.selectionStart==null?i.value.length:i.selectionStart,z=i.selectionEnd==null?a:i.selectionEnd;i.value=i.value.slice(0,a)+e+i.value.slice(z);i.selectionStart=i.selectionEnd=a+e.length}
 async function sendStk(id){if(!conv)return;snd.pop();apClose();await rpc("send_sticker",{ch:conv,sid:id,cls:ACLASS||null})}
@@ -281,3 +281,26 @@ async function addStk(inp){const f=inp.files[0];inp.value="";if(!f)return;if(!/^
 // Çatda başqasının stikerinə toxunanda öz kolleksiyana əlavə et
 async function saveStk(p){const q=p.slice(2);if(STK.some(s=>s.path===q))return;if(confirm(tr("Add this sticker to your collection?")))if(await rpc("add_sticker",{pth:q})){toast(tr("Sticker added ✓"));loadStk()}}
 setInterval(()=>{if(apOn&&!$("#tx"))apClose()},700);
+
+/* ---------- Tətbiq daxili kamera (fayl menecerini açmır) ---------- */
+let camS=null,camF="environment";
+async function camOpen(){apClose();camClose();
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){camFallback();return}
+ try{camS=await navigator.mediaDevices.getUserMedia({video:{facingMode:camF,width:{ideal:1600}},audio:false})}catch(e){camFallback();return}
+ const o=document.createElement("div");o.id="cam";o.innerHTML=`<video autoplay playsinline muted></video><div class="camb"><button class="s" onclick="camClose()">✕</button><button class="shut" onclick="camShot()" aria-label="photo"></button><button class="s" onclick="camFlip()">🔄</button></div>`;document.body.appendChild(o);o.firstChild.srcObject=camS}
+function camClose(){if(camS)camS.getTracks().forEach(t=>t.stop());camS=null;const o=$("#cam");if(o)o.remove()}
+function camFlip(){camF=camF==="environment"?"user":"environment";camOpen()}
+function camShot(){const v=$("#cam video");if(!v||!v.videoWidth)return;const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);c.toBlob(b=>{camClose();if(b)sendFile(new File([b],"photo-"+Date.now()+".jpg",{type:"image/jpeg"}))},"image/jpeg",.88)}
+function camFallback(){const i=document.createElement("input");i.type="file";i.accept="image/*";i.setAttribute("capture","environment");i.onchange=()=>pickFile(i);i.click()}
+
+/* ---------- FEEDBACK (Ayarlar) ---------- */
+let fbFile=null;
+function feedbackCard(){return`<div class="card"><b>💬 ${tr("Feedback")}</b><p class="mu">${tr("Found a problem or have an idea? Write it here. It goes straight to the admin.")}</p><textarea id="fbt" rows="4" maxlength="2000" placeholder="${tr("Describe the problem…")}"></textarea><div class="row wrap" style="margin-top:8px"><label class="fbtn">📎 ${tr("Attach file")}<input type="file" style="display:none" onchange="fbPick(this)"></label><span class="mu" id="fbn">${fbFile?esc(fbFile.name):""}</span><button onclick="fbSend()" style="margin-left:auto">${tr("Send")}</button></div></div>`}
+function fbPick(i){const f=i.files[0];i.value="";if(!f)return;if(f.size>10485760){toast(tr("Files must be under 10 MB"),1);return}fbFile=f;$("#fbn").textContent=f.name}
+async function fbSend(){const b=($("#fbt").value||"").trim();if(b.length<3){toast(tr("Write at least 3 characters"),1);return}
+ let fp=null;
+ if(fbFile){fp=uid+"/"+Date.now()+"-"+fbFile.name.replace(/[^\w.-]+/g,"_").slice(-60);const up=await sb.storage.from("feedback").upload(fp,fbFile,{contentType:fbFile.type||"application/octet-stream"});if(up.error){toast(trErr(up.error.message),1);return}}
+ const r=await sb.rpc("send_feedback",{b,fp,fn:fbFile?fbFile.name:null,ft:fbFile?fbFile.type:null});
+ if(r.error){toast(trErr(r.error.message),1);return}
+ try{sb.functions.invoke("feedback-notify",{body:{id:r.data}})}catch(e){}
+ fbFile=null;$("#fbt").value="";$("#fbn").textContent="";toast(tr("Thank you! Sent ✓"))}

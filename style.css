@@ -176,7 +176,7 @@ img.stk,.stk.ld{width:150px;max-width:100%;display:block;cursor:pointer}
 
 /* WhatsApp tipli çat */
 #msgs{background:radial-gradient(circle at 15% 8%,color-mix(in srgb,var(--ac) 8%,transparent),transparent 45%),radial-gradient(circle at 85% 92%,color-mix(in srgb,#10b981 8%,transparent),transparent 45%);border-radius:14px}
-.dsep{align-self:center;background:var(--card);border:1px solid var(--bd);color:var(--mu);font-size:11px;padding:3px 12px;border-radius:99px;margin:8px 0 4px;position:sticky;top:4px;z-index:2}
+.dsep{align-self:center;background:var(--card);border:1px solid var(--bd);color:var(--mu);font-size:11px;padding:3px 12px;border-radius:99px;margin:8px 0 4px}
 .b{cursor:pointer;-webkit-tap-highlight-color:transparent}.b.sys{cursor:default}
 .b.cn{margin-top:-4px;border-top-left-radius:16px}.b.me.cn{border-top-right-radius:16px}
 .b .del{color:var(--mu);font-style:italic}.b a{color:inherit;text-decoration:underline}
@@ -190,3 +190,11 @@ img.stk,.stk.ld{width:150px;max-width:100%;display:block;cursor:pointer}
 .mmr{display:flex;justify-content:space-around;margin-bottom:8px}.mmr button{background:none;border:0;box-shadow:none;font-size:28px;padding:4px 7px;border-radius:50%;cursor:pointer}.mmr .on{background:color-mix(in srgb,var(--ac) 20%,transparent)}
 .mmb{display:block;width:100%;text-align:left;margin:4px 0}
 .rpb{display:flex;align-items:center;gap:8px;border-left:3px solid var(--ac);background:var(--card);border-radius:10px;padding:6px 10px;margin:6px 0;font-size:13px}.rpb>div{flex:1;min-width:0}.rpb .mu{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Çat sürüşdürəndə arxadakı səhifə tərpənməsin */
+#msgs{overscroll-behavior:contain;background-color:var(--bg)}
+html,body{overscroll-behavior-y:none}
+#cam{position:fixed;inset:0;z-index:80;background:#000;display:flex;flex-direction:column}
+#cam video{flex:1;min-height:0;width:100%;object-fit:cover}
+.camb{display:flex;justify-content:space-around;align-items:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));background:#000}
+.shut{width:68px;height:68px;border-radius:50%;border:4px solid #fff;background:#ffffff33;padding:0;box-shadow:none}
