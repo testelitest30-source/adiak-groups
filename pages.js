@@ -224,6 +224,20 @@ function softRender(){pendingRender=true;const mb=$("#msgs");
  if(ME()){markSeen();const n=totalUnread()+inboxCount();document.title=(n?"("+n+") ":"")+"ADIAK Team Maker"}
  lastMax=M.length?M[M.length-1].id:0;if(needUrls.size)fetchUrls()}
 // Səhifəni yenidən çəkir. Düymə basılarkən və səs çalarkən gözləyir ki, klik itməsin
+let lastHtml="";
+// Arxa plan yenilənməsi: DOM-u silib yenidən qurmur, yalnız dəyişən hissələri düzəldir (animasiya, fokus, şəkil və scroll pozulmur)
+function morph(a,b){const B=[...b.childNodes];
+ B.forEach((y,i)=>{const x=a.childNodes[i];
+  if(!x){a.appendChild(y);return}
+  if(x.nodeType!==y.nodeType||x.nodeName!==y.nodeName||(x.nodeType===1&&x.id!==y.id)){a.replaceChild(y,x);return}
+  if(x.nodeType!==1){if(x.nodeValue!==y.nodeValue)x.nodeValue=y.nodeValue;return}
+  const n=x.nodeName,dirty=(n==="INPUT"||n==="TEXTAREA")&&x.value!==x.defaultValue;
+  [...x.attributes].forEach(t=>{if(!y.hasAttribute(t.name))x.removeAttribute(t.name)});
+  [...y.attributes].forEach(t=>{if(x.getAttribute(t.name)!==t.value)x.setAttribute(t.name,t.value)});
+  if(n==="TEXTAREA"){if(!dirty&&document.activeElement!==x)x.value=y.value}
+  else if(n==="INPUT"){if(!dirty&&document.activeElement!==x&&!/^(file|checkbox|radio)$/.test(x.type))x.value=y.getAttribute("value")||""}
+  else morph(x,y)});
+ while(a.childNodes.length>B.length)a.removeChild(a.lastChild)}
 function render(){const holding=pressing&&Date.now()-pressTs<2500;if(holding||(document.querySelectorAll&&[...document.querySelectorAll("audio")].some(a=>!a.paused&&!a.ended))){pendingRender=true;return}pendingRender=false;
  const a=document.activeElement,keep=a&&a.id&&["tx","nn","pw","p1","p2","nm","idin","cp1","cp2"].includes(a.id)?{id:a.id,v:a.value}:null,key=[screen,tab,openG,conv,sp,sheet,menuOpen,pm].join("|"),R=$("#root");
  if(screen==="app"&&ME()&&key===lastKey&&isTyping(a)){softRender();return}
@@ -231,7 +245,7 @@ function render(){const holding=pressing&&Date.now()-pressTs<2500;if(holding||(d
  if(!restoring&&screen==="app"&&lastKey.startsWith("app|")&&key!==lastKey&&lastSnap){navStack.push(lastSnap);try{history.pushState({n:navStack.length},"")}catch(e){}}
  const inN=sheet&&sp==="notes"&&phone();if(wasNotes&&!inN)readNotes();wasNotes=inN;
  if(screen==="app"&&ME())markSeen();
- R.className=key!==lastKey?"in":"";lastKey=key;R.innerHTML=view();if(pm&&screen==="app"){const q=P[pm],me=ME(),sig=q?[q.id,q.name,q.points,q.group_id,(q.perms||[]).join(),q.avatar?1:0,online.has(pm)?1:0,PE.length,me.group_id,(me.perms||[]).join(),me.is_admin?1:0,IV.length,G.length].join("|"):"";if(pmDrawn!==pm||sig!==pmSig){drawProfile(pmDrawn!==pm);pmSig=sig}pmDrawn=pm}else{if(pmDrawn)$("#modal").innerHTML="";pmDrawn=null}
+ const nh=view(),same=key===lastKey&&R.firstChild;R.className=same?R.className:"in";lastKey=key;if(same){if(nh!==lastHtml){const t=document.createElement("div");t.innerHTML=nh;morph(R,t)}}else R.innerHTML=nh;lastHtml=nh;if(pm&&screen==="app"){const q=P[pm],me=ME(),sig=q?[q.id,q.name,q.points,q.group_id,(q.perms||[]).join(),q.avatar?1:0,online.has(pm)?1:0,PE.length,me.group_id,(me.perms||[]).join(),me.is_admin?1:0,IV.length,G.length].join("|"):"";if(pmDrawn!==pm||sig!==pmSig){drawProfile(pmDrawn!==pm);pmSig=sig}pmDrawn=pm}else{if(pmDrawn)$("#modal").innerHTML="";pmDrawn=null}
  sv.forEach(x=>{const n=$("#"+x.id);if(n&&n.value!==x.v)n.value=x.v});
  if(keep){const n=$("#"+keep.id);if(n){n.value=keep.v;n.focus()}}
  const mb=$("#msgs");if(mb)mb.scrollTop=mb.scrollHeight;
