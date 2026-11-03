@@ -1,12 +1,12 @@
 /* sw.js - service worker: sayt tətbiq kimi yüklənə bilsin və şəbəkə yox olanda açılış ekranı görünsün.
    Qayda: həmişə ƏVVƏL İNTERNETDƏN yükləyir (yeni versiya dərhal görünür), internet yoxdursa yaddaşdakı surəti göstərir.
    Supabase və başqa saytlara (başqa mənbə) toxunmur. */
-const V = "adiak-v2"; // versiya artırılır ki, köhnə fayl yolları olan keş silinsin
+const V = "adiak-v3"; // versiya artırılır ki, köhnə fayl yolları olan keş silinsin
 const SHELL = [
   "./", "index.html", "manifest.webmanifest",
-  "assets/css/style.css",
+  "assets/css/style.css", "assets/css/features.css",
   "assets/js/shared/config.js", "assets/js/shared/i18n.js",
-  "assets/js/app/core.js", "assets/js/app/pages.js", "assets/js/app/main.js",
+  "assets/js/app/core.js", "assets/js/app/pages.js", "assets/js/app/extras.js", "assets/js/app/main.js",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png"
 ];
 self.addEventListener("install", e => {
