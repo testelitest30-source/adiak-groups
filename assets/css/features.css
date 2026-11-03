@@ -1,0 +1,145 @@
+/* =====================================================================
+   features.css  -  Yeni funksiyaların görünüşü (style.css-dən SONRA yüklənir)
+
+   Bölmələr:
+     1  Mövzu seçimi (Açıq / Tünd / Avtomatik)
+     2  Fokus və əlçatanlıq
+     3  Yan menyu: axtarış düyməsi
+     4  Telefon üçün alt menyu (tab bar)
+     5  Podium, medallar, həftənin ulduzu
+     6  Xal qrafiki və komanda statistikası
+     7  Qruplar / çatlar: axtarış və filtr
+     8  Çat: qeydlər, oxunmamış xətti, aşağı düyməsi, yüksəklik
+     9  Şəkil böyüdücü
+    10  Oflayn xəbərdarlıq
+    11  Axtarış paneli (Ctrl+K)
+    12  Alətlər: taymer və təsadüfi seçim
+   ===================================================================== */
+
+/* ================= 1. MÖVZU SEÇİMİ ================= */
+:root[data-theme="dark"]{--bg:#0f131c;--card:#1a2030;--tx:#e8edf5;--mu:#97a3b6;--bd:#2a3347;--me:#312e81;--sh:0 6px 20px #0006;color-scheme:dark;--pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520'%3E%3Cg fill='none' stroke='%23c7d2fe' stroke-opacity='0.085' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg fill='%23c7d2fe' fill-opacity='0.0' stroke='none'%3E%3C/g%3E%3Cg transform='translate(24 26) rotate(-8)'%3E%3Cpath d='M0 12Q22-2 44 12V62Q22 48 0 62Z'/%3E%3Cpath d='M44 12Q66-2 88 12V62Q66 48 44 62Z'/%3E%3Cpath d='M8 24Q22 17 36 24M8 34Q22 27 36 34M8 44Q22 37 36 44M52 24Q66 17 80 24M52 34Q66 27 80 34'/%3E%3C/g%3E%3Cg transform='translate(300 16) rotate(6)'%3E%3Crect x='8' y='0' width='54' height='72' rx='7'/%3E%3Cpath d='M0 12h14M0 26h14M0 40h14M0 54h14'/%3E%3Cpath d='M26 16h28M26 28h28M26 40h22M26 52h16'/%3E%3C/g%3E%3Cg transform='translate(176 150) rotate(-14)'%3E%3Cpath d='M0 0H62L76 9L62 18H0Z'/%3E%3Cpath d='M62 0V18M10 0V18'/%3E%3Cpath d='M69 5.5L74 9L69 12.5'/%3E%3C/g%3E%3Cg transform='translate(410 170) rotate(10)'%3E%3Cpath d='M4 74C10 40 36 12 70 2C66 28 46 56 14 70Z'/%3E%3Cpath d='M4 74L50 28M24 52L18 36M34 42L30 26M44 34L44 20'/%3E%3C/g%3E%3Cg transform='translate(40 214) rotate(8)'%3E%3Crect x='0' y='46' width='72' height='16' rx='3'/%3E%3Crect x='6' y='28' width='60' height='16' rx='3'/%3E%3Crect x='12' y='10' width='50' height='16' rx='3'/%3E%3Cpath d='M10 54h52M16 36h40M22 18h30'/%3E%3C/g%3E%3Cg transform='translate(250 276) rotate(-6)'%3E%3Cpath d='M36 70C10 62 4 30 28 12C46-2 70 12 64 34C60 48 44 50 40 40C37 32 46 28 50 34'/%3E%3C/g%3E%3Cg transform='translate(396 332) rotate(-10)'%3E%3Cpath d='M10 30h40l6 34H4Z'/%3E%3Crect x='18' y='20' width='24' height='10' rx='3'/%3E%3Cpath d='M30 20V6M30 6l24-8'/%3E%3Cpath d='M14 48h32'/%3E%3C/g%3E%3Cg transform='translate(120 330) rotate(12)'%3E%3Crect x='8' y='0' width='54' height='72' rx='7'/%3E%3Cpath d='M0 12h14M0 26h14M0 40h14M0 54h14'/%3E%3Cpath d='M26 16h28M26 28h28M26 40h22M26 52h16'/%3E%3C/g%3E%3Cg transform='translate(8 420) rotate(-4)'%3E%3Crect x='0' y='0' width='84' height='22' rx='4'/%3E%3Cpath d='M10 0v10M22 0v7M34 0v10M46 0v7M58 0v10M70 0v7'/%3E%3C/g%3E%3Cg transform='translate(190 430) rotate(10)'%3E%3Cpath d='M0 12Q22-2 44 12V62Q22 48 0 62Z'/%3E%3Cpath d='M44 12Q66-2 88 12V62Q66 48 44 62Z'/%3E%3Cpath d='M8 24Q22 17 36 24M8 34Q22 27 36 34M8 44Q22 37 36 44M52 24Q66 17 80 24M52 34Q66 27 80 34'/%3E%3C/g%3E%3Cg transform='translate(330 448) rotate(-6)'%3E%3Cpath d='M0 0H62L76 9L62 18H0Z'/%3E%3Cpath d='M62 0V18M10 0V18'/%3E%3Cpath d='M69 5.5L74 9L69 12.5'/%3E%3C/g%3E%3Cg transform='translate(444 32) rotate(4)'%3E%3Cpath d='M36 70C10 62 4 30 28 12C46-2 70 12 64 34C60 48 44 50 40 40C37 32 46 28 50 34'/%3E%3C/g%3E%3Ctext stroke='none' fill='%23c7d2fe' fill-opacity='0.07225000000000001' x='150' y='96' transform='rotate(-8 150 96)' font-family='Georgia%2Cserif' font-size='54' font-style='italic'%3E%C6%8F%3C/text%3E%3Ctext stroke='none' fill='%23c7d2fe' fill-opacity='0.07225000000000001' x='352' y='112' transform='rotate(10 352 112)' font-family='Georgia%2Cserif' font-size='46' font-style='italic'%3E%C4%9F%3C/text%3E%3Ctext stroke='none' fill='%23c7d2fe' fill-opacity='0.07225000000000001' x='100' y='170' transform='rotate(8 100 170)' font-family='Georgia%2Cserif' font-size='44' font-style='italic'%3E%C5%9F%3C/text%3E%3Ctext stroke='none' fill='%23c7d2fe' fill-opacity='0.07225000000000001' x='470' y='284' transform='rotate(-8 470 284)' font-family='Georgia%2Cserif' font-size='46' font-style='italic'%3E%C3%A7%3C/text%3E%3Ctext stroke='none' fill='%23c7d2fe' fill-opacity='0.07225000000000001' x='280' y='196' transform='rotate(6 280 196)' font-family='Georgia%2Cserif' font-size='40' font-style='italic'%3E%C3%B6%3C/text%3E%3Ctext stroke='none' fill='%23c7d2fe' fill-opacity='0.07225000000000001' x='34' y='320' transform='rotate(-6 34 320)' font-family='Georgia%2Cserif' font-size='44' font-style='italic'%3E%C3%BC%3C/text%3E%3Ctext stroke='none' fill='%23c7d2fe' fill-opacity='0.07225000000000001' x='230' y='360' transform='rotate(8 230 360)' font-family='Georgia%2Cserif' font-size='40' font-style='italic'%3E%C4%B1%3C/text%3E%3Ctext stroke='none' fill='%23c7d2fe' fill-opacity='0.07225000000000001' x='470' y='430' transform='rotate(6 470 430)' font-family='Georgia%2Cserif' font-size='48' font-style='italic'%3E%C6%8F%3C/text%3E%3Ctext stroke='none' fill='%23c7d2fe' fill-opacity='0.07225000000000001' x='410' y='420' transform='rotate(-10 410 420)' font-family='Georgia%2Cserif' font-size='34' font-style='italic'%3E%C5%9F%3C/text%3E%3C/g%3E%3C/svg%3E")}
+:root[data-theme="light"]{--bg:#eef2f9;--card:#fff;--tx:#1b2330;--mu:#6b7686;--bd:#e1e6f0;--me:#e0e7ff;--sh:0 6px 20px #4f46e522;color-scheme:light;--pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520'%3E%3Cg fill='none' stroke='%234f46e5' stroke-opacity='0.13' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg fill='%234f46e5' fill-opacity='0.0' stroke='none'%3E%3C/g%3E%3Cg transform='translate(24 26) rotate(-8)'%3E%3Cpath d='M0 12Q22-2 44 12V62Q22 48 0 62Z'/%3E%3Cpath d='M44 12Q66-2 88 12V62Q66 48 44 62Z'/%3E%3Cpath d='M8 24Q22 17 36 24M8 34Q22 27 36 34M8 44Q22 37 36 44M52 24Q66 17 80 24M52 34Q66 27 80 34'/%3E%3C/g%3E%3Cg transform='translate(300 16) rotate(6)'%3E%3Crect x='8' y='0' width='54' height='72' rx='7'/%3E%3Cpath d='M0 12h14M0 26h14M0 40h14M0 54h14'/%3E%3Cpath d='M26 16h28M26 28h28M26 40h22M26 52h16'/%3E%3C/g%3E%3Cg transform='translate(176 150) rotate(-14)'%3E%3Cpath d='M0 0H62L76 9L62 18H0Z'/%3E%3Cpath d='M62 0V18M10 0V18'/%3E%3Cpath d='M69 5.5L74 9L69 12.5'/%3E%3C/g%3E%3Cg transform='translate(410 170) rotate(10)'%3E%3Cpath d='M4 74C10 40 36 12 70 2C66 28 46 56 14 70Z'/%3E%3Cpath d='M4 74L50 28M24 52L18 36M34 42L30 26M44 34L44 20'/%3E%3C/g%3E%3Cg transform='translate(40 214) rotate(8)'%3E%3Crect x='0' y='46' width='72' height='16' rx='3'/%3E%3Crect x='6' y='28' width='60' height='16' rx='3'/%3E%3Crect x='12' y='10' width='50' height='16' rx='3'/%3E%3Cpath d='M10 54h52M16 36h40M22 18h30'/%3E%3C/g%3E%3Cg transform='translate(250 276) rotate(-6)'%3E%3Cpath d='M36 70C10 62 4 30 28 12C46-2 70 12 64 34C60 48 44 50 40 40C37 32 46 28 50 34'/%3E%3C/g%3E%3Cg transform='translate(396 332) rotate(-10)'%3E%3Cpath d='M10 30h40l6 34H4Z'/%3E%3Crect x='18' y='20' width='24' height='10' rx='3'/%3E%3Cpath d='M30 20V6M30 6l24-8'/%3E%3Cpath d='M14 48h32'/%3E%3C/g%3E%3Cg transform='translate(120 330) rotate(12)'%3E%3Crect x='8' y='0' width='54' height='72' rx='7'/%3E%3Cpath d='M0 12h14M0 26h14M0 40h14M0 54h14'/%3E%3Cpath d='M26 16h28M26 28h28M26 40h22M26 52h16'/%3E%3C/g%3E%3Cg transform='translate(8 420) rotate(-4)'%3E%3Crect x='0' y='0' width='84' height='22' rx='4'/%3E%3Cpath d='M10 0v10M22 0v7M34 0v10M46 0v7M58 0v10M70 0v7'/%3E%3C/g%3E%3Cg transform='translate(190 430) rotate(10)'%3E%3Cpath d='M0 12Q22-2 44 12V62Q22 48 0 62Z'/%3E%3Cpath d='M44 12Q66-2 88 12V62Q66 48 44 62Z'/%3E%3Cpath d='M8 24Q22 17 36 24M8 34Q22 27 36 34M8 44Q22 37 36 44M52 24Q66 17 80 24M52 34Q66 27 80 34'/%3E%3C/g%3E%3Cg transform='translate(330 448) rotate(-6)'%3E%3Cpath d='M0 0H62L76 9L62 18H0Z'/%3E%3Cpath d='M62 0V18M10 0V18'/%3E%3Cpath d='M69 5.5L74 9L69 12.5'/%3E%3C/g%3E%3Cg transform='translate(444 32) rotate(4)'%3E%3Cpath d='M36 70C10 62 4 30 28 12C46-2 70 12 64 34C60 48 44 50 40 40C37 32 46 28 50 34'/%3E%3C/g%3E%3Ctext stroke='none' fill='%234f46e5' fill-opacity='0.1105' x='150' y='96' transform='rotate(-8 150 96)' font-family='Georgia%2Cserif' font-size='54' font-style='italic'%3E%C6%8F%3C/text%3E%3Ctext stroke='none' fill='%234f46e5' fill-opacity='0.1105' x='352' y='112' transform='rotate(10 352 112)' font-family='Georgia%2Cserif' font-size='46' font-style='italic'%3E%C4%9F%3C/text%3E%3Ctext stroke='none' fill='%234f46e5' fill-opacity='0.1105' x='100' y='170' transform='rotate(8 100 170)' font-family='Georgia%2Cserif' font-size='44' font-style='italic'%3E%C5%9F%3C/text%3E%3Ctext stroke='none' fill='%234f46e5' fill-opacity='0.1105' x='470' y='284' transform='rotate(-8 470 284)' font-family='Georgia%2Cserif' font-size='46' font-style='italic'%3E%C3%A7%3C/text%3E%3Ctext stroke='none' fill='%234f46e5' fill-opacity='0.1105' x='280' y='196' transform='rotate(6 280 196)' font-family='Georgia%2Cserif' font-size='40' font-style='italic'%3E%C3%B6%3C/text%3E%3Ctext stroke='none' fill='%234f46e5' fill-opacity='0.1105' x='34' y='320' transform='rotate(-6 34 320)' font-family='Georgia%2Cserif' font-size='44' font-style='italic'%3E%C3%BC%3C/text%3E%3Ctext stroke='none' fill='%234f46e5' fill-opacity='0.1105' x='230' y='360' transform='rotate(8 230 360)' font-family='Georgia%2Cserif' font-size='40' font-style='italic'%3E%C4%B1%3C/text%3E%3Ctext stroke='none' fill='%234f46e5' fill-opacity='0.1105' x='470' y='430' transform='rotate(6 470 430)' font-family='Georgia%2Cserif' font-size='48' font-style='italic'%3E%C6%8F%3C/text%3E%3Ctext stroke='none' fill='%234f46e5' fill-opacity='0.1105' x='410' y='420' transform='rotate(-10 410 420)' font-family='Georgia%2Cserif' font-size='34' font-style='italic'%3E%C5%9F%3C/text%3E%3C/g%3E%3C/svg%3E")}
+
+/* ================= 2. FOKUS VƏ ƏLÇATANLIQ ================= */
+button:focus-visible,a:focus-visible,.li:focus-visible,.gr:focus-visible{outline:3px solid color-mix(in srgb,var(--ac) 55%,transparent);outline-offset:2px}
+.nxt{display:block;margin-top:-2px}
+.empty{text-align:center;padding:14px 0;margin:0}
+.grid2.mb{margin-bottom:14px}
+kbd{font:600 11px system-ui,sans-serif;border:1px solid var(--bd);border-bottom-width:2px;border-radius:6px;padding:1px 6px;color:var(--mu);background:var(--bg)}
+
+/* ================= 3. YAN MENYU ================= */
+.palbtn{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:10px;background:var(--bg);background-image:none;color:var(--mu);border:1px solid var(--bd);border-radius:12px;padding:8px 12px;box-shadow:none;font-weight:500}
+.palbtn:hover:not(:disabled){background:var(--me);transform:none}
+.srow{flex-wrap:wrap}
+
+/* ================= 4. TELEFON ÜÇÜN ALT MENYU ================= */
+#tabbar{display:none}
+@media(max-width:800px){
+  #fab{display:none!important}
+  #tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:8;background:color-mix(in srgb,var(--card) 93%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--bd);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 26px -16px #0007}
+  .tb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:transparent;background-image:none;box-shadow:none;color:var(--mu);padding:5px 2px;border-radius:14px;font-weight:600;min-width:0;transform:none!important}
+  .tb .ti{position:relative;font-size:21px;line-height:1.15;transition:transform .2s}
+  .tb .badge{position:absolute;top:-5px;right:-14px;margin:0;font-size:10px;padding:0 5px;min-width:16px;text-align:center}
+  .tb .tl{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .tb.on{color:var(--ac);background:color-mix(in srgb,var(--ac) 11%,transparent)}
+  .tb.on .ti{transform:translateY(-1px) scale(1.12)}
+  html.kbd #tabbar{display:none}
+  #sheet{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+  #msgs{height:max(240px,calc(100vh - 252px));height:max(240px,calc(100dvh - 252px))}
+}
+
+/* ================= 5. PODİUM, MEDALLAR, HƏFTƏNİN ULDUZU ================= */
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin:12px 0 4px}
+.pod{flex:1;max-width:124px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.pod .av.big{width:54px;height:54px;font-size:21px}
+.pod .crown{font-size:20px;line-height:1;margin-bottom:-4px;animation:float 3s ease-in-out infinite}
+.pod .pn{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.pod .pp{font-size:12px;color:var(--mu)}
+.pstep{width:100%;border-radius:12px 12px 4px 4px;display:flex;align-items:flex-start;justify-content:center;padding-top:8px;font-size:22px;transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
+.pstep.s1{background:linear-gradient(180deg,#fcd34d,#f59e0b)}
+.pstep.s2{background:linear-gradient(180deg,#e2e8f0,#94a3b8)}
+.pstep.s3{background:linear-gradient(180deg,#fdba74,#ea580c)}
+.starline{margin-top:12px;padding:9px 12px;border-radius:12px;background:var(--me);cursor:pointer;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px}
+.bdgs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.bdg{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;padding:8px 2px;border-radius:12px;background:var(--bg);border:1px solid var(--bd);min-width:0}
+.bdg .bi{font-size:24px;line-height:1.1}
+.bdg small{font-size:10px;line-height:1.15;color:var(--mu);max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.bdg.off{filter:grayscale(1);opacity:.38}
+.bdg.on{border-color:color-mix(in srgb,var(--ac) 45%,var(--bd));background:color-mix(in srgb,var(--ac) 9%,var(--card))}
+.bdg.on small{color:var(--tx);font-weight:600}
+.bdg.on .bi{animation:pop .5s}
+
+/* ================= 6. XAL QRAFİKİ VƏ KOMANDA STATİSTİKASI ================= */
+.sparkw{margin-top:12px}.sparkw .mu{font-size:12px}
+.spark{display:block;width:100%;height:64px;margin-top:2px}
+.tstat{margin:6px 0 4px}
+
+/* ================= 7. AXTARIŞ VƏ FİLTR ================= */
+.gfbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 4px}
+.gq{width:100%;margin:8px 0 4px}
+.gfbar .gq{flex:1;min-width:140px;width:auto;margin:0}
+
+/* ================= 8. ÇAT ================= */
+#msgs{height:max(300px,calc(100vh - 330px));height:clamp(300px,calc(100dvh - 330px),780px)}
+.msgwrap{position:relative}
+.tobot{position:absolute;right:12px;bottom:18px;width:40px;height:40px;padding:0;border-radius:50%;font-size:18px;opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .2s,transform .2s;box-shadow:0 6px 16px #0004;z-index:2}
+.tobot.show{opacity:1;pointer-events:auto;transform:none}
+.mention{color:var(--ac);font-weight:600}
+.mention.me{background:color-mix(in srgb,#f59e0b 30%,transparent);color:inherit;border-radius:6px;padding:0 3px}
+.usep{align-self:stretch;display:flex;align-items:center;gap:10px;color:var(--ac);font-size:11px;font-weight:700;margin:8px 0 2px}
+.usep:before,.usep:after{content:"";flex:1;height:1px;background:color-mix(in srgb,var(--ac) 40%,transparent)}
+
+/* ================= 9. ŞƏKİL BÖYÜDÜCÜ ================= */
+#lb{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .2s;cursor:zoom-out}
+#lb img{max-width:100%;max-height:calc(100vh - 100px);max-height:calc(100dvh - 100px);object-fit:contain;border-radius:12px;box-shadow:0 20px 60px #000a;animation:pop .25s;cursor:default}
+#lb .lbx{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;width:42px;height:42px;padding:0;border-radius:50%;background:#ffffff2e;background-image:none;color:#fff;font-size:16px}
+#lb .lbdl{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);color:#fff;background:#ffffff2e;padding:9px 16px;border-radius:99px;text-decoration:none;font-size:14px;white-space:nowrap}
+
+/* ================= 10. OFLAYN XƏBƏRDARLIQ ================= */
+#offl{position:fixed;top:0;left:0;right:0;z-index:100;background:#b45309;color:#fff;text-align:center;padding:calc(6px + env(safe-area-inset-top,0px)) 12px 6px;font-size:13px;font-weight:600;animation:fade .2s}
+
+/* ================= 11. AXTARIŞ PANELİ ================= */
+#pal{position:fixed;inset:0;z-index:90;background:rgba(10,12,24,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:12vh 12px 12px;animation:fade .15s}
+.palbox{width:min(580px,100%);background:var(--card);border:1px solid var(--bd);border-radius:20px;box-shadow:0 30px 80px -20px #000b;overflow:hidden;animation:pop .2s;display:flex;flex-direction:column;max-height:76vh}
+.palin{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bd)}
+.palin input{flex:1;min-width:0;border:0;background:transparent;padding:6px 0;font-size:17px}
+.palin input:focus{box-shadow:none}
+#pall{overflow:auto;padding:6px;overscroll-behavior:contain}
+.palsec{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--mu);padding:8px 10px 3px}
+.palrow{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;cursor:pointer}
+.palrow.on{background:var(--me)}
+.pali{width:24px;text-align:center;flex:none}
+.palt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.palhint{font-size:11px;text-align:center;padding:7px;border-top:1px solid var(--bd)}
+@media(max-width:800px){#pal{padding-top:8vh}.palhint{display:none}}
+
+/* ================= 12. ALƏTLƏR ================= */
+.toolsg{align-items:start;margin:10px}
+@media(min-width:801px){.toolsg{margin:0}}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.presets button{flex:1;min-width:52px;padding:7px 6px}
+.presets button.on{background:var(--ac);color:#fff}
+.tmbox{position:relative;width:min(230px,72%);margin:6px auto 12px;aspect-ratio:1}
+.tmbox svg{width:100%;height:100%;display:block}
+.tmbg{fill:none;stroke:var(--bd);stroke-width:12}
+.tmfg{fill:none;stroke:var(--ac);stroke-width:12;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
+.tmbox.warn .tmfg{stroke:#f59e0b}
+.tmbox.crit .tmfg,.tmbox.end .tmfg{stroke:#ef4444}
+.tmc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.tmd{font:800 44px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.tmbox.crit .tmd{color:#ef4444;animation:pulse3 1s infinite}
+.tmbox.end .tmd{color:#ef4444;animation:pop .5s}
+.tmbtns button{padding:10px 14px}
+@keyframes pulse3{50%{transform:scale(1.08)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pkshow{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 10px;margin:12px 0;background:var(--bg);border-radius:16px;min-height:132px;text-align:center}
+.pkq{font-size:44px;display:inline-block}
+.pkshow.roll .pkq{animation:spin .6s linear infinite}
+.pkname{font-size:22px;font-weight:800;word-break:break-word}
+.pkshow.win{background:linear-gradient(135deg,color-mix(in srgb,#22c55e 15%,var(--bg)),color-mix(in srgb,var(--ac) 15%,var(--bg)));animation:pop .4s}
+.pkopt{display:flex;align-items:center;gap:8px;margin:12px 0 8px;cursor:pointer;font-size:14px}
+.pkopt input{width:18px;height:18px;padding:0;accent-color:var(--ac)}
+.pkord{margin-top:12px;border-top:1px solid var(--bd);padding-top:10px}
+.ordn{width:22px;font-weight:800;color:var(--ac);text-align:center}
+.tpill{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:0;right:0;margin:0 auto;width:max-content;z-index:46;padding:7px 16px;border-radius:99px;font-variant-numeric:tabular-nums;box-shadow:0 8px 24px -8px #000a;animation:pop .3s}
+.tpill.crit{background:linear-gradient(135deg,#ef4444,#dc2626);animation:pulse3 1s infinite}
