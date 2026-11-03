@@ -61,7 +61,7 @@ async function fetchUrls(){if(!needUrls.size||!sb)return;const paths=[...needUrl
 // Mesajdakı fayl, şəkil və ya səsin HTML-i
 function fileHtml(m){if(!m.file_path)return"";const u=urlFor(m.file_path),t=m.file_type||"";
  if(t==="sticker")return u?`<img class="stk" src="${esc(u)}" alt="sticker" >`:`<div class="stk ld">🎭</div>`;
- if(/^image\//.test(t))return u?`<img class="ph" src="${esc(u)}" alt="${esc(m.file_name)}" onclick="window.open(this.src)">`:`<div class="file">🖼️ ${tr("Loading…")}</div>`;
+ if(/^image\//.test(t))return u?`<img class="ph" src="${esc(u)}" alt="${esc(m.file_name)}" onclick="openImg(this.src)">`:`<div class="file">🖼️ ${tr("Loading…")}</div>`;
  if(/^audio\//.test(t))return u?`<audio controls preload="metadata" src="${esc(u)}"></audio>`:`<div class="file">🎤 ${tr("Loading…")}</div>`;
  return`<a class="file" ${u?`href="${esc(u)}" target="_blank" rel="noopener"`:""}><span class="ic">${ficon(t,m.file_name)}</span><span style="min-width:0"><b>${esc(m.file_name)}</b><br><small class="mu">${fsize(m.file_size||0)}${u?" · "+tr("tap to open"):""}</small></span></a>`}
 function pickFile(inp){const f=inp.files[0];inp.value="";if(f)sendFile(f)}
@@ -102,7 +102,8 @@ const saveSeen=()=>{try{localStorage.setItem("seen:"+uid,JSON.stringify(SEEN))}c
 // Bir çatdakı oxunmamış mesajların sayı
 const unread=ch=>M.filter(m=>m.channel===ch&&mIn(m)&&m.sender!==null&&m.sender!==uid&&m.id>(SEEN[ch]||0)).length;
 const totalUnread=()=>{let n=0;new Set(M.map(m=>m.channel)).forEach(c=>{n+=unread(c)});return n};
-const visibleConv=()=>conv&&(!phone()||(sheet&&sp==="chat"))?conv:null;
+// Çat yalnız həqiqətən ekranda göründüyü zaman "açıq" sayılır (telefonda çat səhifəsi, kompüterdə "Çat" tabı)
+const visibleConv=()=>conv&&(phone()?(sheet&&sp==="chat"):tab==="chat")?conv:null;
 // Açıq çatı oxunmuş kimi qeyd edir
 function markSeen(all){const chs=all?[...new Set(M.map(m=>m.channel))]:(visibleConv()?[conv]:[]);let ch=false;
  chs.forEach(c=>{const ids=M.filter(m=>m.channel===c).map(m=>m.id);if(ids.length){const mx=Math.max(...ids);if((SEEN[c]||0)<mx){SEEN[c]=mx;ch=true}}});if(ch)saveSeen()}
@@ -177,7 +178,7 @@ function onMsg(n){if(!ready||!n||n.id==null)return false;const o=snapOld();
  if(!M.some(m=>m.id===n.id)){M.push(n);M.sort((a,b)=>a.id-b.id)}if(M.length>600)M=M.slice(-400);
  SIGS.messages=null;diff(o);render();return true}
 // Köhnə və yeni məlumatı müqayisə edib lazımi bildirişləri yaradır
-function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){sparks();notify("⭐ +"+dp+" "+tr("points!"),tr("Your total is now {n}",{n:u.points}),null,"ok")}const g=u.group_id,isHost=g!==null&&grp(g)&&grp(g).host_id===uid;
+function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){sparks();notify("⭐ +"+dp+" "+tr("points!"),tr("Your total is now {n}",{n:u.points}),null,"ok")}rankUpCheck(o,u);const g=u.group_id,isHost=g!==null&&grp(g)&&grp(g).host_id===uid;
  if(o.g===null&&g!==null){party();notify("🎉 "+tr("You joined {g}",{g:gname(g)}),tr("Welcome to the group!"),{k:"group",id:g},"ok")}
  else if(o.g!==null&&g===null&&Date.now()>quietUntil)notify(tr("You are no longer in {g}",{g:gname(o.g)}),"",null,"err");
  if(g!==null){
@@ -193,7 +194,7 @@ function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){spar
   if(was!==undefined&&was!=="approved"&&r.stage==="approved")notify("👍 "+tr("Members approved your request"),tr("Waiting for the host's final decision"),null,"ok")});
  if(g===null&&o.g===null&&Date.now()>quietUntil&&[...o.my].some(id=>!RQ.some(r=>r.id===id)))notify(tr("Your join request was declined")+" 😕","",null,"err");
  const vc=visibleConv();
- M.filter(m=>m.id>o.mx&&m.sender!==uid&&m.sender!==null).slice(-3).forEach(m=>{if(m.channel===vc){snd.pop();return}if(m.channel==="all")return;
+ M.filter(m=>m.id>o.mx&&m.sender!==uid&&m.sender!==null).slice(-3).forEach(m=>{if(m.channel===vc){snd.pop();return}if(m.channel==="all"){if(mentionsMe(m))notify("📣 "+tr("{nm} mentioned you",{nm:nameOf(m.sender)}),prev(m,60),{k:"chat",ch:"all"},"msg");return}
   notify(m.channel[0]==="d"?tr("New message from {nm}",{nm:nameOf(m.sender)}):tr("New message in {g} from {nm}",{g:gname(+m.channel.slice(2)),nm:nameOf(m.sender)}),prev(m,60),{k:"chat",ch:m.channel},"msg")})}
 // Dəyişən cədvəllərin adını toplayıb 150 ms sonra yalnız onları yeniləyir
 let pendT=new Set(),pendAll=false;
