@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<!-- ADIAK Team Maker: şagird saytı. Bütün fayllar EYNİ qovluqda (repo-nun kökündə) olmalıdır. -->
+<!-- ADIAK Team Maker: şagird saytı. Quruluş üçün README.md faylına bax. -->
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#4f46e5">
 <!-- Tətbiq kimi yükləmə (PWA) -->
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ADIAK">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ADIAK Team Maker</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="assets/css/style.css">
 </head><body>
 <!-- Səhifənin boş qabları: məzmunu JavaScript doldurur -->
 <div id="root"></div><div id="modal"></div><div id="toast"></div><div id="toasts"></div>
@@ -19,11 +19,11 @@
 <!-- 1) Supabase kitabxanası (internetdən) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <!-- 2) Saytın öz faylları. Sıra vacibdir: config → i18n → core → pages → main -->
-<script src="config.js"></script>
-<script src="i18n.js"></script>
-<script src="core.js"></script>
-<script src="pages.js"></script>
-<script src="main.js"></script>
+<script src="assets/js/shared/config.js"></script>
+<script src="assets/js/shared/i18n.js"></script>
+<script src="assets/js/app/core.js"></script>
+<script src="assets/js/app/pages.js"></script>
+<script src="assets/js/app/main.js"></script>
 <!-- Service worker: yalnız https və localhost-da qeydə alınır; xəta olsa sayt yenə də işləyir -->
 <script>if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
 
@@ -36,7 +36,7 @@
     document.getElementById("root").innerHTML='<div style="max-width:440px;margin:12vh auto;padding:20px;font:16px system-ui;border:2px solid #dc2626;border-radius:16px">'
      +'<h3 style="margin-top:0;color:#dc2626">Bəzi fayllar tapılmadı</h3>'
      +'<p>'+(miss.length?'Tapılmayan: <b>'+miss.join(", ")+'</b>.':'Supabase kitabxanası yüklənmədi (internetə baxın).')+'</p>'
-     +'<p>GitHub-da <b>bütün faylları eyni qovluğa</b> (repo-nun kökünə) yükləyin: index.html, style.css, config.js, i18n.js, core.js, pages.js, main.js (+ admin üçün admin.html, admin.css, admin.js).</p></div>';
+     +'<p>Layihənin <b>qovluq quruluşunu dəyişmədən</b> (index.html, assets/, admin/, sw.js, manifest.webmanifest) GitHub-a yükləyin.</p></div>';
   }
 })();
 </script>

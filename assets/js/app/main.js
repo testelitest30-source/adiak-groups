@@ -78,7 +78,7 @@ addEventListener("popstate",()=>{if(screen!=="app")return;const s=navStack.pop()
 let tx0=0,ty0=0;
 addEventListener("touchstart",e=>{const t=e.touches[0];tx0=t.clientX;ty0=t.clientY},{passive:true});
 addEventListener("touchend",e=>{if(!phone()||screen!=="app")return;const t=e.changedTouches[0],dx=t.clientX-tx0,dy=t.clientY-ty0;if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*.6)return;
- if(dx<0&&!menuOpen&&!sp&&!pm&&tx0>innerWidth*.5){menuOpen=true;render()}else if(dx>0&&menuOpen)goBack()},{passive:true});
+ if(dx>0&&!menuOpen&&!sp&&!pm&&tx0<innerWidth*.6){menuOpen=true;render()}else if(dx<0&&menuOpen)goBack()},{passive:true});
 // Klaviatura açılanda ekranın hündürlüyü dəyişir; yalnız telefon/masaüstü keçidində yenilə
 let lastPhone=phone();addEventListener("resize",()=>{const p=phone();if(p!==lastPhone){lastPhone=p;if(screen==="app")render()}});
 // ---- Tətbiq kimi yükləmə (PWA) ----

@@ -1,6 +1,6 @@
 /* =====================================================================
-   i18n-admin.js  -  Admin panelinin tərcüməsi (AZ | EN). Yalnız admin.html yükləyir.
-   Yüklənmə sırası: config.js → i18n.js → i18n-admin.js → admin.js
+   i18n-admin.js  -  Admin panelinin tərcüməsi (AZ | EN). Yalnız admin/index.html yükləyir.
+   Yüklənmə sırası: shared/config.js → shared/i18n.js → admin/i18n-admin.js → admin/admin.js
    Necə işləyir: admin.js-də esc() istifadəçi məlumatını (ad, mesaj) gizli işarələrlə (\u0001 … \u0002) əhatə edir.
    Hər innerHTML yazılışı admHtml() ilə keçir: mətn düyünləri və placeholder/title lüğətdən tərcümə olunur,
    işarələnmiş məlumata isə toxunulmur. Rəqəmlər {0}, {1} … ilə əvəz olunub lüğətdə axtarılır.
