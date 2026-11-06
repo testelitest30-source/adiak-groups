@@ -5,8 +5,9 @@
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const jsq=s=>esc(JSON.stringify(String(s==null?"":s)));
 let pressing=false,pressTs=0,pmSig="",SET={max_groups:6},menuOpen=false,MYSID=null,navStack=[],restoring=false,lastSnap=null,pmDrawn=null,wasNotes=false,URLS={},needUrls=new Set(),rec=null,pendingRender=false,PE=[],pm=null,sb=null,chan=null,uid=null,screen="boot",err="",roster=[],P={},G=[],RQ=[],JB=[],KK=[],KB=[],IV=[],M=[],online=new Set(),SEEN={};
-let lastSig="",ACLASS=null,CLS=[],CHOICES=null,chartMode="students",NOTES=[],notesOpen=false,tab="home",openG=null,conv=null,sheet=false,sp=null,tm=null,tt=null,ready=false,quietUntil=0,lastKey="",lastMax=0,muted=false,AC=null;
+let lastSig="",ACLASS=null,CLS=[],CHOICES=null,chartMode="students",NOTES=[],notesOpen=false,tab="home",openG=null,conv=null,sheet=false,sp=null,tmSched=null,tmRetry=null,tmChan=null,tt=null,ready=false,quietUntil=0,lastKey="",lastNav="",lastMax=0,muted=false,AC=null;
 try{muted=localStorage.getItem("mute")==="1"}catch(e){}
 const phone=()=>innerWidth<=800, ME=()=>P[uid], grp=id=>G.find(g=>g.id===id), nameOf=id=>P[id]?P[id].name:"?";
 // Bu hesabın verilmiş yetkisi varmı? (admin hər şeyi edə bilər)
@@ -18,12 +19,12 @@ const mytags=p=>UT.filter(x=>x.user_id===p.id).map(x=>TG.find(t=>t.id===x.tag_id
 const tchip=t=>`<span class="chip utag" style="--tc:${t.color}" title="${esc(t.descr||t.name)}">${esc(t.emoji)} ${esc(t.name)}</span>`;
 const tchips=(p,n)=>{const L=mytags(p);return L.slice(0,n).map(t=>" "+tchip(t)).join("")+(L.length>n?` <span class="chip">+${L.length-n}</span>`:"")};
 const tagBox=p=>{const L=mytags(p);return L.length?`<div class="tbox">${L.map(t=>`<div class="trow">${tchip(t)}<span class="mu">${esc(t.descr||"")}${t.reward>0?" · +"+t.reward+" "+tr("pts"):""}</span></div>`).join("")}</div>`:""};
-const tag0=p=>!p?"":adm(p)?' <span class="chip tag">🛡 Admin</span>':p.role==="teacher"?' <span class="chip tag3">👩‍🏫 '+tr("Teacher")+'</span>':(p.perms||[]).includes("points")?' <span class="chip tag2">⭐ '+tr("Scorer")+'</span>':"";
+const tag0=p=>!p?"":adm(p)?` <span class="chip tag">${ic("shield")} Admin</span>`:p.role==="teacher"?` <span class="chip tag3">${ic("cap")} ${tr("Teacher")}</span>`:(p.perms||[]).includes("points")?` <span class="chip tag2">${ic("star")} ${tr("Scorer")}</span>`:"";
 const tag=p=>!p?"":tag0(p)+tchips(p,2);
 const PERM_TEXT={points:"give points",groups:"manage groups (add, move, remove students)",chats:"moderate chats",passwords:"see students' passwords",panel:"open the admin panel",admin:"do everything"};
 const permList=p=>["admin","points","groups","chats","passwords","panel"].filter(k=>p&&(p.is_admin||(p.perms||[]).includes("admin")||(p.perms||[]).includes(k)))
 // Sağ alt küncdəki 'Created by' kartı
-const credits=inl=>`<div class="credits${inl?" inline":""}"><small>${tr("Created by")}</small><div><b>Sübhan Camalzadə</b> <span class="chip tag">🛡 Admin</span></div><div><b>Nurəli Qasımlı</b> <span class="chip tag">🛡 Admin</span></div></div>`;
+const credits=inl=>`<div class="credits${inl?" inline":""}"><small>${tr("Created by")}</small><div><b>Sübhan Camalzadə</b> <span class="chip tag">${ic("shield")} Admin</span></div><div><b>Nurəli Qasımlı</b> <span class="chip tag">${ic("shield")} Admin</span></div></div>`;
 // Tələbələrin siyahısı (müəllim və Host daxil deyil)
 const ppl=()=>Object.values(P).filter(p=>!p.is_admin&&p.role!=="teacher"&&!(p.perms||[]).includes("admin")&&(viewerTag()===undefined||p.class_tag===viewerTag())).sort((a,b)=>a.name.localeCompare(b.name));
 // Akademik qrup (class_tag): tələbə yalnız öz akademik qrupunun komandalarını və boş tələbələrini görür; müəllim/admin hamısını görür
@@ -43,7 +44,7 @@ const dmKey=(a,b)=>a<b?`d:${a}:${b}`:`d:${b}:${a}`;
 const RANKS=[["Newcomer",0],["Speaker",10],["Orator",25],["Maestro",50]];
 const rank=p=>{let i=0;RANKS.forEach((r,j)=>{if(p>=r[1])i=j});const nx=RANKS[i+1];return{name:tr(RANKS[i][0]),pct:nx?Math.round((p-RANKS[i][1])/(nx[1]-RANKS[i][1])*100):100}};
 const av=(p,c="")=>{let h=0;for(const ch of p.name)h=(h*31+ch.charCodeAt(0))%360;
- return`<div class="av ${c}" onclick="event.stopPropagation();showProfile('${p.id}')" style="background:hsl(${h},55%,48%)">${p.avatar?`<img src="${esc(p.avatar)}" alt="">`:esc(p.name[0].toUpperCase())}${online.has(p.id)?'<i class="on"></i>':""}</div>`};
+ return`<div class="av ${c}" onclick="event.stopPropagation();showProfile('${p.id}')" style="background:hsl(${h},55%,48%)">${p.avatar?`<img src="${esc(p.avatar)}" alt="">`:esc(p.name[0].toUpperCase())}</div>`};
 
 /* ================= SƏSLƏR (hazır fayl yoxdur, brauzerdə yaradılır) ================= */
 // Brauzerdə tək bir səs tonu yaradır
@@ -61,12 +62,12 @@ async function fetchUrls(){if(!needUrls.size||!sb)return;const paths=[...needUrl
 // Mesajdakı fayl, şəkil və ya səsin HTML-i
 function fileHtml(m){if(!m.file_path)return"";const u=urlFor(m.file_path),t=m.file_type||"";
  if(t==="sticker")return u?`<img class="stk" src="${esc(u)}" alt="sticker" >`:`<div class="stk ld">🎭</div>`;
- if(/^image\//.test(t))return u?`<img class="ph" src="${esc(u)}" alt="${esc(m.file_name)}" onclick="openImg(this.src)">`:`<div class="file">🖼️ ${tr("Loading…")}</div>`;
+ if(/^image\//.test(t))return u?`<img class="ph" src="${esc(u)}" alt="${esc(m.file_name)}" loading="lazy" decoding="async" onclick="openImg(this.src)">`:`<div class="file">🖼️ ${tr("Loading…")}</div>`;
  if(/^audio\//.test(t))return u?`<audio controls preload="metadata" src="${esc(u)}"></audio>`:`<div class="file">🎤 ${tr("Loading…")}</div>`;
  return`<a class="file" ${u?`href="${esc(u)}" target="_blank" rel="noopener"`:""}><span class="ic">${ficon(t,m.file_name)}</span><span style="min-width:0"><b>${esc(m.file_name)}</b><br><small class="mu">${fsize(m.file_size||0)}${u?" · "+tr("tap to open"):""}</small></span></a>`}
-function pickFile(inp){const f=inp.files[0];inp.value="";if(f)sendFile(f)}
+function pickFile(inp){const f=inp.files[0];if(!f)return;if(!msgReady()){inp.value="";return}inp.value="";sendFile(f)}
 // Faylı yükləyir və çata göndərir (25 MB-a qədər)
-async function sendFile(f){if(!conv)return;if(f.size>26214400){toast(tr("Files must be under 25 MB"),1);snd.err();return}
+async function sendFile(f){if(!conv)return;if(f.size>26214400){toast(tr("Files must be under 25 MB"),1);snd.err();return}if(!canMsg())return;
  toast(tr("Uploading {name}…",{name:f.name}));const ch=conv,safe=f.name.replace(/[^\w.\-]+/g,"_").slice(-60),path=uid+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,7)+"-"+safe;
  const up=await sb.storage.from("chat-files").upload(path,f,{contentType:f.type||"application/octet-stream"});
  if(up.error){toast(trErr(up.error.message),1);snd.err();return}
@@ -88,8 +89,20 @@ addEventListener("click",e=>{if(e.target.closest&&e.target.closest("button,.gr,.
 
 // Ekranın altında qısa xəbər göstərir (qırmızı = xəta)
 function toast(m,bad){const t=$("#toast");t.textContent=m;t.className="show"+(bad?" bad":"");clearTimeout(tt);tt=setTimeout(()=>{t.className=""},3800)}
-// Bazadakı funksiyanı çağırır, uğurlu olsa məlumatı yeniləyir
-async function rpc(fn,a){quietUntil=Date.now()+3000;const {error}=await sb.rpc(fn,a);if(error){toast(trErr(error.message),1);snd.err();return false}await refresh(true);return true}
+const MSG_GAP=1000;let lastMsgAt=0;
+function msgReady(){if(Date.now()-lastMsgAt<MSG_GAP){toast(tr("Please wait a second before sending again."),1);return false}return true}
+function canMsg(){if(!msgReady())return false;lastMsgAt=Date.now();return true}
+addEventListener("error",e=>{if(e&&e.target&&e.target!==window&&e.target.tagName)return;const m=(e&&(e.message||""))||"";if(/ResizeObserver|Script error/i.test(m))return;try{console.error(e.error||e.message);toast(tr("Something went wrong. Please try again."),1)}catch(_){}});
+addEventListener("unhandledrejection",e=>{try{console.error(e.reason);toast(tr("Something went wrong. Please try again."),1)}catch(_){}});
+const RPC_T={send_message:["messages"],send_reply:["messages"],send_file:["messages"],send_sticker:["messages"],edit_message:["messages"],delete_message:["messages"],
+ admin_clear_channel:["messages"],admin_clear_all_chats:["messages"],toggle_reaction:["msg_reactions"],add_points:["profiles","point_events"],update_me:["profiles"],
+ create_group:["groups","profiles"],leave_group:["groups","profiles","requests"],admin_move_member:["groups","profiles"],admin_remove_member:["groups","profiles"],
+ set_my_class_tag:["profiles"],send_invite:["invites"],cancel_invite:["invites"],start_kick:["kicks"],claim_session:["sessions"],
+ request_join:["requests"],cancel_request:["requests"],open_vote:["requests"],vote_join:["join_ballots","requests"],
+ vote_kick:["kick_ballots","kicks","profiles"],host_decide:["requests","groups","profiles"],respond_invite:["invites","requests","groups","profiles"],
+ add_sticker:[],delete_sticker:[],send_feedback:[]};
+async function rpc(fn,a){quietUntil=Date.now()+3000;const {error}=await sb.rpc(fn,a);if(error){toast(trErr(error.message),1);snd.err();return false}
+ const t=RPC_T[fn];if(t===undefined)await refresh(true);else if(t.length)await refresh(false,t);return true}
 function closeM(){pm=null;pmDrawn=null;pmSig="";$("#modal").innerHTML=""}
 // Bəli / Ləğv təsdiq pəncərəsi
 function ask(t,fn){$("#modal").innerHTML=`<div class="ov"><div class="card" style="max-width:340px"><p>${t}</p><div class="row"><button class="s" style="flex:1" onclick="closeM()">${tr("Cancel")}</button><button class="d" style="flex:1" id="yes">${tr("Yes")}</button></div></div></div>`;$("#yes").onclick=()=>{closeM();fn()}}
@@ -138,7 +151,7 @@ function goTab(k,g){if(tab==="notes"||(phone()&&sp==="notes"))readNotes();notesO
 const openDM=id=>openChat(dmKey(uid,id));
 function toggleNotes(){goTab("notes")}
 const noteRows=()=>NOTES.length?NOTES.map((n,i)=>`<div class="nrow${n.read?"":" un"}" onclick="go(NOTES[${i}].act)"><b>${esc(n.t)}</b>${n.b?`<br><span class="mu">${esc(n.b)}</span>`:""}<br><small>${ago(n.time)}</small></div>`).join(""):"<p class='mu'>"+tr("No notifications yet")+"</p>";
-const noteHead=()=>`<div class="row sp"><b>🔔 ${tr("Notifications")}</b><button class="s" onclick="readNotes();render()">${tr("Mark all read")}</button></div>`;
+const noteHead=()=>`<div class="row sp"><b>${ic("bell")} ${tr("Notifications")}</b><button class="s" onclick="readNotes();render()">${tr("Mark all read")}</button></div>`;
 const notesPanel=()=>`<div id="notes" class="card">${noteHead()}${noteRows()}</div>`;
 const notesPage=()=>`<div class="card">${noteHead()}${noteRows()}</div>`;
 
@@ -150,6 +163,18 @@ const TBL={profiles:()=>sb.from("profiles").select("id,name,avatar,points,group_
  point_events:()=>sb.from("point_events").select("*").order("id",{ascending:false}).limit(500),messages:()=>sb.from("messages").select("*").order("id",{ascending:false}).limit(300),sessions:()=>sb.from("sessions").select("sid").eq("user_id",uid)};
 TBL.tags=()=>sb.from("tags").select("*").order("id");TBL.user_tags=()=>sb.from("user_tags").select("*");TBL.msg_reactions=()=>sb.from("msg_reactions").select("*").limit(3000);
 const ALLT=Object.keys(TBL);let SIGS={};
+const CACHE_V="v1",cacheKey=id=>"cache:"+CACHE_V+":"+id;
+let tmCache=null,lastCacheAt=0;
+function loadCache(id){try{const raw=localStorage.getItem(cacheKey(id));if(!raw)return null;const c=JSON.parse(raw);return c&&c.P&&c.P[id]?c:null}catch(e){return null}}
+function applyCache(c){P=c.P||{};G=c.G||[];M=c.M||[];RQ=c.RQ||[];JB=c.JB||[];KK=c.KK||[];KB=c.KB||[];IV=c.IV||[];PE=c.PE||[];TG=c.TG||[];UT=c.UT||[];RX=c.RX||[];SET=c.SET||{max_groups:6};CLS=c.CLS||[];ACLASS=c.ACLASS||null;CHOICES=c.CHOICES||null;ready=true;SIGS={};lastMax=M.length?M[M.length-1].id:0}
+function saveCache(){
+ if(!uid||!ready)return;
+ const write=()=>{lastCacheAt=Date.now();const base={t:lastCacheAt,P,G,M:M.slice(-120),RQ,JB,KK,KB,IV,PE:PE.slice(0,300),TG,UT,RX:RX.slice(-800),SET,CLS,ACLASS,CHOICES};
+  try{localStorage.setItem(cacheKey(uid),JSON.stringify(base));return}catch(e){}
+  const slim={...base,P:Object.fromEntries(Object.entries(P).map(([k,p])=>[k,{...p,avatar:null}])),M:base.M.slice(-40),RX:base.RX.slice(-200)};
+  try{localStorage.setItem(cacheKey(uid),JSON.stringify(slim))}catch(e){}};
+ if(Date.now()-lastCacheAt>1500)write();else{clearTimeout(tmCache);tmCache=setTimeout(write,1500)}
+}
 // Dəyişiklikdən əvvəlki vəziyyətin şəkli (diff() bildirişləri bununla müqayisə edir)
 const snapOld=()=>{const u0=ME();return{pts:u0?u0.points:0,g:u0?u0.group_id:null,rqs:new Map(RQ.map(x=>[x.id,x.stage])),kk:new Set(KK.map(x=>x.id)),iv:new Set(IV.map(x=>x.id)),mx:M.length?M[M.length-1].id:0,
   mem:new Set(u0&&u0.group_id!==null?mem(u0.group_id).map(x=>x.id):[]),my:new Set(RQ.filter(x=>x.user_id===uid).map(x=>x.id))}};
@@ -158,8 +183,8 @@ async function refresh(force,tables){
  const want=!ready||force||!tables||!tables.length?ALLT:[...new Set(tables)].filter(t=>TBL[t]);
  if(!want.length)return true;
  const res=await Promise.all(want.map(t=>TBL[t]())),R={};want.forEach((t,i)=>{R[t]=res[i]});
- if((R.profiles&&R.profiles.error)||(R.groups&&R.groups.error)){toast(tr("Connection problem. Retrying…"),1);if(ready){clearTimeout(tm);tm=setTimeout(()=>refresh(),2500)}return false}
- const se=R.sessions;if(se&&se.data&&se.data[0]&&MYSID&&se.data[0].sid!==MYSID){await kickedOut();return false}
+ if(want.some(t=>R[t]&&R[t].error)){toast(tr("Connection problem. Retrying…"),1);if(ready){clearTimeout(tmRetry);tmRetry=setTimeout(()=>refresh(),2500)}return false}
+ const se=R.sessions;if(se&&se.data&&se.data.length&&MYSID&&!se.data.some(x=>x.sid===MYSID)){await kickedOut();return false}
  // Hansı cədvəllərin məlumatı həqiqətən dəyişib? Dəyişməyibsə ekranı yeniləmirik (yazan adamın ekranı pozulmasın)
  const ok=t=>!!(R[t]&&!R[t].error&&R[t].data),ch=[];
  want.forEach(t=>{if(t==="sessions"||!ok(t))return;const sg=JSON.stringify(R[t].data);if(sg!==SIGS[t]){SIGS[t]=sg;ch.push(t)}});
@@ -171,12 +196,12 @@ async function refresh(force,tables){
  if(ready){const nt=mytags({id:uid}).filter(t=>!ot.has(t.id))[0];if(nt){party();notify("🏷️ "+tr("New tag!"),nt.emoji+" "+nt.name,null,"ok")}}if(A("invites"))IV=R.invites.data;if(A("point_events"))PE=R.point_events.data;if(A("messages"))M=[...R.messages.data].reverse();
  const u=ME();if(u&&conv&&conv[0]==="g"&&u.group_id!==+conv.slice(2))conv=null;
  if(!ready){if(!Object.keys(SEEN).length)markSeen(true);ready=true;const n=inboxCount(),tx="📬 "+(n>1?tr("{n} items waiting for you",{n}):tr("1 item waiting for you"));if(n&&!(NOTES[0]&&!NOTES[0].read&&NOTES[0].t===tx))notify(tx,tr("Open Requests"),{k:"req"},"alert")}else diff(o);
- render();return true}
+ render();saveCache();return true}
 // Real vaxtda gələn yeni mesajı sorğu göndərmədən birbaşa siyahıya əlavə edir (ən sürətli yol)
 function onMsg(n){if(!ready||!n||n.id==null)return false;const o=snapOld();
  M=M.filter(m=>!(m._tmp&&n.sender===uid&&m.channel===n.channel&&m.body===n.body));
  if(!M.some(m=>m.id===n.id)){M.push(n);M.sort((a,b)=>a.id-b.id)}if(M.length>600)M=M.slice(-400);
- SIGS.messages=null;diff(o);render();return true}
+ SIGS.messages=null;diff(o);render();saveCache();return true}
 // Köhnə və yeni məlumatı müqayisə edib lazımi bildirişləri yaradır
 function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){sparks();notify("⭐ +"+dp+" "+tr("points!"),tr("Your total is now {n}",{n:u.points}),null,"ok")}rankUpCheck(o,u);const g=u.group_id,isHost=g!==null&&grp(g)&&grp(g).host_id===uid;
  if(o.g===null&&g!==null){party();notify("🎉 "+tr("You joined {g}",{g:gname(g)}),tr("Welcome to the group!"),{k:"group",id:g},"ok")}
@@ -198,7 +223,7 @@ function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){spar
   notify(m.channel[0]==="d"?tr("New message from {nm}",{nm:nameOf(m.sender)}):tr("New message in {g} from {nm}",{g:gname(+m.channel.slice(2)),nm:nameOf(m.sender)}),prev(m,60),{k:"chat",ch:m.channel},"msg")})}
 // Dəyişən cədvəllərin adını toplayıb 150 ms sonra yalnız onları yeniləyir
 let pendT=new Set(),pendAll=false;
-const sched=t=>{if(t)pendT.add(t);else pendAll=true;clearTimeout(tm);tm=setTimeout(()=>{const ts=pendAll?null:[...pendT];pendT=new Set();pendAll=false;refresh(false,ts)},150)};
+const sched=t=>{if(t)pendT.add(t);else pendAll=true;clearTimeout(tmSched);tmSched=setTimeout(()=>{const ts=pendAll?null:[...pendT];pendT=new Set();pendAll=false;refresh(false,ts)},150)};
 // Real vaxt bağlantısı: bazada dəyişiklik olanda avtomatik yeniləyir
 function subscribe(){if(chan)return;
  chan=sb.channel("room",{config:{presence:{key:uid}}})
@@ -208,14 +233,16 @@ function subscribe(){if(chan)return;
    if(t==="messages"&&ev.eventType==="UPDATE"&&ev.new&&ev.new.id!=null){const i=M.findIndex(x=>x.id===ev.new.id);if(i>=0){M[i]={...M[i],...ev.new};render();return}}
    sched(t);if(t==="profiles")sched("point_events")})
   .on("presence",{event:"sync"},()=>{const n=new Set(Object.keys(chan.presenceState())),same=n.size===online.size&&[...n].every(x=>online.has(x));online=n;if(!same)render()})
-  .subscribe(s=>{if(s==="SUBSCRIBED")chan.track({at:Date.now()})})}
+  .subscribe(s=>{if(s==="SUBSCRIBED"){chan.track({at:Date.now()});return}
+   if(s==="CHANNEL_ERROR"||s==="TIMED_OUT"||s==="CLOSED"){chan=null;clearTimeout(tmChan);tmChan=setTimeout(()=>{if(uid&&!chan)subscribe()},3000)}})}
+addEventListener("online",()=>{if(uid&&!chan)subscribe()});
 
 /* ================= AYARLAR VƏ TƏK CİHAZ QAYDASI ================= */
 const maxG=()=>+SET.max_groups||6;
 // Sayt ayarlarını (qrup limiti) yükləyir
 async function loadMeta(){try{const a=await sb.from("app_settings").select("*");(a.data||[]).forEach(x=>{SET[x.key]=x.value})}catch(e){}}
 // Hesaba başqa cihazdan girilibsə bu cihazı çıxarır
-async function kickedOut(){if(!uid)return;if(chan){try{await sb.removeChannel(chan)}catch(e){}chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}
- try{localStorage.removeItem("sid")}catch(e){}MYSID=null;uid=null;conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();
+async function kickedOut(){if(!uid)return;clearTimeout(tmRetry);clearTimeout(tmSched);clearTimeout(tmChan);if(chan){try{await sb.removeChannel(chan)}catch(e){}chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}
+ try{localStorage.removeItem("sid")}catch(e){}try{localStorage.removeItem(cacheKey(uid))}catch(e){}MYSID=null;uid=null;conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();
  err=tr("You were signed out because this account was opened on another device.");screen="login";render()}
 

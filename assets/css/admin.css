@@ -2,16 +2,16 @@
    admin.css  -  Admin panelinin görünüşü
    Rənglər :root-dadır. Qaranlıq rejim avtomatikdir. 900px-dən dar ekranda yan menyu üstə keçir.
    ===================================================================== */
-:root{--bg:#f3f5fb;--card:#fff;--tx:#161b2e;--mu:#6b7690;--bd:#e4e8f3;--soft:#f7f8fd;--ac:#4f46e5;--ac2:#7c3aed;--ok:#16a34a;--bad:#dc2626;--warn:#d97706;
+:root{--bg:#f5f6f8;--card:#fff;--tx:#16181d;--mu:#5f6673;--bd:#e6e8ec;--soft:#f2f4f7;--ac:#4338ca;--ac2:#4f46e5;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;
  --r:16px;--sh:0 1px 2px rgba(16,24,40,.05),0 12px 28px -16px rgba(49,46,129,.22)}
-@media(prefers-color-scheme:dark){:root{--bg:#0d111b;--card:#171c2b;--tx:#e8ecf7;--mu:#97a2bd;--bd:#262d42;--soft:#1c2234;--sh:0 1px 2px rgba(0,0,0,.4),0 12px 28px -16px rgba(0,0,0,.6)}}
+@media(prefers-color-scheme:dark){:root{--bg:#0c0e13;--card:#151922;--tx:#e6e8ec;--mu:#98a0ae;--bd:#242a36;--soft:#1b202b;--sh:0 1px 2px rgba(0,0,0,.4),0 12px 28px -16px rgba(0,0,0,.6)}}
 *{box-sizing:border-box}html,body{margin:0}
-body{font:15px/1.5 Inter,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
+body{font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
 .mono{font-family:ui-monospace,Menlo,Consolas,monospace}.mu{color:var(--mu)}.row{display:flex;gap:10px;align-items:center}.wrap{flex-wrap:wrap}.sp{justify-content:space-between}.grow{flex:1;min-width:0}
 
 /* ---------- ümumi quruluş ---------- */
 .app{display:grid;grid-template-columns:268px 1fr;min-height:100vh}
-.side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:22px 14px;color:#fff;background:linear-gradient(170deg,#2e2a82 0%,#5b34c9 55%,#8b3fd1 100%)}
+.side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:22px 14px;color:#fff;background:#312e81}
 .brand{display:flex;gap:12px;align-items:center;padding:0 8px 22px}.brand .logo{width:42px;height:42px;border-radius:13px;background:#ffffff26;display:grid;place-items:center;font-size:22px}
 .brand b{display:block;font-size:16px;letter-spacing:.2px}.brand small{opacity:.7;font-size:12px}
 .nav{display:flex;flex-direction:column;gap:3px;flex:1;overflow:auto}
@@ -30,16 +30,16 @@ body{font:15px/1.5 Inter,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-se
 .panel h3{margin:0 0 4px;font-size:16px}.panel .hint{color:var(--mu);margin:0 0 14px;font-size:14px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:18px}
 .stat{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px;display:flex;gap:14px;align-items:center;box-shadow:var(--sh)}
-.stat .ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:22px;color:#fff;background:linear-gradient(135deg,var(--ac),var(--ac2))}
-.stat:nth-child(2) .ico{background:linear-gradient(135deg,#0ea5e9,#2563eb)}.stat:nth-child(3) .ico{background:linear-gradient(135deg,#f59e0b,#ef4444)}
-.stat:nth-child(4) .ico{background:linear-gradient(135deg,#10b981,#059669)}.stat:nth-child(5) .ico{background:linear-gradient(135deg,#ec4899,#be185d)}.stat:nth-child(6) .ico{background:linear-gradient(135deg,#64748b,#334155)}
+.stat .ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:22px;color:#fff;background:var(--ac)}
+.stat:nth-child(2) .ico{background:#0284c7}.stat:nth-child(3) .ico{background:#b45309}
+.stat:nth-child(4) .ico{background:#047857}.stat:nth-child(5) .ico{background:#be123c}.stat:nth-child(6) .ico{background:#475569}
 .stat b{display:block;font-size:26px;line-height:1.1;letter-spacing:-.5px}.stat span{color:var(--mu);font-size:13px}
 
 /* ---------- düymələr, sahələr ---------- */
 button,input,select,textarea{font:inherit;color:var(--tx)}
-.btn,button{border:0;border-radius:12px;padding:10px 16px;font-weight:600;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 8px 18px -10px rgba(79,70,229,.8);transition:.15s}
+.btn,button{border:0;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;color:#fff;background:var(--ac);box-shadow:0 1px 2px rgba(16,24,40,.12);transition:.15s}
 button:hover{transform:translateY(-1px);filter:brightness(1.07)}button:active{transform:scale(.97)}button:disabled{opacity:.45;cursor:not-allowed;transform:none}
-button.s{background:var(--soft);color:var(--tx);box-shadow:none;border:1px solid var(--bd)}button.d{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 8px 18px -10px rgba(220,38,38,.8)}button.ok{background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 8px 18px -10px rgba(22,163,74,.8)}button.sm{padding:6px 11px;font-size:13px;border-radius:10px}
+button.s{background:var(--soft);color:var(--tx);box-shadow:none;border:1px solid var(--bd)}button.d{background:#b91c1c;box-shadow:none}button.ok{background:#15803d;box-shadow:none}button.sm{padding:6px 11px;font-size:13px;border-radius:10px}
 input,select,textarea{width:100%;padding:11px 13px;border:1px solid var(--bd);border-radius:12px;background:var(--soft);outline:none;transition:.15s}
 input:focus,select:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 18%,transparent);background:var(--card)}
 label.l{display:block;font-size:13px;font-weight:600;color:var(--mu);margin:14px 0 6px}
@@ -47,7 +47,7 @@ label.l{display:block;font-size:13px;font-weight:600;color:var(--mu);margin:14px
 
 /* ---------- nişanlar (chip) ---------- */
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--soft);color:var(--mu);border:1px solid var(--bd);white-space:nowrap}
-.chip.admin{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:0}.chip.teacher{background:#dbeafe;color:#1e40af;border:0}.chip.student{background:#e0f2fe;color:#075985;border:0}.chip.host{background:#fef3c7;color:#92400e;border:0}
+.chip.admin{background:var(--ac);color:#fff;border:0}.chip.teacher{background:#dbeafe;color:#1e40af;border:0}.chip.student{background:#e0f2fe;color:#075985;border:0}.chip.host{background:#fef3c7;color:#92400e;border:0}
 .chip.ok{background:#dcfce7;color:#166534;border:0}.chip.warn{background:#fef3c7;color:#92400e;border:0}.chip.bad{background:#fee2e2;color:#991b1b;border:0}
 .av{position:relative;width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;font-size:17px;box-shadow:inset 0 0 0 2px #ffffff40}
 .av img{width:100%;height:100%;border-radius:50%;object-fit:cover}.av.lg{width:64px;height:64px;font-size:25px}
@@ -64,7 +64,7 @@ label.l{display:block;font-size:13px;font-weight:600;color:var(--mu);margin:14px
 
 /* ---------- pəncərə (modal) ---------- */
 .ov{position:fixed;inset:0;background:rgba(10,14,30,.55);backdrop-filter:blur(3px);z-index:30;display:flex;align-items:flex-start;justify-content:center;padding:4vh 14px;overflow:auto;animation:fade .2s}
-.sheet{background:var(--card);border-radius:20px;width:100%;max-width:640px;box-shadow:0 30px 70px -20px rgba(0,0,0,.6);animation:pop .25s}
+.sheet{background:var(--card);border-radius:18px;width:100%;max-width:640px;box-shadow:0 30px 70px -20px rgba(0,0,0,.6);animation:pop .25s}
 .sheet.sm{max-width:440px}.sheet-h{padding:22px 24px 6px}.sheet-b{padding:6px 24px 22px}
 .sec{border:1px solid var(--bd);border-radius:14px;padding:16px;margin-top:14px;background:var(--card)}.sec>h4{margin:0 0 10px;font-size:14px;display:flex;gap:8px;align-items:center}
 .sec.locked{background:var(--soft);color:var(--mu)}
@@ -72,7 +72,7 @@ label.l{display:block;font-size:13px;font-weight:600;color:var(--mu);margin:14px
 .prow .pi{width:38px;height:38px;border-radius:11px;background:var(--soft);display:grid;place-items:center;font-size:19px;flex:none}.prow .pt{flex:1}.prow small{display:block;color:var(--mu);line-height:1.35}
 .sw{position:relative;width:46px;height:26px;flex:none}.sw input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:2}
 .sw i{position:absolute;inset:0;background:#cbd2e4;border-radius:99px;transition:.2s}.sw i:after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.3);transition:.2s}
-.sw input:checked+i{background:linear-gradient(135deg,var(--ac),var(--ac2))}.sw input:checked+i:after{transform:translateX(20px)}
+.sw input:checked+i{background:var(--ac)}.sw input:checked+i:after{transform:translateX(20px)}
 .pwbox{display:flex;gap:10px;align-items:center;background:var(--soft);border:1px dashed var(--bd);border-radius:12px;padding:12px 14px}.pwbox .v{font:700 20px ui-monospace,Menlo,Consolas,monospace;letter-spacing:2px;flex:1;min-width:0;overflow-wrap:anywhere}
 .big{font:800 28px ui-monospace,Menlo,Consolas,monospace;letter-spacing:3px;text-align:center;background:var(--soft);border-radius:14px;padding:18px;margin:12px 0;user-select:all}
 
@@ -83,7 +83,7 @@ label.l{display:block;font-size:13px;font-weight:600;color:var(--mu);margin:14px
 
 /* ---------- qruplar və çatlar ---------- */
 .gcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}.gcards .panel{margin:0}
-.bar{height:8px;background:var(--soft);border-radius:9px;overflow:hidden;margin:8px 0 12px;border:1px solid var(--bd)}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),#22c55e);border-radius:9px}
+.bar{height:8px;background:var(--soft);border-radius:9px;overflow:hidden;margin:8px 0 12px;border:1px solid var(--bd)}.bar i{display:block;height:100%;background:var(--ac);border-radius:9px}
 .chats{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}.chats .list{max-height:70vh;overflow:auto;padding:8px}
 .citem{padding:11px 12px;border-radius:12px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}.citem:hover{background:var(--soft)}.citem.on{background:color-mix(in srgb,var(--ac) 14%,transparent);font-weight:650}
 .msgs{max-height:66vh;overflow:auto;padding:4px}.msg{display:flex;gap:10px;justify-content:space-between;padding:10px 12px;border-radius:12px;margin-bottom:6px;background:var(--soft)}.msg small{color:var(--mu)}
@@ -107,11 +107,32 @@ label.l{display:block;font-size:13px;font-weight:600;color:var(--mu);margin:14px
 .panel .lang-a{margin:0 0 10px;justify-content:flex-end}.panel .lang-a button{flex:none;background:var(--soft);color:var(--tx);border:1px solid var(--bd);opacity:1}.panel .lang-a button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 
 /* Sinif kartları, fayl düyməsi və ana səhifə arxa fonu */
-.main{background:radial-gradient(700px 420px at 90% -5%,#7c3aed2e,transparent 65%) fixed,radial-gradient(560px 400px at 8% 105%,#ec48992b,transparent 65%) fixed,radial-gradient(var(--bd,#e1e6f0) 1px,transparent 1px) 0 0/24px 24px fixed}
+.main{background:radial-gradient(var(--bd,#e6e8ec) 1px,transparent 1px) 0 0/24px 24px fixed}
 .cls-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
-.cls-card{background:var(--card,#fff);border:1px solid var(--bd,#e1e6f0);border-radius:18px;padding:16px;cursor:pointer;box-shadow:var(--sh,0 6px 20px #4f46e522);transition:transform .15s,box-shadow .2s}
+.cls-card{background:var(--card,#fff);border:1px solid var(--bd,#e6e8ec);border-radius:16px;padding:16px;cursor:pointer;box-shadow:var(--sh);transition:transform .15s,box-shadow .2s}
 .cls-card:hover{transform:translateY(-3px)}
-.cls-tag{font-size:28px;font-weight:800;background:linear-gradient(120deg,var(--ac,#4f46e5),var(--ac2,#7c3aed));-webkit-background-clip:text;background-clip:text;color:transparent}
+.cls-tag{font-size:28px;font-weight:800;background:var(--ac,#4338ca);-webkit-background-clip:text;background-clip:text;color:transparent}
 .cls-n{margin:8px 0}
 .fbtn{display:inline-block;padding:9px 12px;border-radius:12px;background:var(--bd,#e1e6f0);cursor:pointer}
 .tchip{display:inline-block;padding:4px 12px;border-radius:99px;font-weight:700;font-size:14px;color:var(--tc);background:color-mix(in srgb,var(--tc) 14%,transparent);border:1px solid color-mix(in srgb,var(--tc) 40%,transparent)}
+
+.main{margin:0 auto}
+@media(min-width:1500px){.main{max-width:1440px}}
+.ic{width:1.2em;height:1.2em;flex:none;vertical-align:-.22em}
+button .ic{pointer-events:none}
+.nav .i{display:grid;place-items:center}
+.nav .i .ic{width:20px;height:20px}
+.logo{display:grid;place-items:center}
+.logo .ic{width:26px;height:26px}
+.stat .ico .ic{width:24px;height:24px}
+.prow .pi .ic{width:20px;height:20px}
+.empty .e .ic{width:34px;height:34px}
+.seg .ic,.chip .ic{width:1.1em;height:1.1em}
+@media(max-width:900px){
+  .tbl{display:block;overflow-x:auto;white-space:nowrap}
+  .tbl th,.tbl td{padding:9px 10px}
+  .panel{padding:14px}
+  .sheet{max-width:100%}
+  .seg{display:flex;flex-wrap:wrap;width:100%}
+  .seg button{flex:1 1 auto;padding:7px 8px;font-size:13px}
+}
