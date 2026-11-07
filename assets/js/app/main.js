@@ -85,7 +85,9 @@ async function boot(){try{
 ["pause","ended"].forEach(ev=>addEventListener(ev,e=>{if(pendingRender&&e.target&&e.target.tagName==="AUDIO")render()},true));
 addEventListener("pointerdown",()=>{pressing=true;pressTs=Date.now()},true);
 ["pointerup","pointercancel"].forEach(ev=>addEventListener(ev,()=>{setTimeout(()=>{pressing=false;if(pendingRender)render()},20)},true));
-addEventListener("popstate",()=>{if(screen!=="app")return;const s=navStack.pop();if(!s)return;restoring=true;tab=s.tab;openG=s.openG;conv=s.conv;sheet=s.sheet;sp=s.sp;menuOpen=s.menuOpen;pm=s.pm&&P[s.pm]?s.pm:null;render();restoring=false});
+// Tarixçə dərinliyinə (state.n) görə bərpa edir: navStack[d] həmin dərinlikdəki səhifədir.
+// d===uzunluq: artıq kəsilib, heç nə etmir; d>uzunluq (brauzerin "irəli" düyməsi): tarixçəni yenidən uyğunlaşdırır
+addEventListener("popstate",e=>{if(screen!=="app")return;const d=e.state&&typeof e.state.n==="number"?e.state.n:0;if(d>navStack.length){try{history.go(navStack.length-d)}catch(x){}return}if(d===navStack.length)return;const s=navStack[d];navStack.length=d;restoring=true;tab=s.tab;openG=s.openG;conv=s.conv;sheet=s.sheet;sp=s.sp;menuOpen=s.menuOpen;pm=s.pm&&P[s.pm]?s.pm:null;navSync();render();restoring=false});
 let tx0=0,ty0=0;
 addEventListener("touchstart",e=>{const t=e.touches[0];tx0=t.clientX;ty0=t.clientY},{passive:true});
 addEventListener("touchend",e=>{if(!phone()||screen!=="app")return;const t=e.changedTouches[0],dx=t.clientX-tx0,dy=t.clientY-ty0;if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*.6)return;

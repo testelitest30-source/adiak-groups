@@ -33,6 +33,7 @@
 <script src="assets/js/app/pages.js"></script>
 <script src="assets/js/app/extras.js"></script>
 <script src="assets/js/app/main.js"></script>
+<script src="assets/js/app/native.js"></script>
 <!-- Service worker: yalnız https və localhost-da qeydə alınır (Capacitor native tətbiqində yox); xəta olsa sayt yenə də işləyir -->
 <script>if("serviceWorker" in navigator&&!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
 

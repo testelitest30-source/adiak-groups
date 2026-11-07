@@ -2,7 +2,6 @@ name: Android debug APK
 
 on:
   pull_request:
-    branches: [main]
   push:
     branches: [feature/phase-2-android]
   workflow_dispatch:

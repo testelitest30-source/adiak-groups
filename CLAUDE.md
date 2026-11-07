@@ -9,7 +9,7 @@
 - UI uses inline SVG icons (`icons.js`) and no gradients. Do not redesign.
 
 ## Script loading order (do not change)
-- App: `vendor/supabase.js → config.js → i18n.js → icons.js → core.js → pages.js → extras.js → main.js`
+- App: `vendor/supabase.js → config.js → i18n.js → icons.js → core.js → pages.js → extras.js → main.js → native.js`
 - Admin: `vendor/supabase.js → config.js → i18n.js → icons.js → i18n-admin.js → admin.js`
 - These are plain global scripts; the check script at the bottom of each page depends on these globals.
 
@@ -28,7 +28,7 @@
 
 ## Service worker (`sw.js`)
 - Network-first, same-origin only; precaches the `SHELL` list (includes `assets/vendor/supabase.js`).
-- Bump `V` (currently `adiak-v5`) whenever `SHELL` or asset paths change.
+- Bump `V` (currently `adiak-v6`) whenever `SHELL` or asset paths change.
 - Registration in `index.html` is skipped in native Capacitor (`Capacitor.isNativePlatform()`); websites register normally.
 
 ## Android / Capacitor (Phase 2)
@@ -38,7 +38,12 @@
 - `scripts/build-www.mjs` copies an allowlist (`index.html`, `favicon.ico`, `manifest.webmanifest`, `sw.js`, `admin/`, `assets/`)
   and fails on any unresolved page/manifest/SW reference. **Add new top-level runtime files to its allowlist.**
 - Capacitor serves the root `index.html` for extensionless paths, so in-app links to the admin panel must be `admin/index.html`, never `admin/`.
-- CI: `.github/workflows/android.yml` builds the debug APK artifact `adiak-debug-apk`, with no secrets.
+- `@capacitor/app` **8.1.2** (exact) handles the Android Back button. `assets/js/app/native.js` is a no-op on the web; in the app it loads
+  `assets/vendor/capacitor/{capacitor,app}.js` (copied from `node_modules` by `build-www.mjs`, APK only, never committed) and maps Back to
+  `nativeBack()`: close overlay → in-app back → reset to home → `App.exitApp()` on the home root.
+- In-app navigation history (`pages.js`/`main.js`): `navStack[d]` = page at history depth `d` (`history.state.n`). Navigating to a page already
+  in `navStack` truncates back to it (no duplicates); backward/in-place navigation must call `navSync()` and never push.
+- CI: `.github/workflows/android.yml` builds the debug APK artifact `adiak-debug-apk` (PRs to any branch, pushes to the Phase 2 branch, manual), with no secrets.
 - `android/` is committed; build output, `local.properties`, `assets/public` and generated plugin folders are ignored by `android/.gitignore`.
 
 ## Token efficiency
