@@ -9,11 +9,23 @@ var NDBG=null;
   if(!C||typeof C.isNativePlatform!=="function"||!C.isNativePlatform())return;
 
   // ---- MÜVƏQQƏTİ diaqnostik panel ----
-  var lines=[];
-  NDBG=function(m){try{lines.push(new Date().toTimeString().slice(3,8)+" "+m);if(lines.length>14)lines.shift();
-    var el=document.getElementById("ndbg");
+  var lines=[],head="";
+  function paint(){var el=document.getElementById("ndbg");
     if(!el){el=document.createElement("pre");el.id="ndbg";el.style.cssText="position:fixed;top:0;left:0;right:0;z-index:2147483647;margin:0;padding:4px 6px;max-height:42vh;overflow:hidden;background:rgba(0,0,0,.78);color:#7CFC00;font:10px/1.25 monospace;white-space:pre-wrap;pointer-events:none";document.documentElement.appendChild(el)}
-    el.textContent=lines.join("\n")}catch(e){}};
+    el.textContent=(head?head+"\n":"")+lines.join("\n")}
+  NDBG=function(m){try{lines.push(new Date().toTimeString().slice(3,8)+" "+m);if(lines.length>12)lines.shift();paint()}catch(e){}};
+  // Safe-area ölçüləri (həmişə panelin başında): env(), Capacitor-un --safe-area-inset-* dəyişənləri, ekran, WebView versiyası, aktiv viewport
+  function insets(){try{
+    var p=document.getElementById("ndbgp");
+    if(!p){p=document.createElement("div");p.id="ndbgp";p.style.cssText="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";document.documentElement.appendChild(p)}
+    var cs=getComputedStyle(p),rs=getComputedStyle(document.documentElement),v=function(n){return (rs.getPropertyValue("--safe-area-inset-"+n)||"-").trim()};
+    var vms=document.querySelectorAll("meta[name=viewport]"),cr=(navigator.userAgent.match(/Chrome\/(\d+)/)||[])[1];
+    head="SAFE env(t/r/b/l)="+[cs.paddingTop,cs.paddingRight,cs.paddingBottom,cs.paddingLeft].map(function(x){return parseInt(x)}).join("/")+
+      " cap(t/r/b/l)="+["top","right","bottom","left"].map(v).join("/")+
+      "\nVIEW inner="+innerWidth+"x"+innerHeight+" screen="+window.screen.width+"x"+window.screen.height+" dpr="+devicePixelRatio+" WebView="+(cr||"?")+
+      " viewport="+(vms.length?vms[vms.length-1].content.replace("width=device-width, ","").replace(/\s/g,""):"-")+" ("+vms.length+")";
+    paint()}catch(e){}}
+  addEventListener("resize",insets);setTimeout(insets,0);setTimeout(insets,1500);setTimeout(insets,4000);
   var hdr=(C.PluginHeaders||[]).map(function(p){return p.name});
   NDBG("platform="+(C.getPlatform&&C.getPlatform())+" PluginHeaders="+(hdr.join(",")||"-")+" App="+(hdr.indexOf("App")>=0?"YES":"NO"));
   var nk=function(){try{return [screen,tab,openG||"",conv||"",sp||"",sheet?1:0,menuOpen?1:0,pm||""].join("|")}catch(e){return "?"}};
