@@ -1,7 +1,7 @@
 // Stages the static website into www/ (Capacitor webDir) and checks that every
 // local file referenced by the pages, the manifest and the service worker exists.
 // The website itself (GitHub Pages, repo root) is not changed by this script.
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -31,6 +31,9 @@ for (const [dest, src] of Object.entries(NATIVE)) {
   mkdirSync(dirname(join(OUT, dest)), { recursive: true });
   cpSync(join(ROOT, src), join(OUT, dest));
 }
+// Build stamp shown by native.js (APK only) so the installed APK can be matched to its commit/run.
+const stamp = { sha: (process.env.HEAD_SHA || "local").slice(0, 7), run: process.env.RUN_NUMBER || "local" };
+writeFileSync(join(OUT, "assets/vendor/capacitor/build.js"), `window.ADIAK_BUILD=${JSON.stringify(stamp)};\n`);
 
 // Verify references, resolved the same way a browser resolves them.
 const missing = [];
