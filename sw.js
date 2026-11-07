@@ -1,9 +1,10 @@
 /* sw.js - service worker: sayt tətbiq kimi yüklənə bilsin və şəbəkə yox olanda açılış ekranı görünsün.
    Qayda: həmişə ƏVVƏL İNTERNETDƏN yükləyir (yeni versiya dərhal görünür), internet yoxdursa yaddaşdakı surəti göstərir.
    Supabase və başqa saytlara (başqa mənbə) toxunmur. */
-const V = "adiak-v4"; // v1.1.0 — versiya artırılır ki, köhnə fayl yolları olan keş silinsin
+const V = "adiak-v5"; // v1.1.0 + vendor supabase.js — versiya artırılır ki, köhnə fayl yolları olan keş silinsin
 const SHELL = [
   "./", "index.html", "manifest.webmanifest",
+  "assets/vendor/supabase.js",
   "assets/css/style.css", "assets/css/features.css", "assets/css/admin.css",
   "assets/js/shared/config.js", "assets/js/shared/i18n.js", "assets/js/shared/icons.js",
   "assets/js/app/core.js", "assets/js/app/pages.js", "assets/js/app/extras.js", "assets/js/app/main.js",

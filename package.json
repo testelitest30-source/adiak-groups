@@ -1,0 +1,20 @@
+{
+  "name": "adiak-groups",
+  "version": "1.1.0",
+  "private": true,
+  "description": "ADIAK Team Maker: static website (GitHub Pages) packaged for Android with Capacitor",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build-www.mjs",
+    "cap:sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0"
+  }
+}
