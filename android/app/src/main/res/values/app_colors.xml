@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Same as --bg in assets/css/style.css (light) -->
+    <!-- Same as the CSS bg variable in assets/css/style.css (light) -->
     <color name="app_bg">#F5F6F8</color>
 </resources>
