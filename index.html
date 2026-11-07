@@ -23,8 +23,8 @@
 <!-- Səhifənin boş qabları: məzmunu JavaScript doldurur -->
 <div id="root"></div><div id="modal"></div><div id="toast"></div><div id="toasts"></div>
 
-<!-- 1) Supabase kitabxanası (internetdən) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<!-- 1) Supabase kitabxanası (yerli surət: @supabase/supabase-js 2.45.4, dist/umd) -->
+<script src="assets/vendor/supabase.js"></script>
 <!-- 2) Saytın öz faylları. Sıra vacibdir: config → i18n → core → pages → extras → main -->
 <script src="assets/js/shared/config.js"></script>
 <script src="assets/js/shared/i18n.js"></script>
@@ -33,8 +33,8 @@
 <script src="assets/js/app/pages.js"></script>
 <script src="assets/js/app/extras.js"></script>
 <script src="assets/js/app/main.js"></script>
-<!-- Service worker: yalnız https və localhost-da qeydə alınır; xəta olsa sayt yenə də işləyir -->
-<script>if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
+<!-- Service worker: yalnız https və localhost-da qeydə alınır (Capacitor native tətbiqində yox); xəta olsa sayt yenə də işləyir -->
+<script>if("serviceWorker" in navigator&&!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
 
 <!-- 3) Fayl yüklənməyibsə, boş ekran əvəzinə hansının çatışmadığını yazır -->
 <script>
