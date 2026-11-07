@@ -38,9 +38,9 @@ function setTheme(t) {
   render();
 }
 const cycleTheme = () => setTheme(THEME === "auto" ? "light" : THEME === "light" ? "dark" : "auto");
-const themeIcon = () => THEME === "dark" ? "🌙" : THEME === "light" ? "☀️" : "🌓";
+const themeIcon = () => THEME === "dark" ? ic("moon") : THEME === "light" ? ic("sun") : ic("half");
 // Ayarlardakı 3 düymə
-const themeSw = () => `<span class="seg">${[["auto", "🌓", tr("Auto")], ["light", "☀️", tr("Light")], ["dark", "🌙", tr("Dark")]]
+const themeSw = () => `<span class="seg">${[["auto", ic("half"), tr("Auto")], ["light", ic("sun"), tr("Light")], ["dark", ic("moon"), tr("Dark")]]
   .map(([k, i, t]) => `<button class="${THEME === k ? "on" : ""}" onclick="setTheme('${k}')">${i} ${t}</button>`).join("")}</span>`;
 applyTheme();
 
@@ -51,7 +51,7 @@ const fold = s => String(s == null ? "" : s).toLowerCase()
   .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const mmss = s => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
 const isFieldEl = el => !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
-const noMatch = txt => `<p class="mu empty">🔎 ${txt}</p>`;
+const noMatch = txt => `<p class="mu empty">${ic("search")} ${txt}</p>`;
 
 /* ================= 3. RÜTBƏ İRƏLİLƏYİŞİ VƏ MEDALLAR ================= */
 const rankIdx = p => { let i = 0; RANKS.forEach((r, j) => { if (p >= r[1]) i = j; }); return i; };
@@ -60,7 +60,7 @@ function toNext(p) {
   const nx = RANKS[rankIdx(p.points) + 1];
   return nx ? { need: nx[1] - p.points, name: tr(nx[0]) } : null;
 }
-const nextRankText = p => { const n = toNext(p); return n ? tr("{n} pts to {r}", { n: n.need, r: n.name }) : "👑 " + tr("Top rank reached"); };
+const nextRankText = p => { const n = toNext(p); return n ? tr("{n} pts to {r}", { n: n.need, r: n.name }) : ic("crown")+" "+tr("Top rank reached"); };
 
 // Xal artıb yeni rütbəyə çatanda bayram edir (core.js-dəki diff() çağırır)
 function rankUpCheck(o, u) {
@@ -90,7 +90,7 @@ const isStudentP = p => !!p && !p.is_admin && p.role !== "teacher" && !(p.perms 
 function medalsCard() {
   const u = ME(); if (!isStudentP(u)) return "";
   const L = badgesOf(u), n = L.filter(b => b.on).length;
-  return `<div class="card medc"><div class="row sp"><b>🎖️ ${tr("Medals")}</b><span class="chip${n ? " on" : ""}">${n}/${L.length}</span></div>${badgeGrid(L)}</div>`;
+  return `<div class="card medc"><div class="row sp"><b>${ic("medal")} ${tr("Medals")}</b><span class="chip${n ? " on" : ""}">${n}/${L.length}</span></div>${badgeGrid(L)}</div>`;
 }
 
 /* ================= 4. XAL QRAFİKİ ================= */
@@ -110,7 +110,7 @@ function sparkline(ev) {
 }
 // Profil pəncərəsinə əlavə olunan hissə: qrafik + medallar
 function profileExtras(p, st) {
-  return sparkline(st.ev) + (isStudentP(p) ? `<p style="margin:12px 0 4px"><b>${tr("Medals")}</b></p>${badgeGrid(badgesOf(p))}` : "");
+  return sparkline(st.ev);
 }
 
 /* ================= 5. LİDERLƏR PODİUMU VƏ HƏFTƏNİN ULDUZU ================= */
@@ -122,16 +122,16 @@ function weekGain() {
 }
 function podiumCard() {
   const R = ranked().filter(p => p.points > 0).slice(0, 3);
-  if (!R.length) return `<div class="card podc"><b>🏆 ${tr("Leaders")}</b><p class="mu">${tr("No points yet")}</p></div>`;
+  if (!R.length) return `<div class="card podc"><b>${ic("trophy")} ${tr("Leaders")}</b><p class="mu">${tr("No points yet")}</p></div>`;
   const wk = weekGain(), sid = Object.keys(wk).sort((a, b) => wk[b] - wk[a])[0], star = sid && P[sid];
   const order = R.length === 3 ? [1, 0, 2] : R.length === 2 ? [1, 0] : [0];   // 2-ci, 1-ci, 3-cü
   const cols = order.map(i => { const p = R[i], h = [104, 78, 58][i];
-    return `<div class="pod" onclick="showProfile('${p.id}')">${i === 0 ? '<span class="crown">👑</span>' : ""}${av(p, "big")}<b class="pn">${esc(p.name.split(" ")[0])}</b><span class="pp">${p.points} ${tr("pts")}</span><div class="pstep s${i + 1}" style="height:${h}px">${["🥇", "🥈", "🥉"][i]}</div></div>`; }).join("");
-  return `<div class="card podc"><div class="row sp"><b>🏆 ${tr("Leaders")}</b><button class="s" onclick="showAll()">${tr("See all")} →</button></div><div class="podium">${cols}</div>
-   ${star ? `<div class="starline" onclick="showProfile('${star.id}')">⭐ ${tr("This week's star")}: <b>${esc(star.name)}</b> <span class="chip on">+${wk[sid]}</span></div>` : ""}</div>`;
+    return `<div class="pod" onclick="showProfile('${p.id}')">${i === 0 ? '<span class="crown">'+crownArt()+'</span>' : ""}${av(p, "big")}<b class="pn">${esc(p.name.split(" ")[0])}</b><span class="pp">${p.points} ${tr("pts")}</span><div class="pstep s${i + 1}" style="height:${h}px">${["🥇", "🥈", "🥉"][i]}</div></div>`; }).join("");
+  return `<div class="card podc"><div class="row sp"><b>${ic("trophy")} ${tr("Leaders")}</b><button class="s" onclick="showAll()">${tr("See all")} →</button></div><div class="podium">${cols}</div>
+   ${star ? `<div class="starline" onclick="showProfile('${star.id}')">${ic("star")} ${tr("This week's star")}: <b>${esc(star.name)}</b> <span class="chip on">+${wk[sid]}</span></div>` : ""}</div>`;
 }
 // Ana səhifənin ortasındakı podium + medallar
-const homeMid = () => isStudentP(ME()) ? `<div class="grid2 mb">${podiumCard()}${medalsCard()}</div>` : podiumCard();
+const homeMid = () => podiumCard();
 
 /* ================= 6. QRUPLAR SİYAHISI: AXTARIŞ VƏ FİLTR ================= */
 let gFilter = "all", gQuery = "";
@@ -230,7 +230,7 @@ netBanner();
 function tabbar() {
   if (sheet && sp === "chat" && conv) return "";   // çat açıqdırsa yazı sahəsinə yer qalsın
   const active = !sheet || !sp ? "home" : ["groups", "chat", "req"].includes(sp) ? sp : "menu";
-  const T = [["home", "🏠", tr("Home"), ""], ["groups", "👥", tr("Groups"), ""], ["chat", "💬", tr("Chat"), ub(totalUnread())], ["req", "📨", tr("Requests"), ub(inboxCount())], ["menu", "☰", tr("Menu"), ub(unreadNotes())]];
+  const T = [["home", ic("home"), tr("Home"), ""], ["groups", ic("groups"), tr("Groups"), ""], ["chat", ic("chat"), tr("Chat"), ub(totalUnread())], ["req", ic("inbox"), tr("Requests"), ub(inboxCount())], ["menu", ic("menu"), tr("Menu"), ub(unreadNotes())]];
   return `<nav id="tabbar" aria-label="${tr("Menu")}">${T.map(([k, i, t, b]) => `<button class="tb${active === k ? " on" : ""}" onclick="${k === "menu" ? "menuOpen=true;render()" : `goTab('${k}')`}"><span class="ti">${i}${b}</span><span class="tl">${t}</span></button>`).join("")}</nav>`;
 }
 // Klaviatura açılanda alt menyunu gizlədir
@@ -243,22 +243,22 @@ let palOpen = false, palSel = 0, palItems = [];
 function palBuild(q) {
   const f = fold(q.trim()), u = ME(), out = [];
   const hit = (...a) => !f || a.some(s => fold(s).includes(f));
-  [["home", "🏠", tr("Home")], ["groups", "👥", tr("Groups")], ["chat", "💬", tr("Chat")], ["req", "📨", tr("Requests & idle")], ["notes", "🔔", tr("Notifications")], ["tools", "🧰", tr("Tools")], ["settings", "⚙️", tr("Settings")]]
+  [["home", ic("home"), tr("Home")], ["groups", ic("groups"), tr("Groups")], ["chat", ic("chat"), tr("Chat")], ["req", ic("inbox"), tr("Requests & idle")], ["notes", ic("bell"), tr("Notifications")], ["tools", ic("tools"), tr("Tools")], ["settings", ic("settings"), tr("Settings")]]
     .forEach(([k, i, t]) => { if (hit(t)) out.push({ sec: tr("Pages"), i, t, run: () => goTab(k) }); });
   if (f) {
     Object.values(P).filter(p => p.id !== uid && (p.is_admin || p.role === "teacher" || sameClass(p)) && hit(p.name)).slice(0, 6)
-      .forEach(p => out.push({ sec: tr("People"), i: "👤", t: p.name, s: p.group_id !== null ? gname(p.group_id) : (isStudentP(p) ? tr("idle") : tr("teacher")), run: () => showProfile(p.id) }));
+      .forEach(p => out.push({ sec: tr("People"), i: ic("user"), t: p.name, s: p.group_id !== null ? gname(p.group_id) : (isStudentP(p) ? tr("idle") : tr("teacher")), run: () => showProfile(p.id) }));
     visG().filter(g => hit(g.name)).slice(0, 4)
-      .forEach(g => out.push({ sec: tr("Groups"), i: "👥", t: g.name, s: mem(g.id).length + "/" + g.capacity, run: () => goTab("groups", g.id) }));
+      .forEach(g => out.push({ sec: tr("Groups"), i: ic("groups"), t: g.name, s: mem(g.id).length + "/" + g.capacity, run: () => goTab("groups", g.id) }));
   }
   const acts = [
-    ["🌓", tr("Toggle theme"), () => cycleTheme()],
-    [muted ? "🔊" : "🔇", muted ? tr("Sounds on") : tr("Sounds off"), () => toggleMute()],
-    ["🌐", LANG === "az" ? "English" : "Azərbaycanca", () => setLang(LANG === "az" ? "en" : "az")]
+    [ic("half"), tr("Toggle theme"), () => cycleTheme()],
+    [muted ? ic("sound") : ic("soundOff"), muted ? tr("Sounds on") : tr("Sounds off"), () => toggleMute()],
+    [ic("globe"), LANG === "az" ? "English" : "Azərbaycanca", () => setLang(LANG === "az" ? "en" : "az")]
   ];
   if (isStaff(u) && CLS.length > 1) acts.push(["⇄", tr("Switch class"), () => leaveClass()]);
-  if (can("panel")) acts.push(["🛠", tr("Admin panel"), () => window.open("admin/", "_blank")]);
-  acts.push(["🚪", tr("Log out"), () => confirmLogout()]);
+  if (can("panel")) acts.push([ic("wrench"), tr("Admin panel"), () => window.open("admin/", "_blank")]);
+  acts.push([ic("logout"), tr("Log out"), () => confirmLogout()]);
   acts.forEach(([i, t, run]) => { if (hit(t)) out.push({ sec: tr("Actions"), i, t, run }); });
   return out;
 }
@@ -286,7 +286,7 @@ function openPalette() {
   palOpen = true; menuOpen = false; palItems = palBuild(""); palSel = 0;
   const o = document.createElement("div"); o.id = "pal";
   o.onclick = e => { if (e.target === o) closePal(); };
-  o.innerHTML = `<div class="palbox" role="dialog" aria-modal="true"><div class="palin"><span>🔍</span><input id="palq" autocomplete="off" spellcheck="false" placeholder="${tr("Search people, groups, pages…")}" oninput="palFilter(this.value)" onkeydown="palKey(event)"><kbd>Esc</kbd></div><div id="pall" role="listbox"></div><div class="palhint mu">↑ ↓ · Enter · Esc</div></div>`;
+  o.innerHTML = `<div class="palbox" role="dialog" aria-modal="true"><div class="palin"><span>${ic("search")}</span><input id="palq" autocomplete="off" spellcheck="false" placeholder="${tr("Search people, groups, pages…")}" oninput="palFilter(this.value)" onkeydown="palKey(event)"><kbd>Esc</kbd></div><div id="pall" role="listbox"></div><div class="palhint mu">↑ ↓ · Enter · Esc</div></div>`;
   document.body.appendChild(o); palDraw();
   const i = $("#palq"); if (i) i.focus();
 }
@@ -330,15 +330,15 @@ function tmPill() {
   const started = TM.run || (!TM.done && TM.left > 0 && TM.left < TM.dur), onTools = phone() ? (sheet && sp === "tools") : tab === "tools";
   if (!(started && screen === "app" && !onTools)) { if (p) p.remove(); return; }
   if (!p) { p = document.createElement("button"); p.id = "tpill"; p.className = "tpill"; p.onclick = () => goTab("tools"); document.body.appendChild(p); }
-  p.textContent = "⏱ " + mmss(tmLeft()) + (TM.run ? "" : " ⏸");
+  p.innerHTML = ic("clock")+" "+mmss(tmLeft());
   p.classList.toggle("crit", tmLeft() <= 10);
 }
 function timerCard() {
   const l = tmLeft(), off = (TM_C * (1 - (TM.dur ? l / TM.dur : 0))).toFixed(1);
-  return `<div class="card tmcard"><b>⏱ ${tr("Presentation timer")}</b>
+  return `<div class="card tmcard"><b>${ic("clock")} ${tr("Presentation timer")}</b>
    <div class="presets">${[3, 5, 7, 10, 15].map(m => `<button class="s${TM.dur === m * 60 ? " on" : ""}" ${TM.run ? "disabled" : ""} onclick="tmSet(${m * 60})">${tr("{n} min", { n: m })}</button>`).join("")}</div>
    <div id="tmBox" class="tmbox ${tmState(l)}"><svg viewBox="0 0 200 200" aria-hidden="true"><circle class="tmbg" cx="100" cy="100" r="88"/><circle id="tmRing" class="tmfg" cx="100" cy="100" r="88" transform="rotate(-90 100 100)" style="stroke-dasharray:${TM_C};stroke-dashoffset:${off}"/></svg>
-    <div class="tmc"><div id="tmDisp" class="tmd" role="timer">${mmss(l)}</div><small class="mu">${TM.done ? "🔔 " + tr("Time's up!") : TM.run ? tr("Timer running") : "&nbsp;"}</small></div></div>
+    <div class="tmc"><div id="tmDisp" class="tmd" role="timer">${mmss(l)}</div><small class="mu">${TM.done ? ic("bell")+" "+tr("Time's up!") : TM.run ? tr("Timer running") : "&nbsp;"}</small></div></div>
    <div class="row tmbtns"><button class="s" ${TM.run ? "disabled" : ""} onclick="tmSet(TM.dur-60)" aria-label="−1 ${tr("min")}">−1</button>
     ${TM.run ? `<button onclick="tmPause()" style="flex:1">⏸ ${tr("Pause")}</button>` : `<button class="ok" onclick="tmStart()" style="flex:1">▶ ${TM.done ? tr("Restart") : TM.left < TM.dur ? tr("Resume") : tr("Start")}</button>`}
     <button class="s" onclick="tmReset()" title="${tr("Reset")}" aria-label="${tr("Reset")}">↺</button><button class="s" ${TM.run ? "disabled" : ""} onclick="tmSet(TM.dur+60)" aria-label="+1 ${tr("min")}">+1</button></div></div>`;
@@ -398,13 +398,13 @@ function pickerCard() {
   const u = ME(), s = pkSrc(), pool = pkPool(), w = PK.win && P[PK.win];
   const opts = [["class", tr("Whole class")], ["idle", tr("Idle")]].concat(visG().map(g => ["g:" + g.id, g.name + (!isStaff(u) && u.group_id === g.id ? " (" + tr("my group") + ")" : "")]));
   const left = PK.skip ? pool.filter(p => !PK.done.includes(p.id)).length : pool.length;
-  return `<div class="card pkcard"><b>🎲 ${tr("Random picker")}</b>
-   <div class="row" style="margin-top:8px"><select id="pksrc" style="flex:1;min-width:0" ${PK.busy ? "disabled" : ""} onchange="pkSet(this.value)">${opts.map(([v, t]) => `<option value="${esc(v)}" ${v === s ? "selected" : ""}>${esc(t)}</option>`).join("")}</select><span class="chip">${pool.length} 👤</span></div>
-   <div class="pkshow${w ? " win" : ""}${PK.busy ? " roll" : ""}">${w ? av(w, "huge") : '<span class="pkq">🎲</span>'}<div id="pkname" class="pkname">${esc(PK.shown || tr("Who presents?"))}</div></div>
-   <div class="row"><button class="ok" style="flex:1" ${PK.busy ? "disabled" : ""} onclick="pkRoll()">🎯 ${tr("Pick someone")}</button><button class="s" style="flex:1" ${PK.busy ? "disabled" : ""} onclick="pkOrder()">🔀 ${tr("Speaking order")}</button></div>
+  return `<div class="card pkcard"><b>${ic("dice")} ${tr("Random picker")}</b>
+   <div class="row" style="margin-top:8px"><select id="pksrc" style="flex:1;min-width:0" ${PK.busy ? "disabled" : ""} onchange="pkSet(this.value)">${opts.map(([v, t]) => `<option value="${esc(v)}" ${v === s ? "selected" : ""}>${esc(t)}</option>`).join("")}</select><span class="chip">${pool.length} ${ic("user")}</span></div>
+   <div class="pkshow${w ? " win" : ""}${PK.busy ? " roll" : ""}">${w ? av(w, "huge") : '<span class="pkq">'+ic("dice")+'</span>'}<div id="pkname" class="pkname">${esc(PK.shown || tr("Who presents?"))}</div></div>
+   <div class="row"><button class="ok" style="flex:1" ${PK.busy ? "disabled" : ""} onclick="pkRoll()">${ic("target")} ${tr("Pick someone")}</button><button class="s" style="flex:1" ${PK.busy ? "disabled" : ""} onclick="pkOrder()">${ic("shuffle")} ${tr("Speaking order")}</button></div>
    <label class="pkopt"><input type="checkbox" ${PK.skip ? "checked" : ""} onchange="pkSkip(this.checked)"> ${tr("Skip people already picked")} <span class="mu">${PK.done.length ? "· " + tr("{n} left", { n: left }) : ""}</span></label>
    ${PK.done.length || PK.order || PK.win ? `<button class="s" style="width:100%" onclick="pkReset()">↺ ${tr("Reset")}</button>` : ""}
-   ${PK.order ? `<div class="pkord"><div class="row sp"><b>${tr("Speaking order")}</b><button class="s" onclick="pkCopy()">📋 ${tr("Copy")}</button></div>${PK.order.filter(id => P[id]).map((id, i) => `<div class="li" onclick="showProfile('${id}')"><span class="ordn">${i + 1}</span>${av(P[id])}<div class="g">${esc(P[id].name)}</div></div>`).join("")}</div>` : ""}</div>`;
+   ${PK.order ? `<div class="pkord"><div class="row sp"><b>${tr("Speaking order")}</b><button class="s" onclick="pkCopy()">${ic("copy")} ${tr("Copy")}</button></div>${PK.order.filter(id => P[id]).map((id, i) => `<div class="li" onclick="showProfile('${id}')"><span class="ordn">${i + 1}</span>${av(P[id])}<div class="g">${esc(P[id].name)}</div></div>`).join("")}</div>` : ""}</div>`;
 }
 const toolsPage = () => `<div class="grid2 toolsg">${timerCard()}${pickerCard()}</div>`;
 

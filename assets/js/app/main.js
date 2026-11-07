@@ -60,16 +60,27 @@ async function setPw(){const a=$("#p1").value;if(a.length<6){err=tr("At least 6 
  try{await sb.rpc("set_my_password_copy",{pw:a})}catch(e){}err="";snd.ok();await start(data.user,true)}
 // Giriş uğurlu olandan sonra: cihazı qeyd edir, məlumatı yükləyir, real vaxtı qoşur
 async function start(user,fresh){uid=user.id;ready=false;loadSeen();loadNotes();if(user.user_metadata&&user.user_metadata.must_change){screen="setpw";return render()}
+ const cached=loadCache(uid);
+ if(cached){applyCache(cached);screen=(isStaff(ME())&&!ACLASS)?"classes":"app";render()}
+ else{screen="boot";render()}
  try{MYSID=fresh?null:localStorage.getItem("sid")}catch(e){MYSID=null}
- if(!MYSID){MYSID=Math.random().toString(36).slice(2)+Date.now().toString(36);try{localStorage.setItem("sid",MYSID)}catch(e){}await sb.rpc("claim_session",{s:MYSID})}
- screen="boot";render();await loadMeta();let ok=await refresh(true);for(let i=0;!ok&&screen==="boot"&&i<3;i++){await new Promise(r=>setTimeout(r,1000));ok=await refresh(true)}
- if(screen!=="boot")return;if(!ok){err=tr("Connection problem. Please try again.");screen="login";return render()}await prepClass();if(screen!=="boot")return;screen=(isStaff(ME())&&!ACLASS)?"classes":"app";render();subscribe()}
+ if(!MYSID){MYSID=Math.random().toString(36).slice(2)+Date.now().toString(36);try{localStorage.setItem("sid",MYSID)}catch(e){}try{await sb.rpc("claim_session",{s:MYSID})}catch(e){}}
+ await loadMeta();let ok=await refresh(true);for(let i=0;!ok&&i<3;i++){await new Promise(r=>setTimeout(r,1000));ok=await refresh(true)}
+ if(screen==="setpw"||screen==="login")return;
+ if(!ok){if(!cached){err=tr("Connection problem. Please try again.");screen="login";render()}else{toast(tr("Connection problem. Retrying…"),1);if(screen==="app")subscribe()}return}
+ await prepClass();if(screen==="setpw"||screen==="login")return;
+ screen=(isStaff(ME())&&!ACLASS)?"classes":"app";render();saveCache();subscribe()}
 async function loadLogin(){screen="login";render()}
 // Çıxış edir
-async function logout(){if(chan){await sb.removeChannel(chan);chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}try{localStorage.removeItem("sid")}catch(e){}MYSID=null;uid=null;ACLASS=null;CLS=[];CHOICES=null;tab="home";conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();await loadLogin()}
+async function logout(){clearTimeout(tmRetry);clearTimeout(tmSched);clearTimeout(tmChan);if(chan){await sb.removeChannel(chan);chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}try{localStorage.removeItem("sid")}catch(e){}try{localStorage.removeItem(cacheKey(uid))}catch(e){}MYSID=null;uid=null;ACLASS=null;CLS=[];CHOICES=null;tab="home";conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();homeTab="main";await loadLogin()}
 // Sayt açılanda ilk işləyən funksiya
-async function boot(){if(SUPABASE_URL.includes("PASTE")){screen="setup";return render()}
- sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);const {data}=await sb.auth.getSession();if(data.session)return start(data.session.user);await loadLogin()}
+async function boot(){try{
+ if(SUPABASE_URL.includes("PASTE")){screen="setup";return render()}
+ if(!window.supabase){document.getElementById("root").innerHTML='<div class="card login"><h2>Yüklənmədi</h2><p class="mu">'+esc(tr("Could not load the app. Check your internet and reload."))+'</p></div>';return}
+ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);const {data,error}=await sb.auth.getSession();if(error)throw error;
+ if(data.session)return start(data.session.user);await loadLogin()
+}catch(e){console.error("boot failed",e);if(sb){err=tr("Connection problem. Please try again.");screen="login";render()}
+ else{try{document.getElementById("root").innerHTML='<div class="card login"><h2>Yüklənmədi</h2><p class="mu">'+esc(tr("Could not load the app. Check your internet and reload."))+'</p></div>'}catch(_){}}}}
 
 ["pause","ended"].forEach(ev=>addEventListener(ev,e=>{if(pendingRender&&e.target&&e.target.tagName==="AUDIO")render()},true));
 addEventListener("pointerdown",()=>{pressing=true;pressTs=Date.now()},true);
