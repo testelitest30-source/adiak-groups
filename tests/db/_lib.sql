@@ -78,3 +78,16 @@ insert into public.groups(id, name, capacity, host_id, class_tag) overriding sys
 update public.profiles set group_id = 1 where id in (test.id('s1'), test.id('s2'), test.id('s3'));
 update public.profiles set group_id = 2 where id in (test.id('s4'), test.id('s5'));
 update public.profiles set group_id = 3 where id = test.id('x1');
+
+-- creates an open event in c1 with teams g1 + g2 as teacher tpres; returns event id; leaves the session as postgres
+create function test.mk_event(status text default 'open') returns bigint language plpgsql as $$
+declare e bigint;
+begin
+  perform test.as(test.id('tpres'));
+  e := public.pres_event_save(null, 'c1', 'Final presentations', 'desc', now() + interval '3 days', now() + interval '2 days', 7);
+  perform public.pres_set_teams(e, array[1,2]::bigint[], null, null);
+  if status <> 'draft' then perform public.pres_event_status(e, 'open'); end if;
+  perform test.as_db();
+  return e;
+end $$;
+grant execute on function test.mk_event(text) to authenticated;

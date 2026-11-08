@@ -25,11 +25,11 @@ create table auth.identities(id uuid primary key, user_id uuid references auth.u
 create table auth.sessions(id uuid primary key default gen_random_uuid(), user_id uuid references auth.users on delete cascade);
 -- Tests impersonate a user with: set local role authenticated; set local request.jwt.claims = '{"sub":"<uuid>","role":"authenticated"}';
 create function auth.uid() returns uuid language sql stable as
-  $$ select nullif(coalesce(current_setting('request.jwt.claims', true),'{}')::jsonb->>'sub','')::uuid $$;
+  $$ select nullif(coalesce(nullif(current_setting('request.jwt.claims', true),''),'{}')::jsonb->>'sub','')::uuid $$;
 create function auth.role() returns text language sql stable as
-  $$ select coalesce(current_setting('request.jwt.claims', true),'{}')::jsonb->>'role' $$;
+  $$ select coalesce(nullif(current_setting('request.jwt.claims', true),''),'{}')::jsonb->>'role' $$;
 create function auth.jwt() returns jsonb language sql stable as
-  $$ select coalesce(current_setting('request.jwt.claims', true),'{}')::jsonb $$;
+  $$ select coalesce(nullif(current_setting('request.jwt.claims', true),''),'{}')::jsonb $$;
 grant execute on all functions in schema auth to anon, authenticated, service_role;
 
 create table storage.buckets(id text primary key, name text, public boolean default false, file_size_limit bigint, allowed_mime_types text[]);
