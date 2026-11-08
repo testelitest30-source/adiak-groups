@@ -155,6 +155,17 @@ await test("admin panel: tabs by permission", async () => {
   return null;
 });
 
+// 7b. Admin paneli tələbə saytının mövzu seçimini izləyir (pre-paint, yanıb-sönmə olmadan)
+await test("admin follows stored theme (pre-paint)", async () => {
+  const env = await open({ user: IDS.admin, path: "/admin/index.html", theme: "dark", scheme: "light" });
+  const { page } = env;
+  assert(await page.evaluate(() => document.documentElement.getAttribute("data-theme")) === "dark", "admin did not apply stored dark theme");
+  await page.waitForSelector("aside.side .nav button");
+  const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  assert(bg === "rgb(16, 18, 38)", "admin body not dark: " + bg);
+  return env;
+});
+
 // 8. Ekran şəkilləri: tələbə ana səhifə 390/768/1280 × light/dark
 for (const [w, h] of [[390, 844], [768, 1024], [1280, 800]]) for (const theme of ["light", "dark"]) {
   await test(`screenshot home ${w} ${theme}`, async () => {

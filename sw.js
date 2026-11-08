@@ -1,11 +1,11 @@
 /* sw.js - service worker: sayt tətbiq kimi yüklənə bilsin və şəbəkə yox olanda açılış ekranı görünsün.
    Qayda: həmişə ƏVVƏL İNTERNETDƏN yükləyir (yeni versiya dərhal görünür), internet yoxdursa yaddaşdakı surəti göstərir.
    Supabase və başqa saytlara (başqa mənbə) toxunmur. */
-const V = "adiak-v7"; // v7: Purple Edition tələbə saytı (tokens/purple CSS + yerli şriftlər) — versiya artırılır ki, köhnə keş silinsin
+const V = "adiak-v8"; // v8: + admin "Ledger" (admin-ui.css + admin şriftləri); v7: Purple Edition tələbə saytı — versiya artırılır ki, köhnə keş silinsin
 const SHELL = [
   "./", "index.html", "manifest.webmanifest",
   "assets/vendor/supabase.js",
-  "assets/css/tokens.css", "assets/css/style.css", "assets/css/features.css", "assets/css/purple.css", "assets/css/admin.css",
+  "assets/css/tokens.css", "assets/css/style.css", "assets/css/features.css", "assets/css/purple.css", "assets/css/admin.css", "assets/css/admin-ui.css",
   "assets/fonts/inter-latin-wght-normal.woff2", "assets/fonts/inter-latin-ext-wght-normal.woff2",
   "assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2", "assets/fonts/plus-jakarta-sans-latin-ext-wght-normal.woff2",
   "assets/js/shared/config.js", "assets/js/shared/i18n.js", "assets/js/shared/icons.js",

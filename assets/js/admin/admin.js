@@ -112,7 +112,8 @@ function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=
  try{window.scrollTo(0,sy);const m2=$(".main");if(m2)m2.scrollTop=ms}catch(e){}}
 // Dil dəyişəndə cari ekranı yenidən çəkir
 function adminRerender(){if(!uid){loginView();return}if(ME&&has("panel"))draw();else if(ME)noAccess();else loginView()}
-const head=(t,s,right)=>`<div class="page-h"><div><h1>${t}</h1><p>${s}</p></div><div class="row wrap">${right||""}</div></div>`;
+// Səhifə başlığı. pidx = bölmənin yan menyudakı sıra nömrəsi (yalnız görünüş üçün)
+const head=(t,s,right)=>{const n=visibleTabs().findIndex(x=>x.k===tab)+1;return`<div class="page-h"><div><h1>${n?`<span class="pidx">${String(n).padStart(2,"0")}</span>`:""}${t}</h1><p>${s}</p></div><div class="row wrap">${right||""}</div></div>`};
 const empty=(e,t)=>`<div class="empty"><span class="e">${e}</span>${t}</div>`;
 
 /* ---------- 5. DASHBOARD ---------- */
