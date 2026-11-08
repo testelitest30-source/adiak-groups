@@ -26,7 +26,7 @@ select test.as_db();
 select test.eq((select count(*)::int from public.pres_draws where event_id = :e), 2, 'previous round kept (not overwritten)');
 select test.eq((select count(*)::int from public.pres_draws where event_id = :e and superseded_at is null), 1, 'exactly one current draw');
 select test.eq((select superseded_reason from public.pres_draws where event_id = :e and round = 1), 'Team two was absent', 'superseded round records the reason');
-select test.throws(format('update public.pres_draws set result = array[2,1]::bigint[] where event_id = %s and round = 2', :e), 'protected', 'draw result cannot be edited (even by owner)');
+select test.throws(format('update public.pres_draws set result = (select array_agg(x order by x) from unnest(result) x) || array[]::bigint[], drawn_by = test.id(''s1'') where event_id = %s and round = 2', :e), 'protected', 'draw result cannot be edited (even by owner)');
 select test.throws(format('delete from public.pres_draws where event_id = %s', :e), 'cannot be deleted', 'draws cannot be deleted');
 select test.throws(format('update public.pres_draws set superseded_at = clock_timestamp() where event_id = %s and round = 1', :e), 'only be set once', 'superseded_at set-once');
 -- frozen team list after the draw

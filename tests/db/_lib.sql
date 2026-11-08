@@ -91,3 +91,4 @@ begin
   return e;
 end $$;
 grant execute on function test.mk_event(text) to authenticated;
+select setval(pg_get_serial_sequence('public.groups', 'id'), 100);
