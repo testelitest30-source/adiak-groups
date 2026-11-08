@@ -28,7 +28,7 @@
 
 ## Service worker (`sw.js`)
 - Network-first, same-origin only; precaches the `SHELL` list (includes `assets/vendor/supabase.js`).
-- Bump `V` (currently `adiak-v7`) whenever `SHELL` or asset paths change.
+- Bump `V` (currently `adiak-v8`) whenever `SHELL` or asset paths change.
 - Registration in `index.html` is skipped in native Capacitor (`Capacitor.isNativePlatform()`); websites register normally.
 
 ## Android / Capacitor (Phase 2 — done, verified on a Samsung Galaxy S25; PR #5 + PR #6)
@@ -64,6 +64,9 @@
 - Fonts: local OFL WOFF2 in `assets/fonts/`: Plus Jakarta Sans (headings), Inter (body); admin only: Schibsted Grotesk (display) + JetBrains Mono (figures/IDs).
   No CDN. Every font must pass the Azerbaijani glyph check in `tests/tokens-check.mjs` (Sora/Bricolage/Instrument fail on `Ə/ə`).
 - Student styling lives in `assets/css/purple.css` (loaded last, overrides `style.css`/`features.css`; old variables are aliased there). Keep markup changes presentational (classes, `ic()` icons).
+- Admin "Ledger" identity lives in `assets/css/admin-ui.css` (loaded after `admin.css`): ink spine with numbered sections, Schibsted Grotesk
+  headings/figures, JetBrains Mono labels and IDs, hairline rules, outlined chips, **no gradients**; purple only as the signal (active, primary, focus).
+  Admin follows the app's `localStorage.theme` via the pre-paint script in `admin/index.html`. Section numbers in page headers come from `head()` (`pidx`).
 - Keep real i18n labels; never copy mockup wording or add mockup-only features (fake stats/charts/feeds, top search, FAB).
 - Logo: keep current branding until the new logo SVG is approved; integration points are listed in the design doc. Never redraw a logo.
 - Old CSS variables (`--bg --card --tx --mu --ac --ac2 --bd --me ...`) become aliases of tokens in Stage 1; keep them working.
