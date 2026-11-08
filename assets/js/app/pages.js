@@ -59,9 +59,9 @@ const chartData=()=>{const u=ME();
 let homeTab="main";
 const hcard=()=>{const u=ME(),st=isStaff(u),rk=rank(u.points),n=ppl().length,id=idle().length,pos=st?null:myRank();
  const sum=ppl().reduce((a,x)=>a+x.points,0);
- const tiles=st?[[n,tr("Students")],[visG().length,tr("Teams")],[id,tr("Idle")],[n?Math.round(sum/n):0,tr("Avg points")]]
-  :[[u.points,tr("Points")],[pos?pos+"/"+n:"—",tr("Class rank")],[u.group_id!==null&&grp(u.group_id)?esc(grp(u.group_id).name):"—",tr("Team")],[id,tr("Idle")]];
- const tilesHtml=`<div class="tiles">${tiles.map(([v,l])=>`<div class="tile"><b>${v}</b><span>${l}</span></div>`).join("")}</div>`;
+ const tiles=st?[[n,tr("Students"),"cap"],[visG().length,tr("Teams"),"groups"],[id,tr("Idle"),"clock"],[n?Math.round(sum/n):0,tr("Avg points"),"chart"]]
+  :[[u.points,tr("Points"),"star"],[pos?pos+"/"+n:"—",tr("Class rank"),"trophy"],[u.group_id!==null&&grp(u.group_id)?esc(grp(u.group_id).name):"—",tr("Team"),"groups"],[id,tr("Idle"),"clock"]];
+ const tilesHtml=`<div class="tiles">${tiles.map(([v,l,i])=>`<div class="tile"><span class="tic">${ic(i)}</span><b>${v}</b><span>${l}</span></div>`).join("")}</div>`;
  const body=isStudentP(u)
   ?`<div class="hc-side"><div class="seg" style="width:100%"><button class="${homeTab==="main"?"on":""}" style="flex:1" onclick="homeTab='main';render()">${tr("Welcome")}</button><button class="${homeTab==="medals"?"on":""}" style="flex:1" onclick="homeTab='medals';render()">${tr("Medals")}</button></div><div class="hc-panels"><div class="hc-panel${homeTab==="main"?" on":""}">${tilesHtml}</div><div class="hc-panel${homeTab==="medals"?" on":""}">${badgeGrid(badgesOf(u))}</div></div></div>`
   :tilesHtml;
@@ -74,7 +74,7 @@ const chartCard=()=>{const d=chartData(),mx=Math.max(1,...d.map(x=>x.v));
   <div class="bars">${d.length?d.map((x,i)=>`<div class="bcol${x.me?" me":""}" onclick="${x.click}"><span class="bv">${x.v}</span><div class="bar-w"><i style="height:${Math.max(5,Math.round(x.v/mx*100))}%;animation-delay:${i*70}ms"></i></div><span class="bl">${esc(x.label)}</span></div>`).join(""):`<div class="mu" style="margin:auto">${tr("No data yet")}</div>`}</div></div>`};
 // Alt kartlar: qrup / sinif vəziyyəti və sürətli keçidlər
 const homeCards=()=>{const u=ME(),st=isStaff(u);let a;
- if(st)a=`<div class="card"><b>${ic("school")} ${tr("Class")} ${esc(ACLASS||"")}</b><p class="mu">${tr("You are viewing this class. Everything you see belongs to it.")}</p>${CLS.length>1?`<button onclick="leaveClass()">⇄ ${tr("Switch class")}</button>`:""}</div>`;
+ if(st)a=`<div class="card"><b>${ic("school")} ${tr("Class")} ${esc(ACLASS||"")}</b><p class="mu">${tr("You are viewing this class. Everything you see belongs to it.")}</p>${CLS.length>1?`<button onclick="leaveClass()">${ic("swap")} ${tr("Switch class")}</button>`:""}</div>`;
  else if(u.group_id!==null&&grp(u.group_id)){const g=grp(u.group_id);a=`<div class="card" style="border-left:5px solid ${gcol(g.id)}"><b>${esc(g.name)}</b>${g.host_id===uid?` ${ic("crown")}`:""}<div class="avs">${mem(g.id).map(x=>av(x)).join("")}</div><p class="mu">${tr("{a}/{b} members",{a:mem(g.id).length,b:g.capacity})}</p><button onclick="goTab('groups',${g.id})">${tr("Open team")}</button></div>`}
  else a=`<div class="card"><b>${tr("You're idle")}</b><p class="mu">${tr("Open a group and send a join request, create your own, or wait for an invitation.")}</p><button onclick="goTab('groups')">${tr("Groups")}</button></div>`;
  return a;};
@@ -84,11 +84,11 @@ const NAV=()=>[["home",ic("home"),tr("Home"),""],["groups",ic("groups"),tr("Grou
 const sideNav=()=>{const u=ME(),st=isStaff(u);
  return`<aside class="side"><div class="brand"><span class="blogo">${ic("groups")}</span><div><b>ADIAK</b><small>Team Maker</small></div></div>
   <button class="palbtn" onclick="openPalette()" aria-label="${tr("Search")}"><span>${ic("search")} ${tr("Search")}</span><kbd>Ctrl K</kbd></button>
-  ${st&&ACLASS?`<button class="clsbtn" ${CLS.length>1?'onclick="leaveClass()"':""}><span>${ic("school")} ${esc(ACLASS)}</span>${CLS.length>1?"<span>⇄</span>":""}</button>`:""}
+  ${st&&ACLASS?`<button class="clsbtn" ${CLS.length>1?'onclick="leaveClass()"':""}><span>${ic("school")} ${esc(ACLASS)}</span>${CLS.length>1?`<span>${ic("swap")}</span>`:""}</button>`:""}
   <nav class="nav">${NAV().map(([k,i,t,b])=>`<button class="${tab===k?"on":""}" onclick="goTab('${k}')"><span class="ni">${i}</span><span>${t}</span>${b}</button>`).join("")}</nav>
   <div class="sgrow"></div>
   ${can("panel")?`<a class="navlink" href="admin/index.html" target="_blank">${ic("wrench")} ${tr("Admin panel")}</a>`:""}
-  <div class="sfoot"><div class="sme" onclick="showProfile('${u.id}')">${av(u)}<div><b>${esc(u.name)}</b><small>${st?tr("Staff"):rank(u.points).name}</small></div></div><div class="srow">${langSw()}<button class="s" onclick="toggleMute()" title="${tr("Sounds")}">${muted?ic("soundOff"):ic("sound")}</button><button class="s" onclick="cycleTheme()" title="${tr("Toggle theme")}" aria-label="${tr("Toggle theme")}">${themeIcon()}</button><button class="s" onclick="confirmLogout()" title="${tr("Log out")}" aria-label="${tr("Log out")}">⏻</button></div></div></aside>`};
+  <div class="sfoot"><div class="sme" onclick="showProfile('${u.id}')">${av(u)}<div><b>${esc(u.name)}</b><small>${st?tr("Staff"):rank(u.points).name}</small></div></div><div class="srow">${langSw()}<button class="s" onclick="toggleMute()" title="${tr("Sounds")}">${muted?ic("soundOff"):ic("sound")}</button><button class="s" onclick="cycleTheme()" title="${tr("Toggle theme")}" aria-label="${tr("Toggle theme")}">${themeIcon()}</button><button class="s" onclick="confirmLogout()" title="${tr("Log out")}" aria-label="${tr("Log out")}">${ic("power")}</button></div></div></aside>`};
 const chatDesk=()=>`<div class="chat2${conv?" has-conv":""}"><div>${chatList()}</div><div>${conv?thread():`<div class="card mu" style="text-align:center;padding:44px 16px">${ic("chat")} ${tr("Select a chat")}</div>`}</div></div>`;
 const bodyOf=k=>({home:homePage,groups:groupsPage,chat:chatDesk,req:()=>reqPage()+idlePage(),notes:notesPage,tools:()=>toolsPage(),settings:settingsPage}[k]||homePage)();
 // Heyət üçün sinif seçmə ekranı
