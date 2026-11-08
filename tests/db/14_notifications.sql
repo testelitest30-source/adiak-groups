@@ -1,4 +1,5 @@
 -- Persistent notifications: dedupe, per-user isolation, read sync, failure never breaks the caller.
+delete from public.push_outbox; delete from public.notifications;
 select test.eq(public._notify(array[test.id('s1'), test.id('s2'), test.id('s1')], 'pres.draw', '{"e":1}', '{"k":"pres","event":1}', 'draw:1:1'), 2,
   'notify fan-out deduplicates users in one call');
 select test.eq(public._notify(array[test.id('s1')], 'pres.draw', '{}', '{}', 'draw:1:1'), 0, 'same dedupe key never inserts twice');
