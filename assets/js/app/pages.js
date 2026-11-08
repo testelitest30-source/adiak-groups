@@ -87,7 +87,7 @@ const sideNav=()=>{const u=ME(),st=isStaff(u);
   ${st&&ACLASS?`<button class="clsbtn" ${CLS.length>1?'onclick="leaveClass()"':""}><span>${ic("school")} ${esc(ACLASS)}</span>${CLS.length>1?"<span>⇄</span>":""}</button>`:""}
   <nav class="nav">${NAV().map(([k,i,t,b])=>`<button class="${tab===k?"on":""}" onclick="goTab('${k}')"><span class="ni">${i}</span><span>${t}</span>${b}</button>`).join("")}</nav>
   <div class="sgrow"></div>
-  ${can("panel")?`<a class="navlink" href="admin/" target="_blank">${ic("wrench")} ${tr("Admin panel")}</a>`:""}
+  ${can("panel")?`<a class="navlink" href="admin/index.html" target="_blank">${ic("wrench")} ${tr("Admin panel")}</a>`:""}
   <div class="sfoot"><div class="sme" onclick="showProfile('${u.id}')">${av(u)}<div><b>${esc(u.name)}</b><small>${st?tr("Staff"):rank(u.points).name}</small></div></div><div class="srow">${langSw()}<button class="s" onclick="toggleMute()" title="${tr("Sounds")}">${muted?ic("soundOff"):ic("sound")}</button><button class="s" onclick="cycleTheme()" title="${tr("Toggle theme")}" aria-label="${tr("Toggle theme")}">${themeIcon()}</button><button class="s" onclick="confirmLogout()" title="${tr("Log out")}" aria-label="${tr("Log out")}">⏻</button></div></div></aside>`};
 const chatDesk=()=>`<div class="chat2${conv?" has-conv":""}"><div>${chatList()}</div><div>${conv?thread():`<div class="card mu" style="text-align:center;padding:44px 16px">${ic("chat")} ${tr("Select a chat")}</div>`}</div></div>`;
 const bodyOf=k=>({home:homePage,groups:groupsPage,chat:chatDesk,req:()=>reqPage()+idlePage(),notes:notesPage,tools:()=>toolsPage(),settings:settingsPage}[k]||homePage)();
@@ -95,7 +95,7 @@ const bodyOf=k=>({home:homePage,groups:groupsPage,chat:chatDesk,req:()=>reqPage(
 const classesScreen=()=>{const u=ME(),last=(()=>{try{return localStorage.getItem("lastClass")}catch(e){return null}})();
  return`<div class="cl-wrap"><div class="row sp"><div><h2 style="margin:0">${tr("Choose a class")}</h2><p class="mu" style="margin:4px 0 0">${tr("Welcome, {name}",{name:esc(u.name)})} · ${tr("Choose the class you want to open.")}</p></div><button class="s" onclick="confirmLogout()">${tr("Log out")}</button></div>
   <div class="clgrid">${CLS.map(c=>`<button class="clcard${c.tag===last?" last":""}" onclick="enterClass('${esc(c.tag)}')"><div class="cltag">${esc(c.tag)}</div>${c.title?`<div>${esc(c.title)}</div>`:""}<div class="mu">${tr("{n} students",{n:c.students})}</div><span class="chip on">${c.role==="admin"?tr("Admin"):c.role==="starosta"?tr("Class rep"):tr("Teacher")}</span></button>`).join("")||`<div class="card mu">${tr("No classes yet. An admin must create one.")}</div>`}</div>
-  ${can("panel")?`<p><a class="navlink" href="admin/" target="_blank">${ic("wrench")} ${tr("Admin panel")}</a></p>`:""}</div>`};
+  ${can("panel")?`<p><a class="navlink" href="admin/index.html" target="_blank">${ic("wrench")} ${tr("Admin panel")}</a></p>`:""}</div>`};
 const dayLbl=iso=>{const d=new Date(iso),n=new Date(),y=new Date(n-864e5),s=x=>x.toDateString();return s(d)===s(n)?tr("Today"):s(d)===s(y)?tr("Yesterday"):d.toLocaleDateString(LANG==="az"?"az":"en",{day:"numeric",month:"long"})};
 const lnk=s=>mentions(esc(s)).replace(/(https?:\/\/[^\s<]+)/g,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
 function rxHtml(m){const R=RX.filter(r=>r.msg_id===m.id);if(!R.length)return"";const g={};R.forEach(r=>(g[r.emoji]=g[r.emoji]||[]).push(r.user_id));return`<div class="rx">${Object.keys(g).map(e=>`<span class="rxc${g[e].includes(uid)?" me":""}" onclick="react(${m.id},'${e}')">${e}${g[e].length>1?" "+g[e].length:""}</span>`).join("")}</div>`}
@@ -166,16 +166,19 @@ function reqPage(){const u=ME(),mine=RQ.filter(r=>r.user_id===uid),inv=myInvites
 const idlePage=()=>`<div class="card"><b>${tr("Idle people ({n})",{n:idle().length})}</b>${idle().map(p=>`<div class="li" onclick="showProfile('${p.id}')">${av(p)}<div class="g">${esc(p.name)}${tag(p)}</div></div>`).join("")||"<p class='mu'>"+tr("Nobody")+"</p>"}</div>`;
 // Ayarlar: ad, şəkil, parol, səs, çıxış
 function settingsPage(){const u=ME();return`<div class="card"><b>${tr("Settings")}</b><p class="mu">${tr("Display name")}</p><div class="row"><input id="nn" value="${esc(u.name)}" maxlength="30" style="flex:1;min-width:0"><button onclick="saveName()">${tr("Save")}</button></div>
- ${can("panel")?'<p><a class="chip on" href="admin/" target="_blank" style="text-decoration:none">'+ic("wrench")+' '+tr("Open admin panel")+'</a></p>':""}<p class="mu">${tr("Profile picture")}</p><input type="file" accept="image/*" onchange="pic(this)"><p class="row"><button class="s" onclick="toggleMute()">${muted?ic("soundOff")+" "+tr("Sounds off"):ic("sound")+" "+tr("Sounds on")}</button><button class="s" onclick="confirmLogout()">${tr("Log out")}</button></p>
+ ${can("panel")?'<p><a class="chip on" href="admin/index.html" target="_blank" style="text-decoration:none">'+ic("wrench")+' '+tr("Open admin panel")+'</a></p>':""}<p class="mu">${tr("Profile picture")}</p><input type="file" accept="image/*" onchange="pic(this)"><p class="row"><button class="s" onclick="toggleMute()">${muted?ic("soundOff")+" "+tr("Sounds off"):ic("sound")+" "+tr("Sounds on")}</button><button class="s" onclick="confirmLogout()">${tr("Log out")}</button></p>
  <hr><b>${tr("Appearance")}</b><p>${themeSw()}</p>${phone()?`<hr><b>${tr("Language")}</b><p>${langSw()}</p>`:""}${installBox()}<hr><b>${tr("Change password")}</b><p class="mu" style="margin:4px 0">${can("admin")?tr("Admin passwords are private: nobody else can see or reset yours."):tr("Class admins can see your password so they can help you if you forget it. Do not reuse a password from anywhere else.")}</p><input id="cp1" type="password" placeholder="${tr("New password (min 6)")}" autocomplete="new-password"><input id="cp2" type="password" placeholder="${tr("Repeat")}" autocomplete="new-password" style="margin-top:6px"><button style="margin-top:8px" onclick="changePw()">${tr("Change password")}</button>
  ${can("points")?`<hr><b>${tr("Give points")}</b><div class="row" style="margin-top:8px"><select id="ps">${ppl().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select><input id="pp" type="number" value="1" min="-100" max="100" style="width:80px"><button onclick="rpc('add_points',{u:$('#ps').value,n:+$('#pp').value})">${tr("Add")}</button></div>`:""}</div>${feedbackCard()}`}
 const pages={notes:notesPage,chat:chatPage,idle:idlePage,groups:groupsPage,tools:()=>toolsPage(),settings:settingsPage,req:()=>reqPage()};
 const snap=()=>({tab,openG,conv,sheet,sp,menuOpen,pm});
+// Naviqasiya açarı (render()-dəki navKey ilə eyni format) və geri keçiddə tarixçəyə yazmadan vəziyyəti sinxronlaşdırma
+const navKeyOf=s=>["app",s.tab,s.openG,s.conv,s.sp,s.sheet,s.menuOpen].join("|")+"|"+(s.pm||"");
+function navSync(){lastSnap=snap();lastNav=navKeyOf(lastSnap)}
 const mItems=()=>[["notes",ic("bell"),tr("Notifications"),ub(unreadNotes())],["chat",ic("chat"),tr("Chat"),ub(totalUnread())],["idle",ic("user"),tr("Idle people ({n})",{n:idle().length}),""],["groups",ic("groups"),tr("Groups"),""],["tools",ic("tools"),tr("Tools"),""],["settings",ic("settings"),tr("Settings"),""],["req",ic("inbox"),tr("Requests & invites"),ub(inboxCount())]];
 // Telefonda sağdan açılan menyu
-const drawer=()=>{const u=ME(),rk=rank(u.points);return`<div id="scrim" onclick="goBack()"></div><div id="drawer"><div class="dh">${av(u,"big")}<div><b>${esc(u.name)}</b><br><span class="mu">${rk.name} · ${u.points} ${tr("pts")}</span></div></div><div class="gr" onclick="openPalette()"><span>${ic("search")} ${tr("Search")}</span><span>›</span></div>${mItems().map(([k,i,t,b])=>`<div class="gr" onclick="menuOpen=false;sheet=true;sp='${k}';render()"><span>${i} ${t} ${b}</span><span>›</span></div>`).join("")}${isStaff(u)&&CLS.length>1?`<div class="gr" onclick="leaveClass()"><span>${ic("school")} ${tr("Switch class")}</span></div>`:""}${can("panel")?`<a class="gr" href="admin/" target="_blank" style="text-decoration:none;color:inherit"><span>${ic("wrench")} ${tr("Admin panel")}</span></a>`:""}<div class="gr" onclick="confirmLogout()"><span>${ic("logout")} ${tr("Log out")}</span></div></div>`};
+const drawer=()=>{const u=ME(),rk=rank(u.points);return`<div id="scrim" onclick="goBack()"></div><div id="drawer"><div class="dh">${av(u,"big")}<div><b>${esc(u.name)}</b><br><span class="mu">${rk.name} · ${u.points} ${tr("pts")}</span></div></div><div class="gr" onclick="openPalette()"><span>${ic("search")} ${tr("Search")}</span><span>›</span></div>${mItems().map(([k,i,t,b])=>`<div class="gr" onclick="menuOpen=false;sheet=true;sp='${k}';render()"><span>${i} ${t} ${b}</span><span>›</span></div>`).join("")}${isStaff(u)&&CLS.length>1?`<div class="gr" onclick="leaveClass()"><span>${ic("school")} ${tr("Switch class")}</span></div>`:""}${can("panel")?`<a class="gr" href="admin/index.html" target="_blank" style="text-decoration:none;color:inherit"><span>${ic("wrench")} ${tr("Admin panel")}</span></a>`:""}<div class="gr" onclick="confirmLogout()"><span>${ic("logout")} ${tr("Log out")}</span></div></div>`};
 // Geri: əvvəlki pəncərəyə qayıdır (proqramdan çıxmır)
-function goBack(){if(navStack.length)history.back();else{openG=null;conv=null;sp=null;sheet=false;menuOpen=false;pm=null;$("#modal").innerHTML="";render()}}
+function goBack(){if(navStack.length)history.back();else{openG=null;conv=null;sp=null;sheet=false;menuOpen=false;pm=null;$("#modal").innerHTML="";navSync();render()}}
 
 /* ================= PROFİL PƏNCƏRƏSİ (statistika, xal vermə, qrup idarəsi) ================= */
 // Şagirdin bal statistikası (təqdimat sayı, ən yüksək, orta)
@@ -184,7 +187,9 @@ const statsOf=id=>{const ev=PE.filter(e=>e.user_id===id),pr=ev.filter(e=>e.kind=
 let profTab="main";
 function showProfile(id){if(!P[id])return;profTab="main";pm=id;render()}
 // Profil pəncərəsini bağlayır (geri düyməsi ilə uyğun)
-function closeProfile(){profTab="main";if(navStack.length&&!navStack[navStack.length-1].pm)history.back();else{pm=null;closeM();render()}}
+// Profil(lər) altındakı səhifəyə tarixçədə geri qayıdır; belə səhifə yoxdursa yerində bağlayır (yeni qeyd yaratmadan)
+function closeProfile(){profTab="main";let i=navStack.length-1;while(i>=0&&navStack[i].pm)i--;
+ if(i>=0&&navKeyOf(navStack[i])===navKeyOf({...snap(),pm:null}))history.go(i-navStack.length);else{pm=null;closeM();navSync();render()}}
 let givingPts=false;
 // Xal verir; rəqəm artır, +N uçur, parıltı çıxır
 async function givePoints(id){if(givingPts)return;const i=$("#gp"),n=parseInt(i&&i.value,10);if(!n||n<-100||n>100){toast(tr("Type a number from -100 to 100"),1);snd.err();if(i&&i.focus)i.focus();return}
@@ -261,7 +266,11 @@ function render(){try{const holding=pressing&&Date.now()-pressTs<2500;if(holding
  const mb0=$("#msgs"),near0=!mb0||mb0.scrollHeight-mb0.scrollTop-mb0.clientHeight<80,kc=key!==lastKey;
  if(screen==="app"&&ME()&&key===lastKey&&isTyping(a)){softRender();return}
  const sv=key===lastKey?[...R.querySelectorAll("input[id],textarea[id],select[id]")].filter(e=>e.type!=="file"&&(e.tagName==="SELECT"?(e.selectedIndex>=0&&!e.options[e.selectedIndex].defaultSelected):e.value!==e.defaultValue)).map(e=>({id:e.id,v:e.value})):[];
- if(!restoring&&screen==="app"&&lastNav.startsWith("app|")&&navKey!==lastNav&&lastSnap){navStack.push(lastSnap);try{history.pushState({n:navStack.length},"")}catch(e){}}
+ if(!restoring&&screen==="app"&&lastNav.startsWith("app|")&&navKey!==lastNav&&lastSnap){
+  // Eyni səhifə artıq tarixçədədirsə, yenisini əlavə etmək əvəzinə ora qədər geri çəkilir (dublikat/loop olmasın)
+  const i=navStack.findIndex(s=>navKeyOf(s)===navKey);
+  if(i>=0){const n=navStack.length-i;navStack.length=i;try{history.go(-n)}catch(e){}}
+  else{navStack.push(lastSnap);try{history.pushState({n:navStack.length},"")}catch(e){}}}
  const inN=sheet&&sp==="notes"&&phone();if(wasNotes&&!inN)readNotes();wasNotes=inN;
  if(screen==="app"&&ME()){trackEnter();markSeen()}
  const nh=view(),same=key===lastKey&&R.firstChild;R.className=same?R.className:"in";lastKey=key;lastNav=navKey;if(same){if(nh!==lastHtml){const t=document.createElement("div");t.innerHTML=nh;morph(R,t)}}else R.innerHTML=nh;lastHtml=nh;if(pm&&screen==="app"){const q=P[pm],me=ME(),sig=q?[q.id,q.name,q.points,q.group_id,(q.perms||[]).join(),q.avatar?1:0,online.has(pm)?1:0,PE.length,me.group_id,(me.perms||[]).join(),me.is_admin?1:0,IV.length,G.length].join("|"):"";if(pmDrawn!==pm||sig!==pmSig){drawProfile(pmDrawn!==pm);pmSig=sig}pmDrawn=pm}else{if(pmDrawn)$("#modal").innerHTML="";pmDrawn=null}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ADIAK</string>
+    <string name="title_activity_main">ADIAK</string>
+    <string name="package_name">az.adiak.teammaker</string>
+    <string name="custom_url_scheme">az.adiak.teammaker</string>
+</resources>
