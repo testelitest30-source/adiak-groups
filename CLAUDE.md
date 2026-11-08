@@ -55,6 +55,16 @@
 - Vercel: `vercel.json` sets `outputDirectory` to `www` (Vercel runs `npm run build`).
 - `android/` is committed; build output, `local.properties`, `assets/public` and generated plugin folders are ignored by `android/.gitignore`.
 
+## Design System 1.0 (spec done, implementation NOT started — needs approval)
+- Spec, boards, PDF and tokens live in `docs/design-system/` (`SPEC.md`, `tokens.css`, `boards.html`, `ADIAK_Design_System_1.0.pdf`).
+- **Strict monochrome**: only the official tokens in `docs/design-system/tokens.css` (white/black/charcoal/neutral grey). No hue anywhere —
+  not for errors, destructive actions, charts, badges, avatars, focus. State = contrast, weight, border style, icon, wording.
+- Icons: SVG only (`icons.js`), 1.8 stroke, round caps/joins, `currentColor`; no emoji as UI icons (emoji only as user content).
+- Font: Inter (self-hosted, OFL). Radius 10 controls / 14 cards / 16 dialogs; controls 40 px; spacing 4·8·12·16·24·32·48.
+- Check: `python3 -I docs/design-system/tools/hue_scan.py <png>` must report 0 coloured pixels.
+- `docs/` is not in the `build-www.mjs` allowlist (never shipped in the APK); GitHub Pages serves it publicly (no secrets).
+- An unapproved earlier implementation draft is kept only as a local `git stash` (not pushed); it predates the official tokens.
+
 ## Token efficiency
 - Read only the files you need; use grep and line ranges. Do not re-audit the repo or dump whole files.
 - Keep reports short: changed files, commit, tests, results, open issues.
