@@ -31,7 +31,7 @@ tail -n +2 supabase/history/manifest.tsv | while IFS=$'\t' read -r v n _; do
   psql "$URL" -qc "insert into supabase_migrations.schema_migrations(version,name) values ('$v','$n')" >/dev/null; done
 
 # Work on a copy so the repo is never modified by the CLI.
-mkdir -p "$WORK/supabase"; cp -r supabase/migrations "$WORK/supabase/"
+mkdir -p "$WORK/supabase/migrations"; for f in supabase/migrations/*.sql; do v=$(basename "$f" | cut -d_ -f1); [ "$v" -le 20261031205544 ] && cp "$f" "$WORK/supabase/migrations/"; done
 cd "$WORK"; "$SB" init --force >/dev/null 2>&1 || true
 
 echo "1. migration list: all 18 Local = Remote"
