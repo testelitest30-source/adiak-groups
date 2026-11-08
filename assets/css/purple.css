@@ -1,0 +1,274 @@
+/* =====================================================================
+   purple.css  -  ADIAK Design System 1.0 — Purple Edition (tələbə saytı)
+   Yüklənmə: tokens.css → style.css → features.css → purple.css (bu fayl SONUNCU)
+   Köhnə qaydaların üstündən yazır; funksiyaya, id-lərə və JS-ə toxunmur.
+   Rənglər yalnız tokens.css-dəki --adia-* dəyişənlərindən gəlir.
+   ===================================================================== */
+
+/* ---------- 1. Köhnə dəyişənlər → tokenlər (style.css / features.css hələ bunları işlədir) ---------- */
+:root,:root[data-theme="light"],:root[data-theme="dark"]{
+  --bg:var(--adia-background);--card:var(--adia-surface);--tx:var(--adia-text);--mu:var(--adia-secondary);
+  --ac:var(--adia-primary-fill);--ac2:var(--adia-primary);--bd:var(--adia-border);--me:var(--adia-primary-light);
+  --sh:var(--adia-shadow-card);--shadow:var(--adia-shadow-card);--r:var(--adia-radius-card);--pat:none;
+}
+
+/* ---------- 2. Səhifə, tipoqrafiya, kətan ---------- */
+html{background:var(--adia-background)}
+body{font-family:var(--adia-font-sans);font-size:15px;line-height:1.45;letter-spacing:0;color:var(--adia-text);
+  background:var(--adia-background);background-image:none;isolation:isolate;font-feature-settings:"cv11","ss01"}
+/* Referansdakı yumşaq diaqonal formalar (mətnsiz bəzək) */
+body::before,body::after{content:"";position:fixed;z-index:-1;pointer-events:none;border-radius:48px;background:var(--adia-gradient-decor);opacity:.075;transform:rotate(-32deg)}
+body::before{width:62vmax;height:30vmax;top:-12vmax;right:-20vmax}
+body::after{width:48vmax;height:22vmax;bottom:-12vmax;left:-18vmax;opacity:.055}
+:root[data-theme="dark"] body::before{opacity:.16}:root[data-theme="dark"] body::after{opacity:.12}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body::before{opacity:.16}:root:not([data-theme="light"]) body::after{opacity:.12}}
+.blob{display:none}
+h1,h2,h3,.hello,.brand b,.tile b,.hd>b,.clcard b,.dh b,.big-title{font-family:var(--adia-font-display);letter-spacing:-.01em}
+h2{font-size:22px;line-height:1.3;font-weight:700}h3{font-size:18px;font-weight:700}
+.mu{color:var(--adia-secondary)}
+small{font-size:12.5px}
+::selection{background:var(--adia-primary-light);color:var(--adia-text)}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--adia-border-strong);border-radius:99px;border:3px solid transparent;background-clip:padding-box}
+
+/* ---------- 3. Kartlar ---------- */
+.card{background:var(--adia-surface);border:1px solid var(--adia-border);border-radius:var(--adia-radius-card);box-shadow:var(--adia-shadow-card);padding:18px}
+.card>b:first-child,.card>.row.sp:first-child>b,.card>.row:first-child>b{font-family:var(--adia-font-display);font-size:15.5px;font-weight:700;display:inline-flex;align-items:center;gap:8px}
+.card>.row.sp:first-child>b>.ic,.card>b:first-child>.ic{color:var(--adia-primary);width:20px;height:20px}
+.empty{color:var(--adia-secondary)}
+
+/* ---------- 4. Düymələr ---------- */
+button{font-family:inherit;font-weight:600;border-radius:var(--adia-radius-control);min-height:40px;padding:9px 16px;
+  background:var(--adia-gradient-brand);color:var(--adia-on-primary);border:0;box-shadow:0 6px 16px -8px rgb(104 70 201 / 55%);
+  transition:transform .12s,box-shadow .2s,background-color .2s,filter .2s}
+button:hover:not(:disabled){filter:none;box-shadow:0 10px 22px -10px rgb(104 70 201 / 70%);transform:translateY(-1px)}
+button:active:not(:disabled){transform:translateY(0) scale(.97)}
+button.s{background:var(--adia-primary-light);color:var(--adia-primary-text);box-shadow:none}
+button.s:hover:not(:disabled){background:var(--adia-primary-wash);box-shadow:inset 0 0 0 1px var(--adia-border-strong);transform:none}
+button.d{background:#B4233A;color:#fff;box-shadow:0 6px 16px -8px rgb(180 35 58 / 55%)}
+button.ok{background:#0F7A50;color:#fff;box-shadow:0 6px 16px -8px rgb(15 122 80 / 50%)}
+button:disabled{opacity:var(--adia-disabled-opacity);box-shadow:none;transform:none}
+button:focus-visible,a:focus-visible,.li:focus-visible,.gr:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--adia-focus);outline-offset:2px}
+a{color:var(--adia-primary-text)}
+
+/* ---------- 5. Formalar ---------- */
+input,select,textarea{font-family:inherit;font-size:15px;min-height:42px;padding:10px 14px;border-radius:var(--adia-radius-control);
+  background:var(--adia-surface);color:var(--adia-text);border:1px solid var(--adia-border-input)}
+input::placeholder,textarea::placeholder{color:var(--adia-secondary);opacity:.85}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--adia-primary);box-shadow:var(--adia-focus-ring)}
+input[type=checkbox],input[type=radio]{min-height:0;accent-color:var(--adia-primary-fill);width:18px;height:18px}
+input[type=range]{accent-color:var(--adia-primary-fill);border:0;padding:0;box-shadow:none}
+.err{color:var(--adia-danger);font-weight:500}
+input[type=file]{min-height:0;padding:6px;border-style:dashed;border-color:var(--adia-border-strong);background:var(--adia-surface-sunken)}
+input[type=file]::file-selector-button{font:inherit;font-weight:600;border:0;border-radius:8px;padding:7px 14px;margin-right:10px;background:var(--adia-primary-light);color:var(--adia-primary-text);cursor:pointer}
+
+/* ---------- 6. Chip, nişan, seqment, tab, irəliləyiş ---------- */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:var(--adia-radius-pill);background:var(--adia-primary-light);color:var(--adia-primary-text)}
+.chip.on{background:var(--adia-success-bg);color:var(--adia-success)}
+.chip.tag{background:var(--adia-primary-fill);color:#fff}
+.chip.tag2{background:var(--adia-warning-bg);color:var(--adia-warning)}
+.chip.tag3{background:var(--adia-info-bg);color:var(--adia-info)}
+.badge,.ub{background:#B4233A;color:#fff;font-weight:700;border-radius:var(--adia-radius-pill);font-size:11px;line-height:16px;min-width:18px;text-align:center;padding:1px 6px;box-shadow:0 0 0 2px var(--adia-surface)}
+.seg,.lang{display:inline-flex;background:var(--adia-surface-sunken);border:1px solid var(--adia-border);border-radius:12px;padding:3px;gap:2px}
+.seg button,.lang button{background:transparent;color:var(--adia-secondary);box-shadow:none;min-height:32px;padding:5px 12px;border-radius:9px;font-weight:600}
+.seg button:hover:not(:disabled),.lang button:hover:not(:disabled){background:var(--adia-primary-wash);color:var(--adia-text);box-shadow:none;transform:none}
+.seg button.on,.lang button.on,.card .lang button.on,.langfix .lang button.on{background:var(--adia-primary-fill);color:#fff;opacity:1;box-shadow:0 4px 10px -6px rgb(104 70 201 / 70%)}
+.tabs{gap:4px;background:var(--adia-surface-sunken);border:1px solid var(--adia-border);border-radius:12px;padding:3px}
+.tabs button{background:transparent;color:var(--adia-secondary);box-shadow:none;min-height:36px}
+.tabs button.on{background:var(--adia-primary-fill);color:#fff}
+.bar{height:8px;background:var(--adia-primary-light);border-radius:99px}
+.bar i{background:var(--adia-gradient-brand);border-radius:99px}
+kbd{font-family:var(--adia-font-sans);font-size:11px;background:var(--adia-surface);border:1px solid var(--adia-border);border-bottom-width:2px;border-radius:6px;padding:1px 6px;color:var(--adia-secondary)}
+.dots i{background:var(--adia-primary-fill)}
+
+/* --ac mətn rəngi kimi işlənən yerlər: tünd mövzuda oxunaqlı vurğu */
+.tb.on,.mention,.ordn,.usep,.navlink,.rq b,.clcard.last,.cltag,.cls-tag{color:var(--adia-primary-text)}
+.nrow.un,.vote,.glow,.clcard.last{border-color:var(--adia-primary)}
+
+/* ---------- 7. Masaüstü qabıq: yan menyu ---------- */
+#shell{gap:20px}
+.side{background:var(--adia-surface);border:1px solid var(--adia-border);border-radius:20px;box-shadow:var(--adia-shadow-card);padding:18px 14px}
+.brand{gap:12px;padding:4px 6px 16px;border-bottom:0;margin-bottom:6px}
+.blogo{width:42px;height:42px;border-radius:13px;background:var(--adia-gradient-brand);color:#fff;box-shadow:0 8px 18px -10px rgb(104 70 201 / 80%)}
+.brand b{font-size:19px;font-weight:800;letter-spacing:-.02em;color:var(--adia-text)}
+.brand small{color:var(--adia-secondary);font-size:12px}
+.palbtn{background:var(--adia-surface-sunken);color:var(--adia-secondary);border:1px solid var(--adia-border);box-shadow:none;min-height:42px;border-radius:12px;font-weight:500}
+.palbtn:hover:not(:disabled){background:var(--adia-primary-wash);color:var(--adia-text);box-shadow:none;transform:none}
+.clsbtn{background:var(--adia-primary-light);color:var(--adia-primary-text);box-shadow:none;border-radius:12px}
+.nav{gap:4px;margin-top:8px}
+.nav button{min-height:44px;padding:10px 14px;border-radius:12px;color:var(--adia-text);font-weight:600;font-size:14.5px;gap:12px;background:transparent;box-shadow:none}
+.nav button .ni{color:var(--adia-secondary);display:grid;place-items:center}
+.nav button:hover:not(:disabled){background:var(--adia-primary-wash);transform:none;box-shadow:none}
+.nav button.on{background:var(--adia-gradient-brand);color:#fff;box-shadow:0 10px 20px -12px rgb(104 70 201 / 90%)}
+.nav button.on .ni{color:#fff}
+.nav .badge{margin-left:auto;box-shadow:none}
+.navlink{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;font-weight:600;text-decoration:none;color:var(--adia-text)}
+.navlink:hover{background:var(--adia-primary-wash)}
+.navlink .ic{color:var(--adia-secondary)}
+.sfoot{border-top:1px solid var(--adia-border);padding-top:12px;margin-top:6px}
+.sme{border-radius:12px;padding:6px}
+.sme:hover{background:var(--adia-primary-wash)}
+.sme b{font-size:14px}.sme small{color:var(--adia-secondary)}
+.srow .s{min-height:36px;min-width:36px;padding:6px 8px;background:var(--adia-surface-sunken);color:var(--adia-secondary);border:1px solid var(--adia-border)}
+.srow .s:hover:not(:disabled){color:var(--adia-primary-text);background:var(--adia-primary-wash)}
+.side .lang button{min-height:30px;padding:4px 9px}
+#main2>.card{margin:0 0 18px}
+#main2{padding-top:2px}
+
+/* ---------- 8. Ana səhifə ---------- */
+.hcard{padding:22px;gap:20px}
+.hcard .av.huge{box-shadow:0 0 0 4px var(--adia-surface),0 0 0 6px var(--adia-primary-light)}
+.hello{font-size:22px;line-height:1.25;font-weight:600;color:var(--adia-text)}
+.hello b{font-weight:800}
+.hc-info .chips{margin:8px 0 10px;display:flex;flex-wrap:wrap;gap:6px}
+.nxt{color:var(--adia-secondary)}
+.tiles{gap:12px}
+.tile{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center;text-align:left;
+  padding:14px;border-radius:var(--adia-radius-card);background:var(--adia-surface);border:1px solid var(--adia-border);box-shadow:var(--adia-shadow-card)}
+.tile .tic{grid-row:1 / span 2;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--adia-primary-light);color:var(--adia-primary)}
+.tile .tic .ic{width:21px;height:21px}
+.tile b{font-size:22px;font-weight:800;line-height:1.1;color:var(--adia-text)}
+.tile span{font-size:12.5px;line-height:1.25;color:var(--adia-secondary);white-space:normal;overflow-wrap:anywhere}
+.tile b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.hc-top{flex:1 1 330px}
+.hc-side,.hcard>.tiles{flex:1.6 1 420px;min-width:0}
+.pod .crown,:root[data-theme="light"] .pod .crown,:root[data-theme="dark"] .pod .crown{color:#E0A21B}
+.hc-side .seg{background:var(--adia-surface-sunken)}
+.bdg{border-radius:14px;border:1px solid var(--adia-border);background:var(--adia-surface)}
+.bdg.on{background:var(--adia-primary-light);border-color:transparent}
+.bdg.on .bi{color:var(--adia-primary)}
+.bdg.on small{color:var(--adia-primary-text)}
+/* Reytinq qrafiki */
+.chartc .bars{gap:12px}
+.bar-w{background:var(--adia-surface-sunken);border-radius:12px 12px 6px 6px}
+.bar-w i{background:color-mix(in srgb,var(--adia-primary-fill) 42%,var(--adia-surface));border-radius:12px 12px 6px 6px}
+.bcol.me .bar-w i,.bcol:hover .bar-w i{background:var(--adia-gradient-brand)}
+:root[data-theme="dark"] .bar-w i{background:color-mix(in srgb,var(--adia-primary) 55%,var(--adia-surface))}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bar-w i{background:color-mix(in srgb,var(--adia-primary) 55%,var(--adia-surface))}}
+:root[data-theme="dark"] .bcol.me .bar-w i,:root[data-theme="dark"] .bcol:hover .bar-w i{background:var(--adia-gradient-brand)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bcol.me .bar-w i,:root:not([data-theme="light"]) .bcol:hover .bar-w i{background:var(--adia-gradient-brand)}}
+.bv{font-family:var(--adia-font-display);font-weight:700;color:var(--adia-text)}
+.bl{color:var(--adia-secondary);font-size:12px}
+/* Podium: medal rəngləri semantikdir (qızıl / gümüş / bürünc), düz rəng */
+.pstep{box-shadow:inset 0 -6px 0 rgb(0 0 0 / 8%)}
+.pstep.s1{background:#F2B33D}.pstep.s2{background:#C3CAD6}.pstep.s3{background:#E58E52}
+.pod .pn{font-weight:700}.pod .pp{color:var(--adia-secondary)}
+.avs .av{box-shadow:0 0 0 2px var(--adia-surface)}
+
+/* ---------- 9. Siyahı sətirləri (qruplar, çatlar, bildirişlər) ---------- */
+.gr{background:var(--adia-surface);border:1px solid var(--adia-border);border-radius:var(--adia-radius-card);padding:14px 16px}
+.gr:hover{transform:translateY(-1px);box-shadow:var(--adia-shadow-menu);border-color:var(--adia-border-strong)}
+.li{border-radius:12px;padding:10px 8px}
+.li:hover{background:var(--adia-primary-wash)}
+.li.un .nm{font-weight:800}
+.nrow{background:var(--adia-surface);border:1px solid var(--adia-border);border-radius:12px;padding:12px 14px}
+.nrow.un{background:var(--adia-primary-wash);box-shadow:inset 3px 0 0 var(--adia-primary-fill)}
+.nrow small{color:var(--adia-secondary)}
+.clcard{border-radius:var(--adia-radius-card);border:1px solid var(--adia-border);box-shadow:var(--adia-shadow-card)}
+.clcard:hover{border-color:var(--adia-primary);box-shadow:var(--adia-shadow-menu)}
+.stat>div{background:var(--adia-surface-sunken);border-radius:12px}
+.stat b{font-family:var(--adia-font-display)}
+
+/* ---------- 10. Çat ---------- */
+#msgs{background:var(--adia-surface-sunken);border:1px solid var(--adia-border);border-radius:var(--adia-radius-card);padding:12px;gap:6px}
+.b{background:var(--adia-bubble-in-bg);color:var(--adia-bubble-in-text);border:1px solid var(--adia-border);border-radius:16px 16px 16px 6px;padding:8px 12px;box-shadow:0 1px 2px rgb(30 20 60 / 5%)}
+.b.me{background:var(--adia-bubble-out-bg);color:var(--adia-bubble-out-text);border-color:transparent;border-radius:16px 16px 6px 16px;box-shadow:0 6px 14px -10px rgb(104 70 201 / 80%)}
+.b.me small,.b.me time{color:rgb(255 255 255 / 82%)}
+.b.me a{color:#fff;text-decoration:underline}
+.b.me .rq{background:rgb(255 255 255 / 16%);border-left-color:#fff}
+.b.me .rq b{color:#fff}
+.b small{color:var(--adia-primary-text);font-weight:600}
+.b time{color:var(--adia-secondary)}
+.b.sys{background:none;border:0;box-shadow:none;color:var(--adia-secondary)}
+.b.hl{box-shadow:0 0 0 2px var(--adia-primary)}
+.dsep{color:var(--adia-secondary)}
+.rq{background:var(--adia-primary-wash);border-left-color:var(--adia-primary-fill)}
+.rxc{background:var(--adia-surface);border:1px solid var(--adia-border);color:var(--adia-text);border-radius:99px}
+.rxc.me{background:var(--adia-primary-light);border-color:var(--adia-primary);color:var(--adia-primary-text)}
+#tx{border-radius:var(--adia-radius-pill);padding-left:18px;min-height:44px}
+.vote{border-color:var(--adia-primary);background:var(--adia-surface)}
+.mention{background:var(--adia-primary-light);border-radius:6px;padding:0 3px}
+.mention.me{background:var(--adia-primary-fill);color:#fff}
+.tobot{background:var(--adia-surface);color:var(--adia-primary-text);border:1px solid var(--adia-border);box-shadow:var(--adia-shadow-menu)}
+.mmbox,.palbox{background:var(--adia-surface);border:1px solid var(--adia-border);border-radius:var(--adia-radius-dialog);box-shadow:var(--adia-shadow-dialog)}
+#apx{background:var(--adia-surface);border-color:var(--adia-border)}
+.rpb{background:var(--adia-primary-wash);border-left:3px solid var(--adia-primary-fill);border-radius:10px}
+
+/* ---------- 11. Örtüklər: dialoq, toast, bildiriş, palet ---------- */
+.ov{background:var(--adia-overlay);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.ov .card{border-radius:var(--adia-radius-dialog);box-shadow:var(--adia-shadow-dialog);padding:22px;border:1px solid var(--adia-border)}
+#toast{background:var(--adia-text);color:var(--adia-background);border-radius:var(--adia-radius-pill);padding:12px 20px;font-weight:600;box-shadow:var(--adia-shadow-menu)}
+#toast.bad{background:#B4233A;color:#fff}
+.nt{background:var(--adia-surface);border:1px solid var(--adia-border);border-left:4px solid var(--adia-primary-fill);border-radius:14px;box-shadow:var(--adia-shadow-menu)}
+.nt small{color:var(--adia-secondary)}
+#pal{background:var(--adia-overlay)}
+.palin input{border:0;box-shadow:none;background:transparent}
+.palrow{border-radius:10px}
+.palrow.on{background:var(--adia-primary-light);color:var(--adia-primary-text)}
+.palsec{color:var(--adia-secondary)}
+#offl{background:var(--adia-warning-bg);color:var(--adia-warning);border-bottom:1px solid var(--adia-border)}
+.credits{background:var(--adia-surface);border:1px solid var(--adia-border);box-shadow:var(--adia-shadow-card);border-radius:14px}
+#lb{background:rgb(10 10 25 / 92%)}
+
+/* ---------- 12. Telefon: başlıq, tabbar, drawer, sheet ---------- */
+.hd{background:color-mix(in srgb,var(--adia-surface) 92%,transparent);color:var(--adia-text);border-bottom:1px solid var(--adia-border);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);min-height:56px}
+.hd>b{font-size:17px;font-weight:700}
+.hd button{background:var(--adia-primary-light);color:var(--adia-primary-text);box-shadow:none;min-height:36px;padding:6px 12px}
+.hd button:hover:not(:disabled){background:var(--adia-primary-wash);transform:none;box-shadow:none}
+#sheet{background:var(--adia-background)}
+#tabbar{background:color-mix(in srgb,var(--adia-surface) 94%,transparent);border-top:1px solid var(--adia-border);box-shadow:0 -8px 24px -18px rgb(40 25 90 / 35%);
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));min-height:64px}
+.tb{min-height:52px;min-width:44px;gap:3px;color:var(--adia-secondary);background:transparent;border-radius:14px;font-size:11.5px;font-weight:600}
+.tb .ti{display:grid;place-items:center;width:52px;height:30px;border-radius:99px;transition:background .2s,color .2s}
+.tb.on{background:transparent;color:var(--adia-primary-text)}
+.tb.on .ti{background:var(--adia-primary-light);color:var(--adia-primary);transform:none}
+.tb .badge{position:absolute;top:-3px;right:6px}
+.tb:hover:not(:disabled){box-shadow:none;transform:none}
+#scrim{background:var(--adia-overlay);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#drawer{background:var(--adia-surface);border-radius:0 22px 22px 0;box-shadow:var(--adia-shadow-dialog);padding-left:16px;padding-right:16px}
+#drawer .gr{border:0;box-shadow:none;margin:2px 0;min-height:48px;padding:12px}
+#drawer .gr:hover{background:var(--adia-primary-wash);transform:none}
+.dh{border-bottom:1px solid var(--adia-border);padding-bottom:16px;margin-bottom:10px}
+
+/* ---------- 13. Giriş ekranı ---------- */
+.stage{background:transparent}
+.login{background:var(--adia-surface);border:1px solid var(--adia-border);border-radius:22px;box-shadow:var(--adia-shadow-dialog);padding:30px 28px;backdrop-filter:none}
+.login h2{font-size:24px;margin:10px 0 4px}
+.big-logo{width:72px;height:72px;border-radius:22px;background:var(--adia-gradient-brand);color:#fff;box-shadow:0 14px 30px -14px rgb(104 70 201 / 90%);margin-bottom:6px}
+.big-logo .ic{width:38px;height:38px}
+.login input{min-height:46px}
+.login button{min-height:48px;font-size:15.5px;margin-top:10px}
+.login .mu{font-size:14px}
+.langfix .lang{background:var(--adia-surface);box-shadow:var(--adia-shadow-card)}
+.langfix .lang button{color:var(--adia-secondary);background:transparent}
+
+/* ---------- 14. Alətlər (taymer, seçici) ---------- */
+.tmbg{stroke:var(--adia-primary-light)}
+.tmfg{stroke:var(--adia-primary-fill)}
+.presets button{background:var(--adia-surface-sunken);color:var(--adia-text);border:1px solid var(--adia-border);box-shadow:none}
+.presets button.on{background:var(--adia-primary-fill);color:#fff;border-color:transparent}
+.tpill{background:var(--adia-primary-fill);color:#fff}
+.pkshow{border-radius:var(--adia-radius-card);background:var(--adia-primary-wash);border:1px dashed var(--adia-border-strong)}
+
+/* ---------- 15. Ölçülər: telefon və planşet ---------- */
+@media (max-width:800px){
+  .card{margin:10px 12px;padding:16px}
+  #main .hcard{background:var(--adia-gradient-brand);border:0;color:#fff;box-shadow:0 18px 34px -20px rgb(104 70 201 / 85%)}
+  #main .hcard .hello,#main .hcard .hello b,#main .hcard .nxt{color:#fff}
+  #main .hcard .chip{background:rgb(255 255 255 / 18%);color:#fff}
+  #main .hcard .bar{background:rgb(255 255 255 / 25%)}
+  #main .hcard .bar i{background:#fff}
+  #main .hcard .av.huge{box-shadow:0 0 0 3px rgb(255 255 255 / 45%)}
+  #main .hcard .seg{background:rgb(255 255 255 / 14%);border-color:transparent}
+  #main .hcard .seg button{color:#fff}
+  #main .hcard .seg button.on{background:#fff;color:#5A3BB5}
+  .tile{padding:12px;column-gap:10px}
+  .tile .tic{width:36px;height:36px}
+  .tile b{font-size:19px}
+  .hello{font-size:19px}
+  .nav button{min-height:48px}
+  input,select{font-size:16px}
+}
+@media (max-width:380px){.tile{grid-template-columns:1fr;text-align:center;justify-items:center}.tile .tic{grid-row:auto;margin-bottom:4px}}
+@media (min-width:1400px){.hcard{padding:26px}}
+@media (prefers-reduced-motion:reduce){button,.gr,.tb .ti{transition:none}button:hover:not(:disabled),.gr:hover{transform:none}}

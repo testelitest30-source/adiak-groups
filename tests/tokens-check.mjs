@@ -52,13 +52,15 @@ async function readVars(scheme, theme) {
   if (!theme && scheme === "light") {
     fonts = await page.evaluate(async () => {
       const az = "ƏəĞğIıİiÖöŞşÜüÇç";
-      await Promise.all(['400 16px "Inter"', '700 16px "Inter"', '700 16px "Sora"'].map((f) => document.fonts.load(f, az)));
-      const used = [...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family + " " + f.unicodeRange.slice(0, 12));
-      // Sora-da Ə/ə varmı? Sora → monospace fallback ilə ölçü fərqi
-      const w = (font, t) => { const c = document.createElement("canvas").getContext("2d"); c.font = font; return c.measureText(t).width; };
-      const soraSchwa = w('700 40px "Sora", monospace', "Əə") !== w("700 40px monospace", "Əə");
-      const interSchwa = w('400 40px "Inter", monospace', "Əə") !== w("400 40px monospace", "Əə");
-      return { used, soraSchwa, interSchwa };
+      const fams = ["Plus Jakarta Sans", "Inter", "Schibsted Grotesk", "JetBrains Mono"];
+      await Promise.all(fams.map((f) => document.fonts.load(`700 16px "${f}"`, az)));
+      const used = [...new Set([...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family))];
+      // Hər hərf ayrıca: şriftlə ölçü monospace fallback-dən fərqlidirsə qlif şriftin özündədir
+      const c = document.createElement("canvas").getContext("2d");
+      const w = (font, t) => { c.font = font; return c.measureText(t).width; };
+      const missing = {};
+      for (const f of fams) { const m = [...az].filter((ch) => w(`700 40px "${f}", monospace`, ch) === w("700 40px monospace", ch) && w(`700 40px "${f}", serif`, ch) === w("700 40px serif", ch)); if (m.length) missing[f] = m.join(""); }
+      return { used, missing };
     });
   }
   await ctx.close();
@@ -86,10 +88,8 @@ for (const m of ["light", "dark"]) {
   }
 }
 const f = modes.autoLight.fonts;
-if (!f.interSchwa) fails.push("Inter does not render Ə/ə");
-if (!f.soraSchwa) notes.push("WARNING Sora has no Ə/ə glyph — headings fall back to Inter for that letter (owner decision pending)");
-notes.push("fonts loaded: " + f.used.join(" | "));
-
+for (const [fam, m] of Object.entries(f.missing)) fails.push(`${fam} is missing Azerbaijani glyphs: ${m}`);
+notes.push("fonts loaded: " + f.used.join(", "));
 await browser.close(); srv.close();
 notes.forEach((n) => console.log("  " + n));
 fails.forEach((n) => console.log("✘ " + n));
