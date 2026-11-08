@@ -1,0 +1,21 @@
+-- Class C (service-only) functions: callable by service_role/postgres WITHOUT auth.uid(); denied for anon/authenticated.
+select test.as_anon();
+select test.throws('select public.push_claim(10)', 'permission denied', 'anon cannot call push_claim');
+select test.throws('select public.push_sweep()', 'permission denied', 'anon cannot call push_sweep');
+select test.as(test.id('s1'));
+select test.throws('select public.push_claim(10)', 'permission denied', 'student cannot call push_claim');
+select test.throws('select public.push_mark(1, ''ok'')', 'permission denied', 'student cannot call push_mark');
+select test.throws('select public.push_purge()', 'permission denied', 'student cannot call push_purge');
+select test.as(test.id('admin'));
+select test.throws('select public.push_claim(10)', 'permission denied', 'even an admin user cannot call push_claim');
+select test.throws('select public._notify(array[test.id(''s2'')], ''x.y'', ''{}'', ''{}'')', 'permission denied', 'clients cannot call _notify');
+select test.as_service();
+select test.lives('select public.push_sweep()', 'service_role runs push_sweep with no auth.uid()');
+select test.lives('select * from public.push_claim(10)', 'service_role runs push_claim');
+select test.lives('select public.push_purge()', 'service_role runs push_purge');
+select test.as_db();
+select test.lives('select public.push_sweep()', 'postgres (pg_cron) runs push_sweep');
+select test.ok(not has_function_privilege('authenticated', 'public.push_claim(int)', 'EXECUTE'), 'grant: authenticated has no EXECUTE on push_claim');
+select test.ok(not has_function_privilege('anon', 'public.push_mark(bigint,text,int,text,text)', 'EXECUTE'), 'grant: anon has no EXECUTE on push_mark');
+select test.ok(has_function_privilege('service_role', 'public.push_mark(bigint,text,int,text,text)', 'EXECUTE'), 'grant: service_role has EXECUTE on push_mark');
+select test.ok((select not prosecdef from pg_proc where proname = 'push_claim'), 'push_claim is SECURITY INVOKER (no escalation)');
