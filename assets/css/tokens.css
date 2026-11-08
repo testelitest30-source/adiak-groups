@@ -1,0 +1,196 @@
+/* =====================================================================
+   tokens.css  -  ADIAK Design System 1.0 — Purple Edition (dizayn tokenları)
+   Mənbə: təsdiqlənmiş purple referans lövhəsi + dizayn paketinin tokens.css faylı,
+   sahibin qərarları ilə düzəldilib (docs/design/purple-edition-stage0.md).
+
+   STAGE 0: bu fayl hələ heç bir səhifəyə QOŞULMAYIB. Stage 1-də index.html və
+   admin/index.html-də style.css / admin.css-dən ƏVVƏL qoşulacaq.
+
+   Mövzu qaydası (extras.js applyTheme ilə eyni):
+     <html data-theme="light"> → açıq, <html data-theme="dark"> → tünd,
+     atribut yoxdur ("auto") → sistemin seçimi (prefers-color-scheme).
+   Tünd dəyərlər İKİ yerdə təkrarlanır ([data-theme="dark"] və auto-dark media).
+   Onları həmişə birlikdə dəyiş — tests/tokens-check.mjs fərqi tapır.
+   ===================================================================== */
+
+/* ---------- Şriftlər (yerli, OFL — assets/fonts/OFL-*.txt) ----------
+   Sora: başlıqlar. DİQQƏT: Sora-da "Ə/ə" (U+018F/U+0259) qlifi YOXDUR;
+   brauzer həmin hərfi növbəti şriftdən (Inter) götürür. Qərar gözləyir. */
+@font-face{font-family:"Sora";font-style:normal;font-display:swap;font-weight:100 800;
+  src:url(../fonts/sora-latin-wght-normal.woff2) format("woff2-variations"),url(../fonts/sora-latin-wght-normal.woff2) format("woff2");
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Sora";font-style:normal;font-display:swap;font-weight:100 800;
+  src:url(../fonts/sora-latin-ext-wght-normal.woff2) format("woff2-variations"),url(../fonts/sora-latin-ext-wght-normal.woff2) format("woff2");
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Inter";font-style:normal;font-display:swap;font-weight:100 900;
+  src:url(../fonts/inter-latin-wght-normal.woff2) format("woff2-variations"),url(../fonts/inter-latin-wght-normal.woff2) format("woff2");
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Inter";font-style:normal;font-display:swap;font-weight:100 900;
+  src:url(../fonts/inter-latin-ext-wght-normal.woff2) format("woff2-variations"),url(../fonts/inter-latin-ext-wght-normal.woff2) format("woff2");
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+
+/* ---------- Açıq mövzu (və hamı üçün ortaq ölçülər) ---------- */
+:root{
+  color-scheme:light;
+
+  /* Bənövşəyi: brand = #7959D6 (referans swatch).
+     primary       — ikon, böyük mətn, qrafik, bəzək
+     primary-text  — kiçik vurğu mətni (link, aktiv tab, chip) — AA 4.5+
+     primary-fill  — düymə / aktiv nav fonu; üstündə HƏMİŞƏ on-primary */
+  --adia-primary:#7959D6;
+  --adia-primary-text:#6846C9;       /* 5.70 on bg, 5.35 on primary-light */
+  --adia-primary-strong:#6846C9;
+  --adia-primary-fill:#7959D6;       /* white 4.98 */
+  --adia-primary-fill-hover:#6846C9; /* white 6.35 */
+  --adia-primary-fill-pressed:#5A3BB5;
+  --adia-on-primary:#FFFFFF;
+  --adia-primary-light:#EDE9FE;      /* seçilmiş fon, chip fonu (mətn: primary-text) */
+  --adia-primary-wash:#F6F3FE;       /* hover fonu */
+
+  /* Mətn və səthlər */
+  --adia-text:#1F2937;               /* 13.17 on bg */
+  --adia-secondary:#5B6478;          /* #64748B lavanda fonda 4.27 idi → 5.33 */
+  --adia-background:#F4F1FD;         /* lavanda kətan (referansdan) */
+  --adia-surface:#FFFFFF;
+  --adia-surface-raised:#FFFFFF;
+  --adia-surface-sunken:#F8F6FE;     /* input fonu, cədvəl hover */
+  --adia-border:#E8E5F1;             /* dekorativ ayırıcı (kart kənarı) */
+  --adia-border-strong:#D8D2E5;
+  --adia-border-input:#857C9F;       /* input/checkbox kənarı: 3.90 ≥ 3:1 */
+
+  /* Status (rəng + mətn/ikon birlikdə; təkbaşına rəng yox) */
+  --adia-success:#0F7A50;   --adia-success-bg:#E6F4EE;   /* 5.36 / 4.73 */
+  --adia-warning:#94570A;   --adia-warning-bg:#FDF3E2;   /* 5.26 on bg */
+  --adia-danger:#B4233A;    --adia-danger-bg:#FCE9EC;    /* 5.55 on bg */
+  --adia-info:#3A5EA8;      --adia-info-bg:#E8EEFA;      /* 5.39 on bg */
+  --adia-on-status:#FFFFFF;
+
+  /* Qradiyentlər — yalnız seçilmiş brend səthləri və bəzək üçün.
+     brand: üstündə mətn ola bilər (ən açıq nöqtə #7959D6 → ağ 4.98).
+     decor: mətnsiz bəzək (açıq ucu #A98FF8-də ağ mətn 2.63 — QADAĞAN). */
+  --adia-gradient-brand:linear-gradient(105deg,#7959D6 0%,#6846C9 100%);
+  --adia-gradient-decor:linear-gradient(135deg,#7959D6 0%,#A98FF8 100%);
+  --adia-gradient-canvas:linear-gradient(160deg,#F4F1FD 0%,#EEE8FD 100%);
+
+  /* Fokus, dərinlik, örtük */
+  --adia-focus:#6846C9;
+  --adia-focus-ring:0 0 0 3px rgb(121 89 214 / 40%);
+  --adia-overlay:rgb(24 18 39 / 48%);
+  --adia-shadow-card:0 4px 14px rgb(52 35 109 / 6%);
+  --adia-shadow-menu:0 12px 28px rgb(44 31 76 / 14%);
+  --adia-shadow-dialog:0 24px 64px rgb(25 18 43 / 22%);
+
+  /* Komponent tokenları */
+  --adia-nav-active-bg:var(--adia-primary-fill);
+  --adia-nav-active-text:var(--adia-on-primary);
+  --adia-nav-hover-bg:var(--adia-primary-wash);
+  --adia-chip-bg:var(--adia-primary-light);
+  --adia-chip-text:var(--adia-primary-text);
+  --adia-bubble-in-bg:var(--adia-surface);
+  --adia-bubble-in-text:var(--adia-text);
+  --adia-bubble-out-bg:var(--adia-primary-fill);
+  --adia-bubble-out-text:var(--adia-on-primary);
+  --adia-chart-1:var(--adia-primary);
+  --adia-chart-fill:rgb(121 89 214 / 16%);
+  --adia-chart-grid:var(--adia-border);
+  --adia-disabled-opacity:.45;
+
+  /* Forma */
+  --adia-radius-control:10px;
+  --adia-radius-card:14px;
+  --adia-radius-dialog:16px;
+  --adia-radius-pill:999px;
+  --adia-space-1:4px; --adia-space-2:8px; --adia-space-3:12px; --adia-space-4:16px;
+  --adia-space-6:24px; --adia-space-8:32px; --adia-space-12:48px;
+  --adia-control-height:40px;
+  --adia-control-height-touch:44px;
+  --adia-icon-size:20px;
+  --adia-icon-stroke:1.8px;
+
+  /* Tipoqrafiya */
+  --adia-font-sans:"Inter",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+  --adia-font-display:"Sora","Inter",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+  --adia-fs-h1:32px;   --adia-lh-h1:38px;   --adia-fw-h1:700;
+  --adia-fs-h2:24px;   --adia-lh-h2:30px;   --adia-fw-h2:600;
+  --adia-fs-h3:20px;   --adia-lh-h3:26px;   --adia-fw-h3:600;
+  --adia-fs-body:16px; --adia-lh-body:24px;
+  --adia-fs-small:14px;--adia-lh-small:20px;
+  --adia-fs-caption:12px;--adia-lh-caption:16px;
+}
+
+/* ---------- Tünd mövzu: navy-indigo (referansdan) ----------
+   Bu blok aşağıdakı auto-dark media blokunda EYNİLƏ təkrarlanır. */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --adia-primary:#B39CF5;
+  --adia-primary-text:#B39CF5;       /* 6.02 on surface */
+  --adia-primary-strong:#C9B8FA;
+  --adia-primary-fill:#7959D6;       /* fon tünddə də eyni: white 4.98 */
+  --adia-primary-fill-hover:#6846C9;
+  --adia-primary-fill-pressed:#5A3BB5;
+  --adia-on-primary:#FFFFFF;
+  --adia-primary-light:#3A3566;
+  --adia-primary-wash:#2C2E4D;
+  --adia-text:#F3F2FA;               /* 14.50 on bg */
+  --adia-secondary:#B4B7CC;          /* 7.09 on surface */
+  --adia-background:#1C1F38;
+  --adia-surface:#262A42;
+  --adia-surface-raised:#2F334C;
+  --adia-surface-sunken:#22253D;
+  --adia-border:#363B57;
+  --adia-border-strong:#454A68;
+  --adia-border-input:#868BAB;       /* 4.22 on surface */
+  --adia-success:#4FCB93;   --adia-success-bg:#1E3A3A;
+  --adia-warning:#F0B95F;   --adia-warning-bg:#3D3424;
+  --adia-danger:#FF8797;    --adia-danger-bg:#432A3A;
+  --adia-info:#90AEF5;      --adia-info-bg:#27325A;
+  --adia-on-status:#1C1F38;
+  --adia-gradient-brand:linear-gradient(105deg,#7959D6 0%,#6846C9 100%);
+  --adia-gradient-decor:linear-gradient(135deg,#4932A7 0%,#7959D6 100%);
+  --adia-gradient-canvas:linear-gradient(160deg,#1C1F38 0%,#211F42 100%);
+  --adia-focus:#C9B8FA;
+  --adia-focus-ring:0 0 0 3px rgb(179 156 245 / 45%);
+  --adia-overlay:rgb(8 9 20 / 64%);
+  --adia-shadow-card:0 4px 14px rgb(0 0 0 / 18%);
+  --adia-shadow-menu:0 12px 28px rgb(0 0 0 / 34%);
+  --adia-shadow-dialog:0 24px 64px rgb(0 0 0 / 50%);
+  --adia-chart-fill:rgb(179 156 245 / 18%);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --adia-primary:#B39CF5;
+    --adia-primary-text:#B39CF5;
+    --adia-primary-strong:#C9B8FA;
+    --adia-primary-fill:#7959D6;
+    --adia-primary-fill-hover:#6846C9;
+    --adia-primary-fill-pressed:#5A3BB5;
+    --adia-on-primary:#FFFFFF;
+    --adia-primary-light:#3A3566;
+    --adia-primary-wash:#2C2E4D;
+    --adia-text:#F3F2FA;
+    --adia-secondary:#B4B7CC;
+    --adia-background:#1C1F38;
+    --adia-surface:#262A42;
+    --adia-surface-raised:#2F334C;
+    --adia-surface-sunken:#22253D;
+    --adia-border:#363B57;
+    --adia-border-strong:#454A68;
+    --adia-border-input:#868BAB;
+    --adia-success:#4FCB93;   --adia-success-bg:#1E3A3A;
+    --adia-warning:#F0B95F;   --adia-warning-bg:#3D3424;
+    --adia-danger:#FF8797;    --adia-danger-bg:#432A3A;
+    --adia-info:#90AEF5;      --adia-info-bg:#27325A;
+    --adia-on-status:#1C1F38;
+    --adia-gradient-brand:linear-gradient(105deg,#7959D6 0%,#6846C9 100%);
+    --adia-gradient-decor:linear-gradient(135deg,#4932A7 0%,#7959D6 100%);
+    --adia-gradient-canvas:linear-gradient(160deg,#1C1F38 0%,#211F42 100%);
+    --adia-focus:#C9B8FA;
+    --adia-focus-ring:0 0 0 3px rgb(179 156 245 / 45%);
+    --adia-overlay:rgb(8 9 20 / 64%);
+    --adia-shadow-card:0 4px 14px rgb(0 0 0 / 18%);
+    --adia-shadow-menu:0 12px 28px rgb(0 0 0 / 34%);
+    --adia-shadow-dialog:0 24px 64px rgb(0 0 0 / 50%);
+    --adia-chart-fill:rgb(179 156 245 / 18%);
+  }
+}

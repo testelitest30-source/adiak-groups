@@ -8,7 +8,9 @@
   },
   "scripts": {
     "build": "node scripts/build-www.mjs",
-    "cap:sync": "cap sync android"
+    "cap:sync": "cap sync android",
+    "test:ui": "node tests/smoke.mjs",
+    "test:tokens": "node tests/tokens-check.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.6.0",
