@@ -10,7 +10,7 @@
 
 ## Script loading order (do not change)
 - App: `vendor/supabase.js → config.js → i18n.js → icons.js → core.js → pages.js → extras.js → main.js → native.js`
-- Admin: `vendor/supabase.js → config.js → i18n.js → icons.js → i18n-admin.js → admin.js`
+- Admin: `vendor/supabase.js → config.js → i18n.js → icons.js → i18n-admin.js → admin.js → ../assets/js/app/native.js`
 - These are plain global scripts; the check script at the bottom of each page depends on these globals.
 
 ## GitHub Pages
@@ -41,6 +41,9 @@
 - `@capacitor/app` **8.1.2** (exact) handles the Android Back button. `assets/js/app/native.js` is a no-op on the web; in the app it loads
   `assets/vendor/capacitor/{capacitor,app}.js` (copied from `node_modules` by `build-www.mjs`, APK only, never committed) and maps Back to
   `nativeBack()`: close overlay → in-app back → reset to home → `App.exitApp()` on the home root.
+- Admin page also loads `native.js` (vendor paths resolve from its own URL). The listener calls `adminBack()` when defined (`admin.js`):
+  close modal → previous admin section (`admStack`, filters/search kept in globals, scroll restored) → at admin root `history.back()` to the student page.
+  Admin sections never touch browser history.
 - In-app navigation history (`pages.js`/`main.js`): `navStack[d]` = page at history depth `d` (`history.state.n`). Navigating to a page already
   in `navStack` truncates back to it (no duplicates); backward/in-place navigation must call `navSync()` and never push.
 - CI: `.github/workflows/android.yml` builds the debug APK artifact `adiak-debug-apk` (PRs to any branch, pushes to the Phase 2 branch, manual), with no secrets.

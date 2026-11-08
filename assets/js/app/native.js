@@ -36,7 +36,9 @@ var NDBG=null;
   addEventListener("popstate",function(e){setTimeout(function(){NDBG("popstate n="+(e.state&&e.state.n)+" -> stack="+ns()+" key="+nk())},0)});
   // ---- /diaqnostika ----
 
-  function load(src,done){var s=document.createElement("script");s.src=src;s.onload=function(){NDBG("loaded "+src.split("/").pop());done()};s.onerror=function(){NDBG("LOAD ERROR "+src)};document.head.appendChild(s)}
+  // Kök ünvan native.js-in öz yerindən hesablanır (assets/js/app/ → ../../../), ki həm /, həm də /admin/ səhifəsində işləsin
+  var ROOT="";try{ROOT=new URL("../../../",document.currentScript.src).href}catch(e){}
+  function load(src,done){var s=document.createElement("script");s.src=ROOT+src;s.onload=function(){NDBG("loaded "+src.split("/").pop());done()};s.onerror=function(){NDBG("LOAD ERROR "+src)};document.head.appendChild(s)}
   load("assets/vendor/capacitor/build.js",function(){
     var b=window.ADIAK_BUILD||{};NDBG("build sha="+(b.sha||"?")+" run="+(b.run||"?"));
     load("assets/vendor/capacitor/capacitor.js",function(){
@@ -45,8 +47,10 @@ var NDBG=null;
         if(!App){NDBG("capacitorApp.App MISSING");return}
         App.addListener("backButton",function(ev){
           NDBG("BACK canGoBack="+(ev&&ev.canGoBack)+" stack="+ns()+" key="+nk());
-          var r;try{r=nativeBack()}catch(e){NDBG("nativeBack ERROR "+e.message);return}
-          if(!r){NDBG("-> exitApp");App.exitApp()}
+          // Admin səhifəsi (admin.js adminBack təyin edir) öz bölmə yığınını istifadə edir; student səhifəsi nativeBack()
+          var admin=typeof adminBack==="function";
+          var r;try{r=admin?adminBack():nativeBack()}catch(e){NDBG((admin?"adminBack":"nativeBack")+" ERROR "+e.message);return}
+          if(!r){if(admin&&ev&&ev.canGoBack){NDBG("-> admin root: back to student");history.back()}else{NDBG("-> exitApp");App.exitApp()}}
         }).then(function(){NDBG("backButton listener registered")},function(e){NDBG("listener ERROR "+(e&&e.message))});
       });
     });
