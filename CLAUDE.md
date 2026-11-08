@@ -6,7 +6,7 @@
 - Entry points: `index.html` (student app), `admin/index.html` (admin panel). App start: `boot()` in `assets/js/app/main.js`.
 - `assets/js/shared/` (config, i18n, icons), `assets/js/app/` (core, pages, extras, main), `assets/js/admin/`, `assets/css/`, `assets/icons/`.
 - `assets/vendor/supabase.js` = `@supabase/supabase-js` **2.45.4** UMD, vendored. No CDN dependencies. Do not upgrade it unless asked.
-- UI uses inline SVG icons (`icons.js`) and no gradients. Do not redesign.
+- UI uses inline SVG icons (`icons.js`). Visual direction: **ADIAK Design System 1.0 — Purple Edition** (see section below). No other redesign.
 
 ## Script loading order (do not change)
 - App: `vendor/supabase.js → config.js → i18n.js → icons.js → core.js → pages.js → extras.js → main.js → native.js`
@@ -55,6 +55,21 @@
 - Vercel: `vercel.json` sets `outputDirectory` to `www` (Vercel runs `npm run build`).
 - `android/` is committed; build output, `local.properties`, `assets/public` and generated plugin folders are ignored by `android/.gitignore`.
 
+## Purple Edition design system (approved; staged rollout, one PR per stage)
+- Plan, decisions and inventories: `docs/design/purple-edition-stage0.md`. Stages: 0 prep (done: tokens, fonts, tests, docs) → 1 foundation → 2 nav/overlays → 3 student screens → 4 chat/admin → 5 QA. Each stage needs explicit approval.
+- Tokens: `assets/css/tokens.css` (`--adia-*`). Light canvas `#F4F1FD`, dark navy-indigo `#1C1F38`, brand `#7959D6`.
+  Use `--adia-primary-fill` + `--adia-on-primary` for filled controls, `--adia-primary-text` for small accent text. Never put white text on `--adia-primary` in dark mode.
+  Dark values exist twice (`[data-theme="dark"]` and the auto-dark media block): change both; `tests/tokens-check.mjs` enforces parity and WCAG AA.
+- Gradients: only `--adia-gradient-brand` behind text; `--adia-gradient-decor` for text-free decoration; nowhere else.
+- Fonts: local OFL WOFF2 in `assets/fonts/` (Sora headings, Inter body). No CDN. Sora lacks `Ə/ə` (falls back to Inter); owner decision pending.
+- Keep real i18n labels; never copy mockup wording or add mockup-only features (fake stats/charts/feeds, top search, FAB).
+- Logo: keep current branding until the new logo SVG is approved; integration points are listed in the design doc. Never redraw a logo.
+- Old CSS variables (`--bg --card --tx --mu --ac --ac2 --bd --me ...`) become aliases of tokens in Stage 1; keep them working.
+
+## Tests (dev-only, not deployed)
+- `node tests/smoke.mjs [label]` and `node tests/tokens-check.mjs` (pre-installed Playwright; screenshots in gitignored `tests/out/`).
+- Supabase is fully mocked; tests must never authenticate against or write to production. Run both before every design PR.
+
 ## Token efficiency
 - Read only the files you need; use grep and line ranges. Do not re-audit the repo or dump whole files.
 - Keep reports short: changed files, commit, tests, results, open issues.
@@ -71,5 +86,5 @@
 - **Never commit or push to `main` directly.** Use feature branches + PRs; never merge without the owner's approval.
 - **Never start a phase that has not been explicitly approved.**
 - **Never expose or commit secrets**: Firebase config/service accounts, `google-services.json`, keystores, passwords, service_role keys, `push_config` values.
-- No UI redesign, no unrelated dependency upgrades, no unnecessary architecture changes.
+- No UI changes outside the approved Purple Edition stage, no unrelated dependency upgrades, no unnecessary architecture changes.
 - Verify changes (e.g. Playwright against `python3 -m http.server`) and report results honestly, including what could not be tested.
