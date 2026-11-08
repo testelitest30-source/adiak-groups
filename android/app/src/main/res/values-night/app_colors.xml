@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Same as the CSS bg variable in assets/css/tokens.css --adia-background (dark) -->
+    <!-- Same as the CSS bg variable in assets/css/tokens.css (adia-background token) (dark) -->
     <color name="app_bg">#1C1F38</color>
 </resources>
