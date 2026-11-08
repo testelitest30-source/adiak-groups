@@ -94,11 +94,11 @@ let admStack=[],admBacking=false;
 const switchTab=k=>{if(!admBacking&&k!==tab){const i=admStack.findIndex(s=>s.k===k);if(i>=0)admStack.length=i;else admStack.push({k:tab,y:scrollY})}tab=k;if(k==="pass"||k==="day")lastSig="";draw();if(k==="pass"||k==="day")load()};
 // Android Back: açıq modal → bağlanır; əvvəlki bölmə → ora qayıdır (axtarış/filtrlər qlobal dəyişənlərdə qalır, scroll bərpa olunur);
 // əvvəlki bölmə yoxdursa false (native.js onda student tərəfinə qayıdır)
-function adminBack(){const log=window.NDBG||function(){};
- if($("#modal").innerHTML){closeM();log("-> admin modal closed");return true}
- const s=admStack.pop();if(!s){log("-> admin root");return false}
+function adminBack(){
+ if($("#modal").innerHTML){closeM();return true}
+ const s=admStack.pop();if(!s)return false;
  admBacking=true;try{switchTab(s.k)}finally{admBacking=false}
- requestAnimationFrame(()=>scrollTo(0,s.y||0));log("-> admin tab "+s.k+" (stack="+admStack.length+")");return true}
+ requestAnimationFrame(()=>scrollTo(0,s.y||0));return true}
 // Yan menyu + seçilmiş səhifə. Düymə basılarkən gözləyir ki, klik itməsin.
 function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=true;return}if(typingNow()){pendingDraw=true;return}pendingDraw=false;
  const sy=window.scrollY,mn=$(".main"),ms=mn?mn.scrollTop:0;
