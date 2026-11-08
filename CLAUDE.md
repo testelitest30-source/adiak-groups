@@ -28,7 +28,7 @@
 
 ## Service worker (`sw.js`)
 - Network-first, same-origin only; precaches the `SHELL` list (includes `assets/vendor/supabase.js`).
-- Bump `V` (currently `adiak-v6`) whenever `SHELL` or asset paths change.
+- Bump `V` (currently `adiak-v7`) whenever `SHELL` or asset paths change.
 - Registration in `index.html` is skipped in native Capacitor (`Capacitor.isNativePlatform()`); websites register normally.
 
 ## Android / Capacitor (Phase 2 — done, verified on a Samsung Galaxy S25; PR #5 + PR #6)
@@ -56,18 +56,21 @@
 - `android/` is committed; build output, `local.properties`, `assets/public` and generated plugin folders are ignored by `android/.gitignore`.
 
 ## Purple Edition design system (approved; staged rollout, one PR per stage)
-- Plan, decisions and inventories: `docs/design/purple-edition-stage0.md`. Stages: 0 prep (done: tokens, fonts, tests, docs) → 1 foundation → 2 nav/overlays → 3 student screens → 4 chat/admin → 5 QA. Each stage needs explicit approval.
+- Plan, decisions and inventories: `docs/design/purple-edition-stage0.md`. Stages: 0 prep (PR #8) → 1+2 student app (`assets/css/purple.css`) → 3 admin "Ledger" (`assets/css/admin-ui.css`) → QA. Each stage needs explicit approval.
 - Tokens: `assets/css/tokens.css` (`--adia-*`). Light canvas `#F4F1FD`, dark navy-indigo `#1C1F38`, brand `#7959D6`.
   Use `--adia-primary-fill` + `--adia-on-primary` for filled controls, `--adia-primary-text` for small accent text. Never put white text on `--adia-primary` in dark mode.
   Dark values exist twice (`[data-theme="dark"]` and the auto-dark media block): change both; `tests/tokens-check.mjs` enforces parity and WCAG AA.
 - Gradients: only `--adia-gradient-brand` behind text; `--adia-gradient-decor` for text-free decoration; nowhere else.
-- Fonts: local OFL WOFF2 in `assets/fonts/` (Sora headings, Inter body). No CDN. Sora lacks `Ə/ə` (falls back to Inter); owner decision pending.
+- Fonts: local OFL WOFF2 in `assets/fonts/`: Plus Jakarta Sans (headings), Inter (body); admin only: Schibsted Grotesk (display) + JetBrains Mono (figures/IDs).
+  No CDN. Every font must pass the Azerbaijani glyph check in `tests/tokens-check.mjs` (Sora/Bricolage/Instrument fail on `Ə/ə`).
+- Student styling lives in `assets/css/purple.css` (loaded last, overrides `style.css`/`features.css`; old variables are aliased there). Keep markup changes presentational (classes, `ic()` icons).
 - Keep real i18n labels; never copy mockup wording or add mockup-only features (fake stats/charts/feeds, top search, FAB).
 - Logo: keep current branding until the new logo SVG is approved; integration points are listed in the design doc. Never redraw a logo.
 - Old CSS variables (`--bg --card --tx --mu --ac --ac2 --bd --me ...`) become aliases of tokens in Stage 1; keep them working.
 
 ## Tests (dev-only, not deployed)
-- `node tests/smoke.mjs [label]` and `node tests/tokens-check.mjs` (pre-installed Playwright; screenshots in gitignored `tests/out/`).
+- `node tests/smoke.mjs [label]`, `node tests/tokens-check.mjs`, and `node tests/screens.mjs <label>` (all screens × 360/390/430/768/1280/1440 × light/dark;
+  fails on horizontal overflow, page errors, small tabbar targets, hidden chat composer). Pre-installed Playwright; output in gitignored `tests/out/`.
 - Supabase is fully mocked; tests must never authenticate against or write to production. Run both before every design PR.
 
 ## Token efficiency

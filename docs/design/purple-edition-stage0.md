@@ -18,7 +18,7 @@ Later stages link and apply them, each in its own PR after owner approval.
 | 10 | Playwright harness in `tests/`, Supabase fully mocked, outside `www` | `tests/` |
 | 11 | No launcher or splash change before logo approval; theme-color and system-bar colors in Stage 1 | — |
 
-## Open issue that needs an owner decision: Sora has no `Ə` / `ə`
+## Resolved: Sora has no `Ə` / `ə`, so headings use Plus Jakarta Sans (owner decision)
 **Verified:** the Sora font (Google Fonts / Fontsource 5.3.0, every subset) has **no glyph for U+018F `Ə` or U+0259 `ə`**. Inter has every Azerbaijani letter.
 With the stack `"Sora","Inter",…`, the browser draws only `Ə/ə` in Inter inside Sora headings. For example, in "Ana səhifə" the "ə" comes from Inter. `tests/tokens-check.mjs` reports this as a warning.
 
@@ -37,7 +37,7 @@ Options:
 - **(b)** Use Inter for headings too, so there is no display font.
 - **(c)** Replace Sora with Plus Jakarta Sans or another font from the list.
 
-Stage 0 vendors Sora exactly as approved. Nothing is linked yet, so switching later costs nothing.
+**Decision:** Plus Jakarta Sans for headings, Inter for body. Sora was removed in the student-app stage. The admin uses Schibsted Grotesk and JetBrains Mono, both verified for Azerbaijani.
 
 ## Tokens (`assets/css/tokens.css`)
 - Light values are on `:root`.

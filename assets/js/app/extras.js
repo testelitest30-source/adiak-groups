@@ -262,7 +262,7 @@ function palBuild(q) {
     [muted ? ic("sound") : ic("soundOff"), muted ? tr("Sounds on") : tr("Sounds off"), () => toggleMute()],
     [ic("globe"), LANG === "az" ? "English" : "Azərbaycanca", () => setLang(LANG === "az" ? "en" : "az")]
   ];
-  if (isStaff(u) && CLS.length > 1) acts.push(["⇄", tr("Switch class"), () => leaveClass()]);
+  if (isStaff(u) && CLS.length > 1) acts.push([ic("swap"), tr("Switch class"), () => leaveClass()]);
   if (can("panel")) acts.push([ic("wrench"), tr("Admin panel"), () => window.open("admin/index.html", "_blank")]);
   acts.push([ic("logout"), tr("Log out"), () => confirmLogout()]);
   acts.forEach(([i, t, run]) => { if (hit(t)) out.push({ sec: tr("Actions"), i, t, run }); });
