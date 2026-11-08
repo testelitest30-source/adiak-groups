@@ -1,0 +1,42 @@
+-- Server-held live timer: start/pause/resume/next/prev/adjust/end, version conflicts, reasons, notifications.
+select test.mk_event() as e \gset
+select test.as(test.id('tpres'));
+select test.throws(format('select public.live_start(%s, 0)', :e), 'draw', 'cannot go live before the draw');
+select public.pres_draw(:e, 0);
+select test.as(test.id('s1'));
+select test.throws(format('select public.live_start(%s, 0)', :e), 'permission', 'students cannot control the timer');
+select test.as(test.id('tpres'));
+select test.eq(public.live_start(:e, 0), 1, 'start -> version 1');
+select test.throws(format('select public.live_pause(%s, 0)', :e), 'changed meanwhile', 'stale version rejected (concurrent control)');
+select test.as_db();
+select test.ok((select state = 'running' and slot_index = 0 and duration_s = 420 and slot_started_at is not null from public.pres_live where event_id = :e), 'running slot 0, 7 min');
+select test.eq((select status from public.pres_events where id = :e), 'live', 'event live');
+select test.ok(exists(select 1 from public.notifications where kind = 'pres.live_now') and exists(select 1 from public.notifications where kind = 'pres.next_up'),
+  'now-presenting and up-next notifications');
+update public.pres_live set slot_started_at = clock_timestamp() - interval '30 seconds' where event_id = :e;
+select test.as(test.id('tpres'));
+select test.eq(public.live_pause(:e, 1), 2, 'pause');
+select test.as_db();
+select test.ok((select elapsed_ms between 29000 and 32000 and slot_started_at is null from public.pres_live where event_id = :e), 'elapsed time persisted on pause');
+select test.as(test.id('tpres'));
+select test.throws(format('select public.live_pause(%s, 2)', :e), 'not running', 'cannot pause twice');
+select test.eq(public.live_resume(:e, 2), 3, 'resume');
+select test.throws(format('select public.live_adjust(%s, 3, 60, null)', :e), 'reason', 'adjust needs a reason');
+select test.eq(public.live_adjust(:e, 3, 60, 'Projector problem'), 4, 'adjust +60s with reason');
+select test.as_db();
+select test.eq((select duration_s from public.pres_live where event_id = :e), 480, 'duration corrected');
+select test.ok(exists(select 1 from public.pres_audit where entity = 'pres_live' and reason = 'Projector problem'), 'correction audited with reason');
+select test.as(test.id('tpres'));
+select test.eq(public.live_next(:e, 4), 5, 'next team');
+select test.throws(format('select public.live_next(%s, 5)', :e), 'no team', 'cannot skip past the last team');
+select test.eq(public.live_prev(:e, 5), 6, 'previous team');
+select test.as_db();
+select test.ok((select slot_index = 0 and elapsed_ms = 0 and duration_s = 420 from public.pres_live where event_id = :e), 'slot change resets the timer');
+select test.as(test.id('s4'));
+select test.ok((select state = 'running' from public.pres_live where event_id = :e), 'every class member reads the same server state');
+select test.ok(public.server_now() is not null, 'server clock available for offset sync');
+select test.as(test.id('tpres'));
+select test.eq(public.live_end(:e, 6), 7, 'end');
+select test.as_db();
+select test.ok((select state from public.pres_live where event_id = :e) = 'ended' and (select status from public.pres_events where id = :e) = 'done', 'ended + done');
+select test.throws(format('delete from public.pres_live where event_id = %s', :e), 'cannot be deleted', 'live record cannot be deleted');

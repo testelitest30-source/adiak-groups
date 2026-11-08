@@ -321,7 +321,7 @@ do $$ declare t text; begin
   loop execute format('create trigger a_nodelete before delete on public.%I for each row execute function public._tg_pres_nodelete()', t); end loop;
 end $$;
 create trigger b_guard before update on public.pres_draws for each row execute function public._tg_pres_guard('', 'superseded_at,superseded_by,superseded_reason');
-create trigger b_guard before update on public.pres_roster for each row execute function public._tg_pres_guard('left_group_at,user_name', 'left_at,left_reason,frozen_at');
+create trigger b_guard before update on public.pres_roster for each row execute function public._tg_pres_guard('left_group_at,user_name,participant', 'left_at,left_reason,frozen_at');
 create trigger b_guard before update on public.pres_files for each row execute function public._tg_pres_guard('hidden_at,hidden_by,hidden_reason', '');
 create trigger c_hide before update on public.pres_files for each row execute function public._tg_pres_file_hide();
 create trigger b_guard before update on public.pres_submissions for each row execute function public._tg_pres_guard('state,reviewed_by,reviewed_at,note', '');

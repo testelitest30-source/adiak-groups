@@ -70,23 +70,23 @@ $$;
 -- freeze: participants + immutable speaking-order snapshot (live/done)
 create or replace function public._pres_freeze(e bigint) returns void
  language plpgsql security definer set search_path = pg_catalog, public as $$
-declare t record; k int;
+declare tm record; k int;
 begin
   if (select frozen_at from public.pres_events where id = e) is not null then return; end if;
   update public.pres_roster r set participant = true, frozen_at = now()
    where r.event_id = e and r.left_at is null
      and exists (select 1 from public.pres_event_teams t where t.event_id = e and t.group_id = r.group_id and t.removed_at is null);
-  for t in select * from public.pres_event_teams where event_id = e and removed_at is null loop
+  for tm in select * from public.pres_event_teams where event_id = e and removed_at is null loop
     insert into public.pres_speakers_final (event_id, group_id, position, user_id, user_name, approved, placed)
-    select e, t.group_id, row_number() over (order by s.position), s.user_id, r.user_name, t.speak_state = 'approved', true
-      from public.pres_speakers s join public.pres_roster r on r.event_id = e and r.group_id = t.group_id and r.user_id = s.user_id and r.participant
-     where s.event_id = e and s.group_id = t.group_id and not s.withdrawn;
-    select coalesce(max(position), 0) into k from public.pres_speakers_final where event_id = e and group_id = t.group_id;
+    select e, tm.group_id, row_number() over (order by s.position), s.user_id, r.user_name, tm.speak_state = 'approved', true
+      from public.pres_speakers s join public.pres_roster r on r.event_id = e and r.group_id = tm.group_id and r.user_id = s.user_id and r.participant
+     where s.event_id = e and s.group_id = tm.group_id and not s.withdrawn;
+    select coalesce(max(position), 0) into k from public.pres_speakers_final where event_id = e and group_id = tm.group_id;
     insert into public.pres_speakers_final (event_id, group_id, position, user_id, user_name, approved, placed)
-    select e, t.group_id, k + row_number() over (order by r.user_name), r.user_id, r.user_name, false, false
+    select e, tm.group_id, k + row_number() over (order by r.user_name), r.user_id, r.user_name, false, false
       from public.pres_roster r
-     where r.event_id = e and r.group_id = t.group_id and r.participant
-       and not exists (select 1 from public.pres_speakers_final f where f.event_id = e and f.group_id = t.group_id and f.user_id = r.user_id);
+     where r.event_id = e and r.group_id = tm.group_id and r.participant
+       and not exists (select 1 from public.pres_speakers_final f where f.event_id = e and f.group_id = tm.group_id and f.user_id = r.user_id);
   end loop;
   update public.pres_events set frozen_at = now(), updated_at = now() where id = e;
 end $$;
