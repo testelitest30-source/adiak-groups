@@ -171,11 +171,14 @@ function settingsPage(){const u=ME();return`<div class="card"><b>${tr("Settings"
  ${can("points")?`<hr><b>${tr("Give points")}</b><div class="row" style="margin-top:8px"><select id="ps">${ppl().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select><input id="pp" type="number" value="1" min="-100" max="100" style="width:80px"><button onclick="rpc('add_points',{u:$('#ps').value,n:+$('#pp').value})">${tr("Add")}</button></div>`:""}</div>${feedbackCard()}`}
 const pages={notes:notesPage,chat:chatPage,idle:idlePage,groups:groupsPage,tools:()=>toolsPage(),settings:settingsPage,req:()=>reqPage()};
 const snap=()=>({tab,openG,conv,sheet,sp,menuOpen,pm});
+// Naviqasiya açarı (render()-dəki navKey ilə eyni format) və geri keçiddə tarixçəyə yazmadan vəziyyəti sinxronlaşdırma
+const navKeyOf=s=>["app",s.tab,s.openG,s.conv,s.sp,s.sheet,s.menuOpen].join("|")+"|"+(s.pm||"");
+function navSync(){lastSnap=snap();lastNav=navKeyOf(lastSnap)}
 const mItems=()=>[["notes",ic("bell"),tr("Notifications"),ub(unreadNotes())],["chat",ic("chat"),tr("Chat"),ub(totalUnread())],["idle",ic("user"),tr("Idle people ({n})",{n:idle().length}),""],["groups",ic("groups"),tr("Groups"),""],["tools",ic("tools"),tr("Tools"),""],["settings",ic("settings"),tr("Settings"),""],["req",ic("inbox"),tr("Requests & invites"),ub(inboxCount())]];
 // Telefonda sağdan açılan menyu
 const drawer=()=>{const u=ME(),rk=rank(u.points);return`<div id="scrim" onclick="goBack()"></div><div id="drawer"><div class="dh">${av(u,"big")}<div><b>${esc(u.name)}</b><br><span class="mu">${rk.name} · ${u.points} ${tr("pts")}</span></div></div><div class="gr" onclick="openPalette()"><span>${ic("search")} ${tr("Search")}</span><span>›</span></div>${mItems().map(([k,i,t,b])=>`<div class="gr" onclick="menuOpen=false;sheet=true;sp='${k}';render()"><span>${i} ${t} ${b}</span><span>›</span></div>`).join("")}${isStaff(u)&&CLS.length>1?`<div class="gr" onclick="leaveClass()"><span>${ic("school")} ${tr("Switch class")}</span></div>`:""}${can("panel")?`<a class="gr" href="admin/index.html" target="_blank" style="text-decoration:none;color:inherit"><span>${ic("wrench")} ${tr("Admin panel")}</span></a>`:""}<div class="gr" onclick="confirmLogout()"><span>${ic("logout")} ${tr("Log out")}</span></div></div>`};
 // Geri: əvvəlki pəncərəyə qayıdır (proqramdan çıxmır)
-function goBack(){if(navStack.length)history.back();else{openG=null;conv=null;sp=null;sheet=false;menuOpen=false;pm=null;$("#modal").innerHTML="";render()}}
+function goBack(){if(navStack.length)history.back();else{openG=null;conv=null;sp=null;sheet=false;menuOpen=false;pm=null;$("#modal").innerHTML="";navSync();render()}}
 
 /* ================= PROFİL PƏNCƏRƏSİ (statistika, xal vermə, qrup idarəsi) ================= */
 // Şagirdin bal statistikası (təqdimat sayı, ən yüksək, orta)
@@ -184,7 +187,9 @@ const statsOf=id=>{const ev=PE.filter(e=>e.user_id===id),pr=ev.filter(e=>e.kind=
 let profTab="main";
 function showProfile(id){if(!P[id])return;profTab="main";pm=id;render()}
 // Profil pəncərəsini bağlayır (geri düyməsi ilə uyğun)
-function closeProfile(){profTab="main";if(navStack.length&&!navStack[navStack.length-1].pm)history.back();else{pm=null;closeM();render()}}
+// Profil(lər) altındakı səhifəyə tarixçədə geri qayıdır; belə səhifə yoxdursa yerində bağlayır (yeni qeyd yaratmadan)
+function closeProfile(){profTab="main";let i=navStack.length-1;while(i>=0&&navStack[i].pm)i--;
+ if(i>=0&&navKeyOf(navStack[i])===navKeyOf({...snap(),pm:null}))history.go(i-navStack.length);else{pm=null;closeM();navSync();render()}}
 let givingPts=false;
 // Xal verir; rəqəm artır, +N uçur, parıltı çıxır
 async function givePoints(id){if(givingPts)return;const i=$("#gp"),n=parseInt(i&&i.value,10);if(!n||n<-100||n>100){toast(tr("Type a number from -100 to 100"),1);snd.err();if(i&&i.focus)i.focus();return}
@@ -261,7 +266,11 @@ function render(){try{const holding=pressing&&Date.now()-pressTs<2500;if(holding
  const mb0=$("#msgs"),near0=!mb0||mb0.scrollHeight-mb0.scrollTop-mb0.clientHeight<80,kc=key!==lastKey;
  if(screen==="app"&&ME()&&key===lastKey&&isTyping(a)){softRender();return}
  const sv=key===lastKey?[...R.querySelectorAll("input[id],textarea[id],select[id]")].filter(e=>e.type!=="file"&&(e.tagName==="SELECT"?(e.selectedIndex>=0&&!e.options[e.selectedIndex].defaultSelected):e.value!==e.defaultValue)).map(e=>({id:e.id,v:e.value})):[];
- if(!restoring&&screen==="app"&&lastNav.startsWith("app|")&&navKey!==lastNav&&lastSnap){navStack.push(lastSnap);try{history.pushState({n:navStack.length},"")}catch(e){}}
+ if(!restoring&&screen==="app"&&lastNav.startsWith("app|")&&navKey!==lastNav&&lastSnap){
+  // Eyni səhifə artıq tarixçədədirsə, yenisini əlavə etmək əvəzinə ora qədər geri çəkilir (dublikat/loop olmasın)
+  const i=navStack.findIndex(s=>navKeyOf(s)===navKey);
+  if(i>=0){const n=navStack.length-i;navStack.length=i;try{history.go(-n)}catch(e){}}
+  else{navStack.push(lastSnap);try{history.pushState({n:navStack.length},"")}catch(e){}}}
  const inN=sheet&&sp==="notes"&&phone();if(wasNotes&&!inN)readNotes();wasNotes=inN;
  if(screen==="app"&&ME()){trackEnter();markSeen()}
  const nh=view(),same=key===lastKey&&R.firstChild;R.className=same?R.className:"in";lastKey=key;lastNav=navKey;if(same){if(nh!==lastHtml){const t=document.createElement("div");t.innerHTML=nh;morph(R,t)}}else R.innerHTML=nh;lastHtml=nh;if(pm&&screen==="app"){const q=P[pm],me=ME(),sig=q?[q.id,q.name,q.points,q.group_id,(q.perms||[]).join(),q.avatar?1:0,online.has(pm)?1:0,PE.length,me.group_id,(me.perms||[]).join(),me.is_admin?1:0,IV.length,G.length].join("|"):"";if(pmDrawn!==pm||sig!==pmSig){drawProfile(pmDrawn!==pm);pmSig=sig}pmDrawn=pm}else{if(pmDrawn)$("#modal").innerHTML="";pmDrawn=null}

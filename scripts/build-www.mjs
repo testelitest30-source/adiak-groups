@@ -1,7 +1,7 @@
 // Stages the static website into www/ (Capacitor webDir) and checks that every
 // local file referenced by the pages, the manifest and the service worker exists.
 // The website itself (GitHub Pages, repo root) is not changed by this script.
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,6 +19,21 @@ for (const p of INCLUDE) {
   if (!existsSync(src)) fail(`missing source: ${p}`);
   cpSync(src, join(OUT, p), { recursive: true, filter: s => !SKIP.has(s.split(/[\\/]/).pop()) });
 }
+
+// Capacitor runtime + App plugin (official no-bundler builds) for assets/js/app/native.js.
+// APK only: they live in node_modules (lockfile-pinned) and are never committed or published to the website.
+const NATIVE = {
+  "assets/vendor/capacitor/capacitor.js": "node_modules/@capacitor/core/dist/capacitor.js",
+  "assets/vendor/capacitor/app.js": "node_modules/@capacitor/app/dist/plugin.js",
+};
+for (const [dest, src] of Object.entries(NATIVE)) {
+  if (!existsSync(join(ROOT, src))) fail(`missing ${src} (run npm ci)`);
+  mkdirSync(dirname(join(OUT, dest)), { recursive: true });
+  cpSync(join(ROOT, src), join(OUT, dest));
+}
+// Build stamp shown by native.js (APK only) so the installed APK can be matched to its commit/run.
+const stamp = { sha: (process.env.HEAD_SHA || "local").slice(0, 7), run: process.env.RUN_NUMBER || "local" };
+writeFileSync(join(OUT, "assets/vendor/capacitor/build.js"), `window.ADIAK_BUILD=${JSON.stringify(stamp)};\n`);
 
 // Verify references, resolved the same way a browser resolves them.
 const missing = [];
@@ -47,6 +62,9 @@ for (const f of ["assets/js/app/pages.js", "assets/js/app/extras.js"]) {
     else check("index.html", m[1]);
   }
 }
+
+// Files loaded at runtime by native.js
+for (const m of readFileSync(join(OUT, "assets/js/app/native.js"), "utf8").matchAll(/"(assets\/[^"]+\.js)"/g)) check("index.html", m[1]);
 
 if (missing.length) fail("unresolved references:\n  " + missing.join("\n  "));
 console.log(`www/ ready: ${INCLUDE.join(", ")} (all references resolved)`);

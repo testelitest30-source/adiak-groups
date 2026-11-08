@@ -88,7 +88,17 @@ async function load(tables){
 // Hər tab üçün lazım olan yetki
 const TABS=[["dash",ic("chart"),"Dashboard","panel"],["people",ic("groups"),"People","panel"],["groups",ic("puzzle"),"Groups","panel"],["classes",ic("school"),"Classes","classes"],["tags",ic("tag"),"Tags","tags"],["feedback",ic("chat"),"Feedback","feedback"],["chats",ic("chat"),"Chats","chats"],["pass",ic("key"),"Passwords","passwords"],["day",ic("archive"),"Close the day","admin"],["import",ic("import"),"Import names","admin"],["settings",ic("settings"),"Settings","admin"]];
 const visibleTabs=()=>isStar()?[{k:"classes",i:ic("school"),t:"My classes"}]:TABS.filter(t=>(t[3]==="classes"||t[3]==="tags"||t[3]==="feedback")?has("admin"):has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
-const switchTab=k=>{tab=k;if(k==="pass"||k==="day")lastSig="";draw();if(k==="pass"||k==="day")load()};
+// Android tətbiqində Back üçün bölmə yığını (yalnız native.js istifadə edir; brauzer tarixçəsinə toxunmur).
+// Eyni bölmə yığında varsa, ona qədər kəsilir (dublikat/loop yoxdur). y = həmin bölmədəki scroll mövqeyi.
+let admStack=[],admBacking=false;
+const switchTab=k=>{if(!admBacking&&k!==tab){const i=admStack.findIndex(s=>s.k===k);if(i>=0)admStack.length=i;else admStack.push({k:tab,y:scrollY})}tab=k;if(k==="pass"||k==="day")lastSig="";draw();if(k==="pass"||k==="day")load()};
+// Android Back: açıq modal → bağlanır; əvvəlki bölmə → ora qayıdır (axtarış/filtrlər qlobal dəyişənlərdə qalır, scroll bərpa olunur);
+// əvvəlki bölmə yoxdursa false (native.js onda student tərəfinə qayıdır)
+function adminBack(){
+ if($("#modal").innerHTML){closeM();return true}
+ const s=admStack.pop();if(!s)return false;
+ admBacking=true;try{switchTab(s.k)}finally{admBacking=false}
+ requestAnimationFrame(()=>scrollTo(0,s.y||0));return true}
 // Yan menyu + seçilmiş səhifə. Düymə basılarkən gözləyir ki, klik itməsin.
 function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=true;return}if(typingNow()){pendingDraw=true;return}pendingDraw=false;
  const sy=window.scrollY,mn=$(".main"),ms=mn?mn.scrollTop:0;

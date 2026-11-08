@@ -236,6 +236,12 @@ function tabbar() {
 // Klaviatura açılanda alt menyunu gizlədir
 addEventListener("focusin", e => { if (isFieldEl(e.target)) document.documentElement.classList.add("kbd"); });
 addEventListener("focusout", () => setTimeout(() => { if (!isFieldEl(document.activeElement)) document.documentElement.classList.remove("kbd"); }, 60));
+// Telefonda klaviatura açılıb-bağlananda (ekran hündürlüyü dəyişir): istifadəçi mesajların aşağısında idisə, aşağıda saxlayır
+let msgsAtBottom = true;
+addEventListener("scroll", e => { const m = e.target; if (m && m.id === "msgs") msgsAtBottom = m.scrollHeight - m.scrollTop - m.clientHeight < 80; }, true);
+function keepMsgsBottom() { if (!phone() || !msgsAtBottom) return; requestAnimationFrame(() => { const m = $("#msgs"); if (m) m.scrollTop = m.scrollHeight; }); }
+addEventListener("resize", keepMsgsBottom);
+if (window.visualViewport) visualViewport.addEventListener("resize", keepMsgsBottom);
 
 /* ================= 12. ÜMUMİ AXTARIŞ PANELİ (Ctrl+K) ================= */
 let palOpen = false, palSel = 0, palItems = [];
