@@ -46,6 +46,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Used by the existing web features: voice messages (getUserMedia audio) and the camera capture -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Required for voice messages in the APK: Capacitor's BridgeWebChromeClient grants a WebView AUDIO_CAPTURE request
+         only when RECORD_AUDIO *and* MODIFY_AUDIO_SETTINGS are both granted. An undeclared permission is always reported
+         as denied, which made getUserMedia fail with NotAllowedError even after the user allowed the microphone.
+         MODIFY_AUDIO_SETTINGS is a normal (install-time) permission: no extra prompt. -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

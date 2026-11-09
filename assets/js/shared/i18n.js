@@ -65,7 +65,7 @@ const AZ={
 "Newcomer":"Yeni gələn","Speaker":"Çıxışçı","Orator":"Natiq","Maestro":"Ustad",
 /* --- Fayl, səs, təsdiq --- */
 "Files must be under 25 MB":"Fayllar 25 MB-dan kiçik olmalıdır","Uploading {name}…":"{name} yüklənir…","Sent ✓":"Göndərildi ✓",
-"Voice recording is not supported in this browser":"Bu brauzer səs yazmağı dəstəkləmir","Microphone access was denied":"Mikrofona giriş icazəsi verilmədi","Yes":"Bəli",
+"Voice recording is not supported in this browser":"Bu brauzer səs yazmağı dəstəkləmir","Microphone access was denied":"Mikrofona giriş icazəsi verilmədi","Microphone permission is off. Allow it in Settings → Apps → ADIAK → Permissions → Microphone.":"Mikrofon icazəsi bağlıdır. Parametrlər → Tətbiqlər → ADIAK → İcazələr → Mikrofon bölməsində icazə verin.","No microphone was found on this device":"Bu cihazda mikrofon tapılmadı","The microphone is being used by another app":"Mikrofon başqa tətbiq tərəfindən istifadə olunur","Could not start voice recording":"Səs yazmaq başlamadı","Yes":"Bəli",
 /* --- Bildirişlər --- */
 "{n} items waiting for you":"Sizi {n} iş gözləyir","1 item waiting for you":"Sizi 1 iş gözləyir","Open Requests":"Müraciətləri açın","points!":"xal!",
 "Your total is now {n}":"Ümumi xalınız indi {n}","You joined {g}":"Qrupa qoşuldunuz: {g}","Welcome to the group!":"Qrupa xoş gəldiniz!",

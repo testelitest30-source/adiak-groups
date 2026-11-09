@@ -65,6 +65,17 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
+      # The merged manifest must carry what the WebView features need (voice messages need BOTH audio permissions:
+      # Capacitor's BridgeWebChromeClient denies AUDIO_CAPTURE unless RECORD_AUDIO and MODIFY_AUDIO_SETTINGS are granted).
+      - name: Check APK permissions
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          P=$("$BT/aapt2" dump permissions android/app/build/outputs/apk/debug/app-debug.apk)
+          echo "$P"
+          for x in INTERNET POST_NOTIFICATIONS RECORD_AUDIO MODIFY_AUDIO_SETTINGS CAMERA; do
+            echo "$P" | grep -q "android.permission.$x" || { echo "missing android.permission.$x"; exit 1; }
+          done
+
       - uses: actions/upload-artifact@v4
         with:
           name: adiak-debug-apk-run${{ github.run_number }}

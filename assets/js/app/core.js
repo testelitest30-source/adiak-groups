@@ -81,7 +81,13 @@ async function toggleRec(){if(rec){stopRec(true);return}
   mr.ondataavailable=e=>{if(e.data.size)rec.chunks.push(e.data)};
   mr.onstop=()=>{const r=rec;clearInterval(r.iv);r.st.getTracks().forEach(t=>t.stop());rec=null;render();if(!r.send||!r.chunks.length)return;
    const type=(mr.mimeType||"audio/webm").split(";")[0],ext=type.includes("mp4")?"m4a":"webm";conv=r.ch;sendFile(new File(r.chunks,"voice-"+new Date().toISOString().slice(11,19).replace(/:/g,"")+"."+ext,{type}))};
-  mr.start();render()}catch(e){toast(tr("Microphone access was denied"),1)}}
+  mr.start();render()}catch(e){toast(micErr(e),1)}}
+// getUserMedia xətasını aydın mesaja çevirir (APK-da icazə ayarlardan bağlıdırsa yolu göstərir)
+function micErr(e){const n=e&&e.name||"",nat=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+ if(n==="NotAllowedError"||n==="SecurityError")return nat?tr("Microphone permission is off. Allow it in Settings → Apps → ADIAK → Permissions → Microphone."):tr("Microphone access was denied");
+ if(n==="NotFoundError"||n==="OverconstrainedError")return tr("No microphone was found on this device");
+ if(n==="NotReadableError"||n==="AbortError")return tr("The microphone is being used by another app");
+ return tr("Could not start voice recording")}
 function stopRec(send){if(!rec)return;rec.send=send;rec.mr.stop()}
 const cancelRec=()=>stopRec(false);
 function toggleMute(){muted=!muted;try{localStorage.setItem("mute",muted?"1":"0")}catch(e){}if(!muted)snd.ding();render()}
