@@ -373,3 +373,33 @@ label.btn.upl{display:inline-flex;align-items:center;gap:6px;cursor:pointer;min-
 html.lvproj .side,html.lvproj #tabbar,html.lvproj .langfix,html.lvproj #toasts{display:none!important}
 html.lvproj #shell{grid-template-columns:1fr!important;padding:0}html.lvproj #main2{max-width:none;padding:clamp(12px,2vw,28px)}
 html.lvproj .lvops{display:none}html.lvproj .lvgrid{grid-template-columns:minmax(0,2.2fr) minmax(260px,1fr)}
+
+/* ===== ADIAK 1.0 · Teacher Studio / Class Hub / Classwork (studio.js) ===== */
+.stwelcome h2{font-family:var(--adia-font-display);margin:4px 0 6px;font-size:clamp(22px,2.6vw,30px)}
+.stwelcome{display:flex;flex-direction:column;gap:10px}
+.stcls{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:var(--adia-space-2);margin-top:10px}
+.stc{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;min-height:110px;background:var(--adia-surface);color:var(--adia-text);border:1px solid var(--adia-border);box-shadow:var(--adia-shadow-card);border-radius:var(--adia-radius-card);padding:14px}
+.stc:hover{border-color:var(--adia-primary)}.stc .cltag{font-family:var(--adia-font-display);font-size:22px;font-weight:800}
+.stbad{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
+.stqa{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.stqa button{min-height:44px}
+.sthead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.stswitch{display:flex;align-items:center;gap:8px;font-weight:700}.stswitch select{min-width:180px;font-weight:700}
+.stkpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--adia-space-2)}
+.stkpi .card{display:flex;flex-direction:column;gap:4px}.stkpi small{color:var(--adia-secondary)}.stkpi b{font-family:var(--adia-font-display);font-size:28px}
+.sttab{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px;display:block;overflow-x:auto}
+.sttab th{text-align:left;color:var(--adia-secondary);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--adia-border);white-space:nowrap}
+.sttab td{padding:8px;border-bottom:1px solid var(--adia-border);vertical-align:middle}
+button.sm{min-height:32px;padding:4px 10px;font-size:13px}
+.stform{display:grid;gap:10px;margin:10px 0}.stform label{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:14px}
+.stchk{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;font-weight:500!important}
+.stteams{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px}
+.strb{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.strbr{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(auto-fit,minmax(78px,.6fr)) auto;gap:8px;align-items:end}
+.strbr label{display:flex;flex-direction:column;font-size:12px;color:var(--adia-secondary);gap:2px}
+@media (max-width:640px){.strbr{grid-template-columns:1fr 1fr}}
+.streveal{max-width:420px;width:100%;display:flex;flex-direction:column;gap:12px}
+.strv{font-family:var(--adia-font-display);font-size:28px;font-weight:800;text-align:center;min-height:40px;color:var(--adia-primary-text)}
+.streveal li{animation:strev .4s both}@keyframes strev{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.streveal li{animation:none}}
+.stann.pin{border-left:4px solid var(--adia-primary)}.sttitle{font-family:var(--adia-font-display);font-size:18px;display:flex;align-items:center;gap:8px;margin:8px 0 0}
+.cwmine{padding:10px;border-radius:var(--adia-radius-control);background:var(--adia-surface-sunken);margin:8px 0}

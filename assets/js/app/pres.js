@@ -48,12 +48,13 @@ Object.assign(AZ_ERR, {
 });
 
 /* ---------- state ---------- */
-const PX = { on: false, acc: null, notes: [], ev: [], et: [], dr: [], ro: [], sp: [], spf: [], fl: [], sub: [], tk: [], an: [], lv: [], ls: [], sc: [], rb: [], log: [],
+const PX = { on: false, acc: null, notes: [], cann: [], asg: [], asub: [], iss: [], ev: [], et: [], dr: [], ro: [], sp: [], spf: [], fl: [], sub: [], tk: [], an: [], lv: [], ls: [], sc: [], rb: [], log: [],
   cur: null, sec: "overview", off: 0, tm: null, loaded: false, hist: null };
 window.PX = PX;   // top-level const is not a window property; core.js (SN) and tests read window.PX
 const pxTables = { pres_events: "ev", pres_event_teams: "et", pres_draws: "dr", pres_roster: "ro", pres_speakers: "sp", pres_speakers_final: "spf",
-  pres_files: "fl", pres_submissions: "sub", pres_tasks: "tk", pres_announcements: "an", pres_live: "lv", pres_live_slots: "ls", pres_scores: "sc", pres_rubrics: "rb", pres_speaker_log: "log" };
-const pxOrder = { pres_events: "id", pres_files: "id", pres_submissions: "version", pres_announcements: "id", pres_speaker_log: "id" };
+  pres_files: "fl", pres_submissions: "sub", pres_tasks: "tk", pres_announcements: "an", pres_live: "lv", pres_live_slots: "ls", pres_scores: "sc", pres_rubrics: "rb", pres_speaker_log: "log",
+  class_announcements: "cann", assignments: "asg", assignment_submissions: "asub", class_issues: "iss" };
+const pxOrder = { pres_events: "id", pres_files: "id", pres_submissions: "version", pres_announcements: "id", pres_speaker_log: "id", class_announcements: "id", assignments: "id", assignment_submissions: "id", class_issues: "id" };
 
 async function pxBoot() {
   if (!sb || PX.on || PX.booting || !uid) return;

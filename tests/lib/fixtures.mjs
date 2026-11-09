@@ -75,7 +75,11 @@ export const tables = {
   pres_announcements: [{ id: 1, event_id: 1, body: "Təqdimatı PDF formatında yükləyin.", author: IDS.teacher, created_at: iso(200) }],
   pres_live: [{ event_id: 1, state: "idle", slot_index: 0, slot_started_at: null, paused_at: null, elapsed_ms: 0, duration_s: 420, version: 0, speaker_index: 0 }],
   pres_live_slots: [], pres_scores: [], pres_rubrics: [], pres_staff_notes: [],
-  class_announcements: [], assignments: [], assignment_submissions: [], class_issues: [],
+  class_announcements: [{ id: 1, class_tag: "10A", title: "Cümə günü otaq 204", body: "Təqdimatlar 204-cü otaqda olacaq.", author: IDS.teacher, author_name: "Müəllim Həsənov", author_role: "teacher", pinned: true, created_at: iso(300), removed_at: null }],
+  assignments: [{ id: 1, class_tag: "10A", title: "Esse: iqlim dəyişikliyi", descr: "500 söz.", due_at: new Date(now + 3 * 864e5).toISOString(), mode: "individual", allow_files: true, status: "published", created_by: IDS.teacher },
+    { id: 2, class_tag: "10A", title: "Komanda posteri", descr: "", due_at: new Date(now - 3600e3).toISOString(), mode: "team", allow_files: true, status: "published", created_by: IDS.teacher }],
+  assignment_submissions: [{ id: 1, assignment_id: 2, subject_user: null, subject_group: 2, version: 1, path: "a2/g2/33333333-3333-4333-8333-333333333333.pdf", name: "poster.pdf", note: "", submitted_by: "00000000-0000-4000-8000-000000000004", submitted_by_name: "Elvin Hüseynov", submitted_at: iso(30), late: true, state: "submitted", feedback: null }],
+  class_issues: [{ id: 1, class_tag: "10A", author: IDS.idle, author_name: "Nigar Quliyeva", title: "Proyektor işləmir", body: "204-cü otaqda", status: "open", created_at: iso(120), reply: null }],
 };
 
 export const rpc = {
@@ -84,6 +88,14 @@ export const rpc = {
   server_now: new Date().toISOString(),
   notes_list: [{ id: 7, user_id: IDS.student, kind: "pres.task_assigned", params: { title: "Ekologiya layihəsi", task: "Giriş slaydını hazırla" }, target: { k: "pres", event: 1, group: 1, sec: "tasks" }, created_at: iso(12), read_at: null }],
   notes_read: 1, pres_my_history: [],
+  teacher_home: { name: "Müəllim Həsənov", classes: [{ tag: "10A", title: "10-cu sinif A", students: 6, reviews: 2, orders: 0, issues: 1 }, { tag: "11B", title: null, students: 0, reviews: 0, orders: 0, issues: 0 }],
+    next: { kind: "event", id: 1, tag: "10A", title: "Ekologiya layihəsi — final təqdimatlar", at: new Date(now + 2 * 864e5).toISOString() }, live: [] },
+  class_overview: () => ({ class: { tag: "10A", title: "10-cu sinif A" }, students: 6, idle: [{ id: IDS.idle, name: "Nigar Quliyeva" }, { id: "00000000-0000-4000-8000-000000000006", name: "Orxan Quliyev" }],
+    teams: [{ id: 1, name: "Alfa", capacity: 4, members: 2 }, { id: 2, name: "Beta", capacity: 4, members: 2 }],
+    events: [{ id: 1, title: "Ekologiya layihəsi — final təqdimatlar", status: "drawn", final_due: new Date(now + 20 * 3600e3).toISOString(), teams: [{ group: 1, name: "Alfa", order: "open", final: "submitted", tasks_open: 1, tasks_done: 1 }, { group: 2, name: "Beta", order: "approved", final: "approved", tasks_open: 0, tasks_done: 3 }] }],
+    assignments: [{ id: 1, title: "Esse: iqlim dəyişikliyi", due_at: new Date(now + 3 * 864e5).toISOString(), status: "published", mode: "individual", submitted: 0, expected: 6, to_review: 0 },
+      { id: 2, title: "Komanda posteri", due_at: new Date(now - 3600e3).toISOString(), status: "published", mode: "team", submitted: 1, expected: 2, to_review: 1 }], issues_open: 1, announcements: [] }),
+  assignment_missing: [{ subject: "g1", name: "Alfa" }],
   staff_classes: [{ tag: "10A" }],
   class_choices: [],
   admin_list_passwords: [],
