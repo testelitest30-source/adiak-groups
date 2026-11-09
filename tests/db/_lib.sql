@@ -71,7 +71,7 @@ insert into public.profiles(id, name, login, role, is_admin, class_tag) values
   (test.id('x1'), 'Other Class', 'x1@classroom.app', 'student', false, 'c2');
 insert into public.class_staff(user_id, class_tag, role, perms) values
   (test.id('tpres'), 'c1', 'teacher', '{points,groups,chats,presentations}'),
-  (test.id('tnone'), 'c1', 'teacher', '{points}'),
+  (test.id('tnone'), 'c1', 'starosta', '{groups,chats,accounts}'),
   (test.id('tother'), 'c2', 'teacher', '{points,groups,chats,presentations}');
 insert into public.groups(id, name, capacity, host_id, class_tag) overriding system value values
   (1, 'Team One', 5, test.id('s1'), 'c1'), (2, 'Team Two', 5, test.id('s4'), 'c1'), (3, 'Team Three', 5, test.id('x1'), 'c2');

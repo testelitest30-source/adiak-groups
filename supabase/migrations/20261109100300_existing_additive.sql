@@ -29,7 +29,7 @@ create or replace function public._pres_can_post(e bigint, g bigint, u uuid) ret
  language sql stable security definer set search_path = pg_catalog, public as $$
   select exists (select 1 from public.pres_events ev where ev.id = e and (
      public._perm(u, 'admin')
-     or exists (select 1 from public.class_staff s where s.user_id = u and s.class_tag = ev.class_tag and s.perms && array['presentations','chats'])
+     or exists (select 1 from public.class_staff s where s.user_id = u and s.class_tag = ev.class_tag and (s.role = 'teacher' or s.perms && array['presentations','chats']))
      or (ev.frozen_at is null and ev.status in ('draft','open','drawn') and exists (select 1 from public.pres_roster r
           join public.pres_event_teams t on t.event_id = r.event_id and t.group_id = r.group_id and t.removed_at is null
           where r.event_id = e and r.group_id = g and r.user_id = u and r.left_at is null))
@@ -140,6 +140,9 @@ CREATE OR REPLACE FUNCTION public.admin_set_perms(u uuid, p text[])
 AS $function$
 begin perform _req_admin();
  if not (p <@ array['admin','points','groups','chats','passwords','panel','presentations']) then raise exception 'Unknown permission'; end if;
+ -- ADIAK 1.0: only the owner grants/removes admin rights or changes the owner's account
+ if (('admin'=any(p)) is distinct from exists(select 1 from profiles where id=u and 'admin'=any(perms)) or exists(select 1 from platform_owner where user_id=u)) and not public._is_owner() then raise exception 'Only the owner can grant or remove admin rights'; end if;
+ if exists(select 1 from platform_owner where user_id=u) and not 'admin'=any(p) then raise exception 'The owner keeps admin rights'; end if;
  if u=auth.uid() and not 'admin'=any(p) and not exists(select 1 from profiles where id=u and is_admin) then raise exception 'You cannot remove your own admin right'; end if;
  update profiles set perms=p where id=u;
  update class_staff set perms=(select coalesce(array_agg(x),'{}') from unnest(p) x where x in ('points','groups','chats','passwords','accounts','presentations')) where user_id=u and role='teacher';
@@ -157,7 +160,9 @@ begin perform _req_admin();
  select * into pr from profiles where id=u; if not found then raise exception 'Person not found'; end if;
  if not exists(select 1 from classes where tag=cls) then raise exception 'That class group does not exist'; end if;
  if r not in ('teacher','starosta') then raise exception 'Role must be teacher or class representative'; end if;
- if p is null or not (p <@ array['points','groups','chats','passwords','accounts','presentations']) then raise exception 'Unknown permission'; end if;
+ if p is null or not (p <@ array['points','groups','chats','passwords','accounts','presentations','announce','coordinate','report']) then raise exception 'Unknown permission'; end if;
+ -- ADIAK 1.0: class leaders never get password access or assessment (presentations) rights
+ if r='starosta' and p && array['passwords','presentations'] then raise exception 'A class representative cannot get password or assessment permissions'; end if;
  if r='teacher' and (pr.role<>'teacher' or pr.is_admin) then raise exception 'That person is not a teacher'; end if;
  if r='starosta' and (pr.role<>'student' or pr.is_admin or pr.class_tag is distinct from cls) then raise exception 'The class representative must be a student of that class'; end if;
  insert into class_staff(user_id,class_tag,role,perms) values(u,cls,r,p) on conflict (user_id,class_tag) do update set role=excluded.role, perms=excluded.perms;
@@ -170,7 +175,7 @@ CREATE OR REPLACE FUNCTION public.staff_classes()
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
- select c.tag,c.title,'admin'::text,array['points','groups','chats','passwords','accounts','presentations'],(select count(*)::int from profiles p where p.class_tag=c.tag and p.role='student' and not p.is_admin) from classes c where public._is_admin()
+ select c.tag,c.title,'admin'::text,array['points','groups','chats','passwords','accounts','presentations','announce','coordinate','report'],(select count(*)::int from profiles p where p.class_tag=c.tag and p.role='student' and not p.is_admin) from classes c where public._is_admin()
  union all
  select c.tag,c.title,s.role,s.perms,(select count(*)::int from profiles p where p.class_tag=c.tag and p.role='student' and not p.is_admin) from class_staff s join classes c on c.tag=s.class_tag where s.user_id=auth.uid() and not public._is_admin()
  order by 1 $function$;

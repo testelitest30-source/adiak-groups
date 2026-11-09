@@ -29,7 +29,7 @@ end $$;
 create or replace function public._pres_staff_ids(tag text) returns uuid[]
  language sql stable security definer set search_path = pg_catalog, public as $$
   select coalesce(
-    (select array_agg(distinct s.user_id) from public.class_staff s where s.class_tag = tag and 'presentations' = any (s.perms)),
+    (select array_agg(distinct s.user_id) from public.class_staff s where s.class_tag = tag and (s.role = 'teacher' or 'presentations' = any (s.perms))),
     (select array_agg(id) from public.profiles where is_admin or 'admin' = any (perms))) $$;
 
 create or replace function public._pres_team_ids(e bigint, g bigint) returns uuid[]
@@ -194,6 +194,7 @@ create or replace function public.pres_draw(e bigint, expected_round int, reason
  language plpgsql security definer set search_path = pg_catalog, public as $$
 declare ev public.pres_events := public._pres_event_for_staff(e, true); cur int; r text; parts bigint[]; res bigint[]; nid bigint; t record;
 begin
+  perform public._rate('draw', 10, 60);
   perform pg_advisory_xact_lock(hashtext('pres_draw'), e::int);
   if ev.status not in ('open','drawn') then raise exception 'Open the presentation before drawing (status: %)', ev.status; end if;
   select coalesce(max(round), 0) into cur from public.pres_draws where event_id = e;
@@ -233,6 +234,7 @@ create or replace function public.pres_pick(e bigint, pos int) returns void
  language plpgsql security definer set search_path = pg_catalog, public as $$
 declare u uuid := public._me_ok(); g bigint := public._pres_my_group(e); t public.pres_event_teams; n int; old int; holder uuid;
 begin
+  perform public._rate('pick', 40, 60);
   if g is null then raise exception 'You are not in a team for this presentation'; end if;
   t := public._pres_team_lock(e, g);
   if t.speak_state <> 'open' then raise exception 'The speaking order is locked (%).', t.speak_state; end if;
@@ -251,6 +253,7 @@ create or replace function public.pres_unpick(e bigint) returns void
  language plpgsql security definer set search_path = pg_catalog, public as $$
 declare u uuid := public._me_ok(); g bigint := public._pres_my_group(e); t public.pres_event_teams; old int;
 begin
+  perform public._rate('pick', 40, 60);
   if g is null then raise exception 'You are not in a team for this presentation'; end if;
   t := public._pres_team_lock(e, g);
   if t.speak_state <> 'open' then raise exception 'The speaking order is locked (%).', t.speak_state; end if;
@@ -273,6 +276,7 @@ create or replace function public.pres_submit_order(e bigint) returns void
  language plpgsql security definer set search_path = pg_catalog, public as $$
 declare u uuid := public._me_ok(); g bigint := public._pres_my_group(e); t public.pres_event_teams; ev public.pres_events; host uuid;
 begin
+  perform public._rate('order', 10, 60);
   if g is null then raise exception 'You are not in a team for this presentation'; end if;
   t := public._pres_team_lock(e, g);
   if t.speak_state <> 'open' then raise exception 'The speaking order was already submitted'; end if;
@@ -329,6 +333,7 @@ create or replace function public.pres_add_file(e bigint, pth text, fname text, 
  language plpgsql security definer set search_path = pg_catalog, public as $$
 declare u uuid := public._me_ok(); g bigint := public._pres_my_group(e); nm text; me text; allowed text[]; nid bigint; ext text;
 begin
+  perform public._rate('upload', 20, 600);
   if g is null then raise exception 'You are not in a team for this presentation'; end if;
   if public._pres_path_eg(pth, 1) is distinct from e or public._pres_path_eg(pth, 2) is distinct from g then raise exception 'Invalid file path'; end if;
   if not exists (select 1 from storage.objects o where o.bucket_id = 'team-files' and o.name = pth and (o.owner is null or o.owner = u)) then
@@ -377,6 +382,7 @@ create or replace function public.pres_submit_final(fid bigint, expected_active 
  language plpgsql security definer set search_path = pg_catalog, public as $$
 declare u uuid := public._me_ok(); f public.pres_files; t public.pres_event_teams; act public.pres_submissions; v int; nid bigint; ev public.pres_events;
 begin
+  perform public._rate('final', 10, 600);
   select * into f from public.pres_files where id = fid;
   if not found or f.hidden_at is not null then raise exception 'File not found'; end if;
   if not public._pres_member(f.event_id, f.group_id) then raise exception 'Only members of this team can submit its final version'; end if;
@@ -424,6 +430,7 @@ create or replace function public.pres_task_save(tid bigint, e bigint, g bigint,
  language plpgsql security definer set search_path = pg_catalog, public as $$
 declare u uuid := public._me_ok(); staff boolean := public._pres_staff(public._pres_ev_tag(e)); tk public.pres_tasks; nid bigint; ev public.pres_events;
 begin
+  perform public._rate('task', 30, 60);
   if ttl is null or char_length(trim(ttl)) not between 1 and 140 then raise exception 'Task title must be 1 to 140 characters'; end if;
   if not (staff or public._pres_member(e, g)) then raise exception 'Only members of this team can manage its tasks'; end if;
   if who is not null and not exists (select 1 from public.pres_roster where event_id = e and group_id = g and user_id = who and left_at is null) then
@@ -448,6 +455,7 @@ create or replace function public.pres_task_status(tid bigint, st text) returns 
  language plpgsql security definer set search_path = pg_catalog, public as $$
 declare u uuid := public._me_ok(); tk public.pres_tasks; ev public.pres_events; staff boolean;
 begin
+  perform public._rate('task', 60, 60);
   if st not in ('todo','doing','done','cancelled') then raise exception 'Unknown task status'; end if;
   select * into tk from public.pres_tasks where id = tid for update;
   if not found then raise exception 'Task not found'; end if;
@@ -468,6 +476,7 @@ create or replace function public.pres_announce(e bigint, txt text) returns bigi
  language plpgsql security definer set search_path = pg_catalog, public as $$
 declare ev public.pres_events := public._pres_event_for_staff(e); nid bigint;
 begin
+  perform public._rate('announce', 10, 600);
   if txt is null or char_length(trim(txt)) not between 1 and 2000 then raise exception 'Announcement must be 1 to 2000 characters'; end if;
   insert into public.pres_announcements (event_id, body, author) values (e, trim(txt), auth.uid()) returning id into nid;
   if ev.status <> 'draft' then
@@ -488,11 +497,13 @@ begin
   update public.pres_announcements set body = trim(txt), edited_at = now() where id = aid;
 end $$;
 
--- ================= synchronized live timer =================
+-- ================= synchronized live timer + stage record =================
+-- pres_live = the clock (server timestamps); pres_live_slots = what happened per team (status + recorded duration).
 create or replace function public._pres_live_lock(e bigint, ver int) returns public.pres_live
  language plpgsql security definer set search_path = pg_catalog, public as $$
 declare l public.pres_live;
 begin
+  perform public._rate('live', 120, 60);
   perform public._pres_event_for_staff(e);
   select * into l from public.pres_live where event_id = e for update;
   if not found then raise exception 'Presentation not found'; end if;
@@ -500,32 +511,67 @@ begin
   return l;
 end $$;
 
+-- elapsed milliseconds of the current slot, as the server sees it now
+create or replace function public._pres_live_elapsed(l public.pres_live) returns bigint
+ language sql stable set search_path = pg_catalog as $$
+  select l.elapsed_ms + case when l.state = 'running' and l.slot_started_at is not null
+    then (extract(epoch from clock_timestamp() - l.slot_started_at) * 1000)::bigint else 0 end $$;
+
 create or replace function public._pres_live_notify(e bigint, idx int) returns void
  language plpgsql security definer set search_path = pg_catalog, public as $$
-declare res bigint[]; ev public.pres_events;
+declare g_now bigint; g_next bigint; ev public.pres_events;
 begin
-  select result into res from public.pres_draws where event_id = e and superseded_at is null;
   select * into ev from public.pres_events where id = e;
-  if res is null then return; end if;
-  if idx + 1 <= cardinality(res) then
-    perform public._notify(public._pres_team_ids(e, res[idx + 1]), 'pres.live_now', jsonb_build_object('title', ev.title), public._pres_tgt(e, res[idx + 1], 'live'), 'now:' || e || ':' || res[idx + 1]);
+  select group_id into g_now from public.pres_live_slots where event_id = e and slot_index = idx;
+  select group_id into g_next from public.pres_live_slots where event_id = e and slot_index > idx and status = 'pending' order by slot_index limit 1;
+  if g_now is not null then
+    perform public._notify(public._pres_team_ids(e, g_now), 'pres.live_now', jsonb_build_object('title', ev.title), public._pres_tgt(e, g_now, 'live'), 'now:' || e || ':' || g_now);
   end if;
-  if idx + 2 <= cardinality(res) then
-    perform public._notify(public._pres_team_ids(e, res[idx + 2]), 'pres.next_up', jsonb_build_object('title', ev.title), public._pres_tgt(e, res[idx + 2], 'live'), 'next:' || e || ':' || res[idx + 2]);
+  if g_next is not null then
+    perform public._notify(public._pres_team_ids(e, g_next), 'pres.next_up', jsonb_build_object('title', ev.title), public._pres_tgt(e, g_next, 'live'), 'next:' || e || ':' || g_next);
   end if;
+end $$;
+
+-- close the current slot: record its duration; st = done | skipped | pending (moved back)
+create or replace function public._pres_slot_close(e bigint, st text) returns void
+ language plpgsql security definer set search_path = pg_catalog, public as $$
+declare l public.pres_live;
+begin
+  select * into l from public.pres_live where event_id = e;
+  update public.pres_live_slots set status = st, ended_at = case when st = 'pending' then null else clock_timestamp() end,
+         duration_ms = public._pres_live_elapsed(l), completed_by = case when st = 'pending' then null else auth.uid() end
+   where event_id = e and slot_index = l.slot_index and status = 'presenting';
+end $$;
+
+-- open slot idx on stage; a slot that already has a recorded duration continues from it
+create or replace function public._pres_slot_open(e bigint, idx int) returns void
+ language plpgsql security definer set search_path = pg_catalog, public as $$
+declare sl public.pres_live_slots;
+begin
+  select * into sl from public.pres_live_slots where event_id = e and slot_index = idx for update;
+  if not found then raise exception 'No team at that position'; end if;
+  update public.pres_live_slots set status = 'presenting', started_at = coalesce(started_at, clock_timestamp()), ended_at = null
+   where event_id = e and slot_index = idx;
+  update public.pres_live set state = 'running', slot_index = idx, slot_started_at = clock_timestamp(), paused_at = null,
+         elapsed_ms = sl.duration_ms, speaker_index = 0, duration_s = (select slot_minutes * 60 from public.pres_events where id = e),
+         version = version + 1, updated_by = auth.uid(), updated_at = now() where event_id = e;
+  perform public._pres_live_notify(e, idx);
 end $$;
 
 create or replace function public.live_start(e bigint, ver int) returns int
  language plpgsql security definer set search_path = pg_catalog, public as $$
-declare l public.pres_live := public._pres_live_lock(e, ver); ev public.pres_events;
+declare l public.pres_live := public._pres_live_lock(e, ver); ev public.pres_events; res bigint[];
 begin
   select * into ev from public.pres_events where id = e for update;
   if ev.status <> 'drawn' then raise exception 'Run the draw before starting the live session'; end if;
+  select result into res from public.pres_draws where event_id = e and superseded_at is null;
   perform public._pres_freeze(e);
   update public.pres_events set status = 'live', updated_at = now() where id = e;
-  update public.pres_live set state = 'running', slot_index = 0, slot_started_at = clock_timestamp(), paused_at = null, elapsed_ms = 0,
-         duration_s = ev.slot_minutes * 60, version = version + 1, updated_by = auth.uid(), updated_at = now() where event_id = e;
-  perform public._pres_live_notify(e, 0);
+  insert into public.pres_live_slots (event_id, slot_index, group_id, group_name)
+  select e, x.ord - 1, x.g, coalesce(t.group_name, '?') from unnest(res) with ordinality as x(g, ord)
+    left join public.pres_event_teams t on t.event_id = e and t.group_id = x.g
+  on conflict do nothing;
+  perform public._pres_slot_open(e, 0);
   return l.version + 1;
 end $$;
 
@@ -534,9 +580,9 @@ create or replace function public.live_pause(e bigint, ver int) returns int
 declare l public.pres_live := public._pres_live_lock(e, ver);
 begin
   if l.state <> 'running' then raise exception 'The timer is not running'; end if;
-  update public.pres_live set state = 'paused', paused_at = clock_timestamp(),
-         elapsed_ms = elapsed_ms + (extract(epoch from clock_timestamp() - slot_started_at) * 1000)::bigint, slot_started_at = null,
+  update public.pres_live set state = 'paused', paused_at = clock_timestamp(), elapsed_ms = public._pres_live_elapsed(l), slot_started_at = null,
          version = version + 1, updated_by = auth.uid(), updated_at = now() where event_id = e;
+  update public.pres_live_slots set duration_ms = public._pres_live_elapsed(l) where event_id = e and slot_index = l.slot_index and status = 'presenting';
   return l.version + 1;
 end $$;
 
@@ -545,31 +591,59 @@ create or replace function public.live_resume(e bigint, ver int) returns int
 declare l public.pres_live := public._pres_live_lock(e, ver);
 begin
   if l.state <> 'paused' then raise exception 'The timer is not paused'; end if;
+  if not exists (select 1 from public.pres_live_slots where event_id = e and slot_index = l.slot_index and status = 'presenting') then
+    raise exception 'This team has finished. Move to the next team.'; end if;
   update public.pres_live set state = 'running', paused_at = null, slot_started_at = clock_timestamp(),
          version = version + 1, updated_by = auth.uid(), updated_at = now() where event_id = e;
   return l.version + 1;
 end $$;
 
-create or replace function public._pres_live_goto(e bigint, ver int, idx int) returns int
+-- stop the clock for the current team and record it as presented
+create or replace function public.live_complete_team(e bigint, ver int) returns int
  language plpgsql security definer set search_path = pg_catalog, public as $$
-declare l public.pres_live := public._pres_live_lock(e, ver); n int; ev public.pres_events;
+declare l public.pres_live := public._pres_live_lock(e, ver);
 begin
   if l.state not in ('running','paused') then raise exception 'The live session is not running'; end if;
-  select cardinality(result) into n from public.pres_draws where event_id = e and superseded_at is null;
-  if idx < 0 or idx >= n then raise exception 'No team at that position'; end if;
-  select * into ev from public.pres_events where id = e;
-  update public.pres_live set state = 'running', slot_index = idx, slot_started_at = clock_timestamp(), paused_at = null, elapsed_ms = 0,
-         duration_s = ev.slot_minutes * 60, version = version + 1, updated_by = auth.uid(), updated_at = now() where event_id = e;
-  perform public._pres_live_notify(e, idx);
+  if not exists (select 1 from public.pres_live_slots where event_id = e and slot_index = l.slot_index and status = 'presenting') then
+    raise exception 'This team is already completed'; end if;
+  perform public._pres_slot_close(e, 'done');
+  update public.pres_live set state = 'paused', paused_at = clock_timestamp(), elapsed_ms = public._pres_live_elapsed(l), slot_started_at = null,
+         version = version + 1, updated_by = auth.uid(), updated_at = now() where event_id = e;
+  return l.version + 1;
+end $$;
+
+create or replace function public._pres_live_goto(e bigint, ver int, idx int, close_as text) returns int
+ language plpgsql security definer set search_path = pg_catalog, public as $$
+declare l public.pres_live := public._pres_live_lock(e, ver);
+begin
+  if l.state not in ('running','paused') then raise exception 'The live session is not running'; end if;
+  if not exists (select 1 from public.pres_live_slots where event_id = e and slot_index = idx) then raise exception 'No team at that position'; end if;
+  perform public._pres_slot_close(e, close_as);
+  perform public._pres_slot_open(e, idx);
   return l.version + 1;
 end $$;
 
 create or replace function public.live_next(e bigint, ver int) returns int
  language sql security definer set search_path = pg_catalog, public as $$
-  select public._pres_live_goto(e, ver, (select slot_index + 1 from public.pres_live where event_id = e)) $$;
+  select public._pres_live_goto(e, ver, (select slot_index + 1 from public.pres_live where event_id = e), 'done') $$;
+create or replace function public.live_skip(e bigint, ver int) returns int
+ language sql security definer set search_path = pg_catalog, public as $$
+  select public._pres_live_goto(e, ver, (select slot_index + 1 from public.pres_live where event_id = e), 'skipped') $$;
 create or replace function public.live_prev(e bigint, ver int) returns int
  language sql security definer set search_path = pg_catalog, public as $$
-  select public._pres_live_goto(e, ver, (select slot_index - 1 from public.pres_live where event_id = e)) $$;
+  select public._pres_live_goto(e, ver, (select slot_index - 1 from public.pres_live where event_id = e), 'pending') $$;
+
+create or replace function public.live_next_speaker(e bigint, ver int, dir int default 1) returns int
+ language plpgsql security definer set search_path = pg_catalog, public as $$
+declare l public.pres_live := public._pres_live_lock(e, ver); n int; g bigint;
+begin
+  if l.state not in ('running','paused') then raise exception 'The live session is not running'; end if;
+  select group_id into g from public.pres_live_slots where event_id = e and slot_index = l.slot_index;
+  select count(*) into n from public.pres_speakers_final where event_id = e and group_id = g;
+  if n = 0 or l.speaker_index + coalesce(dir, 1) not between 0 and n - 1 then raise exception 'No speaker at that position'; end if;
+  update public.pres_live set speaker_index = speaker_index + coalesce(dir, 1), version = version + 1, updated_by = auth.uid(), updated_at = now() where event_id = e;
+  return l.version + 1;
+end $$;
 
 create or replace function public.live_adjust(e bigint, ver int, delta_s int, reason text) returns int
  language plpgsql security definer set search_path = pg_catalog, public as $$
@@ -588,28 +662,54 @@ create or replace function public.live_end(e bigint, ver int) returns int
 declare l public.pres_live := public._pres_live_lock(e, ver);
 begin
   if l.state not in ('running','paused') then raise exception 'The live session is not running'; end if;
-  update public.pres_live set state = 'ended', version = version + 1, updated_by = auth.uid(), updated_at = now() where event_id = e;
+  perform public._pres_slot_close(e, 'done');
+  update public.pres_live set state = 'ended', elapsed_ms = public._pres_live_elapsed(l), slot_started_at = null,
+         version = version + 1, updated_by = auth.uid(), updated_at = now() where event_id = e;
   update public.pres_events set status = 'done', updated_at = now() where id = e;
   return l.version + 1;
+end $$;
+
+create or replace function public.live_note(e bigint, g bigint, txt text) returns bigint
+ language plpgsql security definer set search_path = pg_catalog, public as $$
+declare ev public.pres_events := public._pres_event_for_staff(e); nid bigint;
+begin
+  if txt is null or char_length(trim(txt)) not between 1 and 2000 then raise exception 'Note must be 1 to 2000 characters'; end if;
+  insert into public.pres_staff_notes (event_id, group_id, author, author_name, body)
+  values (e, g, auth.uid(), (select name from public.profiles where id = auth.uid()), trim(txt)) returning id into nid;
+  return nid;
 end $$;
 
 -- ================= rubric & scores =================
 create or replace function public._pres_rubric_valid(c jsonb) returns boolean
  language plpgsql immutable set search_path = pg_catalog as $$
-declare x jsonb; keys text[] := '{}';
+declare x jsonb; keys text[] := '{}'; nd int := 0;
 begin
   if jsonb_typeof(c) <> 'array' or jsonb_array_length(c) not between 1 and 10 then return false; end if;
   for x in select * from jsonb_array_elements(c) loop
-    if jsonb_typeof(x) <> 'object' or coalesce(x->>'key', '') !~ '^[a-z0-9_]{1,20}$' or (x->>'key') = any (keys)
+    if coalesce(jsonb_typeof(x), '') <> 'object' or coalesce(x->>'key', '') !~ '^[a-z0-9_]{1,20}$' or (x->>'key') = any (keys)
        or char_length(coalesce(x->>'label', '')) not between 1 and 60
-       or jsonb_typeof(x->'max') <> 'number' or (x->>'max')::numeric <> floor((x->>'max')::numeric) or (x->>'max')::int not between 1 and 100
-       or jsonb_typeof(coalesce(x->'weight', '1'::jsonb)) <> 'number' or coalesce((x->>'weight')::numeric, 1) not between 0.1 and 100 then
+       or coalesce(jsonb_typeof(x->'max'), '') <> 'number' or (x->>'max')::numeric <> floor((x->>'max')::numeric) or (x->>'max')::int not between 1 and 100
+       or jsonb_typeof(coalesce(x->'weight', '1'::jsonb)) <> 'number' or coalesce((x->>'weight')::numeric, 1) not between 0.1 and 100
+       or coalesce(x->>'kind', 'score') not in ('score','duration') then
       return false;
+    end if;
+    if x->>'kind' = 'duration' then   -- measured criterion: target and tolerance in seconds
+      nd := nd + 1;
+      if coalesce(jsonb_typeof(x->'target_s'), '') <> 'number' or (x->>'target_s')::numeric not between 30 and 7200
+         or coalesce(jsonb_typeof(x->'tolerance_s'), '') <> 'number' or (x->>'tolerance_s')::numeric not between 0 and 3600 then return false; end if;
     end if;
     keys := keys || (x->>'key');
   end loop;
-  return true;
+  return nd <= 1;
 end $$;
+
+-- duration criterion: full marks within tolerance, linear down to 0 at twice the tolerance (team measured only against its own target)
+create or replace function public._pres_duration_score(dur_ms bigint, target_s numeric, tol_s numeric, mx int) returns int
+ language sql immutable set search_path = pg_catalog as $$
+  select case when dur_ms is null then null
+              when abs(dur_ms / 1000.0 - target_s) <= tol_s then mx
+              when tol_s = 0 or abs(dur_ms / 1000.0 - target_s) >= 2 * tol_s then 0
+              else round(mx * (1 - (abs(dur_ms / 1000.0 - target_s) - tol_s) / tol_s))::int end $$;
 
 create or replace function public.pres_rubric_save(e bigint, crit jsonb) returns bigint
  language plpgsql security definer set search_path = pg_catalog, public as $$
@@ -621,30 +721,43 @@ begin
   return nid;
 end $$;
 
-create or replace function public.pres_score(e bigint, g bigint, sc jsonb, cmt text default '') returns bigint
+create or replace function public.pres_score(e bigint, g bigint, sc jsonb, cmt text default '', override_reason text default null) returns bigint
  language plpgsql security definer set search_path = pg_catalog, public as $$
-declare ev public.pres_events := public._pres_event_for_staff(e); rb public.pres_rubrics; x jsonb; s numeric; tot numeric := 0; wsum numeric := 0;
-  cur public.pres_scores; nid bigint; nm text;
+declare ev public.pres_events := public._pres_event_for_staff(e); rb public.pres_rubrics; x jsonb; v numeric; tot numeric := 0; wsum numeric := 0;
+  cur public.pres_scores; nid bigint; nm text; dur bigint; autov int; au jsonb := '{}'; need_reason boolean := false;
 begin
+  perform public._rate('score', 60, 60);
   if ev.status not in ('live','done') then raise exception 'Scores can be given once the presentation is live'; end if;
   if not exists (select 1 from public.pres_event_teams where event_id = e and group_id = g and removed_at is null) then raise exception 'This team is not part of the presentation'; end if;
   select * into rb from public.pres_rubrics where event_id = e order by version desc limit 1;
   if not found then raise exception 'Create a rubric first'; end if;
   if jsonb_typeof(sc) <> 'object' then raise exception 'Invalid scores'; end if;
   if (select count(*) from jsonb_object_keys(sc)) <> jsonb_array_length(rb.criteria) then raise exception 'Give a score for every criterion (and nothing else)'; end if;
+  select duration_ms into dur from public.pres_live_slots where event_id = e and group_id = g and status = 'done' order by slot_index desc limit 1;
   for x in select * from jsonb_array_elements(rb.criteria) loop
     if not (sc ? (x->>'key')) or jsonb_typeof(sc->(x->>'key')) <> 'number' then raise exception 'Missing score for %', x->>'label'; end if;
-    s := (sc->>(x->>'key'))::numeric;
-    if s <> floor(s) or s < 0 or s > (x->>'max')::int then raise exception 'Score for % must be a whole number from 0 to %', x->>'label', x->>'max'; end if;
-    tot := tot + s / (x->>'max')::numeric * coalesce((x->>'weight')::numeric, 1);
+    v := (sc->>(x->>'key'))::numeric;
+    if v <> floor(v) or v < 0 or v > (x->>'max')::int then raise exception 'Score for % must be a whole number from 0 to %', x->>'label', x->>'max'; end if;
+    if x->>'kind' = 'duration' then
+      autov := public._pres_duration_score(dur, (x->>'target_s')::numeric, (x->>'tolerance_s')::numeric, (x->>'max')::int);
+      au := au || jsonb_build_object(x->>'key', autov, 'duration_s', round(dur / 1000.0));
+      if autov is distinct from v::int then need_reason := true; end if;
+    end if;
+    tot := tot + v / (x->>'max')::numeric * coalesce((x->>'weight')::numeric, 1);
     wsum := wsum + coalesce((x->>'weight')::numeric, 1);
   end loop;
+  if need_reason then
+    if override_reason is null or char_length(trim(override_reason)) < 5 then
+      raise exception 'The time score differs from the measured duration; give a reason (at least 5 characters).'; end if;
+    au := au || jsonb_build_object('override_reason', left(trim(override_reason), 300));
+    perform public._pres_reason(trim(override_reason));
+  end if;
   if char_length(coalesce(cmt, '')) > 2000 then raise exception 'Comment is too long (max 2000)'; end if;
   select * into cur from public.pres_scores where event_id = e and group_id = g and reviewer = auth.uid() and superseded_at is null for update;
   if found then update public.pres_scores set superseded_at = now() where id = cur.id; end if;
   select name into nm from public.profiles where id = auth.uid();
-  insert into public.pres_scores (event_id, group_id, rubric_id, reviewer, reviewer_name, scores, total, comment, supersedes_id)
-  values (e, g, rb.id, auth.uid(), nm, sc, round(tot / wsum * 100, 2), coalesce(trim(cmt), ''), cur.id) returning id into nid;
+  insert into public.pres_scores (event_id, group_id, rubric_id, reviewer, reviewer_name, scores, total, comment, auto, supersedes_id)
+  values (e, g, rb.id, auth.uid(), nm, sc, round(tot / wsum * 100, 2), coalesce(trim(cmt), ''), au, cur.id) returning id into nid;
   return nid;
 end $$;
 

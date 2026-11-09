@@ -165,7 +165,31 @@ create table public.pres_live (
   elapsed_ms bigint not null default 0,
   duration_s int not null default 420 check (duration_s between 0 and 7200),
   version int not null default 0,
+  speaker_index int not null default 0,
   updated_by uuid, updated_at timestamptz not null default now()
+);
+
+-- one row per drawn team position: what actually happened on stage (recorded durations survive reconnects/refreshes)
+create table public.pres_live_slots (
+  event_id bigint not null references public.pres_events (id),
+  slot_index int not null,
+  group_id bigint not null,
+  group_name text not null,
+  status text not null default 'pending' check (status in ('pending','presenting','done','skipped')),
+  started_at timestamptz, ended_at timestamptz,
+  duration_ms bigint not null default 0 check (duration_ms >= 0),
+  completed_by uuid,
+  primary key (event_id, slot_index)
+);
+
+-- private staff notes during the live session (never visible to students)
+create table public.pres_staff_notes (
+  id bigint generated always as identity primary key,
+  event_id bigint not null references public.pres_events (id),
+  group_id bigint,
+  author uuid not null, author_name text not null,
+  body text not null check (char_length(body) between 1 and 2000),
+  created_at timestamptz not null default now()
 );
 
 create table public.pres_rubrics (
@@ -186,6 +210,7 @@ create table public.pres_scores (
   scores jsonb not null,
   total numeric(6,2) not null check (total between 0 and 100),
   comment text not null default '' check (char_length(comment) <= 2000),
+  auto jsonb not null default '{}'::jsonb,          -- server-computed values (e.g. duration criterion) and override reason
   created_at timestamptz not null default now(),
   supersedes_id bigint references public.pres_scores (id),
   superseded_at timestamptz
@@ -198,7 +223,7 @@ create or replace function public._pres_ev_tag(e bigint) returns text
 
 create or replace function public._pres_staff(tag text) returns boolean
  language sql stable security definer set search_path = pg_catalog, public as $$
-  select auth.uid() is not null and public._cperm(tag, 'presentations') $$;
+  select auth.uid() is not null and (public._is_teacher_of(tag) or public._cperm(tag, 'presentations')) $$;
 
 create or replace function public._pres_class(e bigint) returns boolean   -- class-wide public info (not drafts)
  language sql stable security definer set search_path = pg_catalog, public as $$
@@ -236,6 +261,8 @@ alter table public.pres_announcements enable row level security;
 alter table public.pres_live enable row level security;
 alter table public.pres_rubrics enable row level security;
 alter table public.pres_scores enable row level security;
+alter table public.pres_live_slots enable row level security;
+alter table public.pres_staff_notes enable row level security;
 
 create policy r on public.pres_events for select to authenticated using (public._pres_class(id));
 create policy r on public.pres_event_teams for select to authenticated using (public._pres_class(event_id));
@@ -253,6 +280,8 @@ create policy r on public.pres_audit for select to authenticated using (
 create policy r on public.pres_tasks for select to authenticated using (public._pres_read(event_id, group_id));
 create policy r on public.pres_announcements for select to authenticated using (public._pres_class(event_id));
 create policy r on public.pres_live for select to authenticated using (public._pres_class(event_id));
+create policy r on public.pres_live_slots for select to authenticated using (public._pres_class(event_id));
+create policy r on public.pres_staff_notes for select to authenticated using (public._pres_staff(public._pres_ev_tag(event_id)));
 create policy r on public.pres_rubrics for select to authenticated using (public._pres_class(event_id));
 create policy r on public.pres_scores for select to authenticated using (
   public._pres_staff(public._pres_ev_tag(event_id))
@@ -261,7 +290,8 @@ create policy r on public.pres_scores for select to authenticated using (
 
 do $$ declare t text; begin
   foreach t in array array['pres_events','pres_event_teams','pres_draws','pres_roster','pres_speakers','pres_speakers_final',
-    'pres_speaker_log','pres_files','pres_submissions','pres_audit','pres_tasks','pres_announcements','pres_live','pres_rubrics','pres_scores']
+    'pres_speaker_log','pres_files','pres_submissions','pres_audit','pres_tasks','pres_announcements','pres_live','pres_rubrics','pres_scores',
+    'pres_live_slots','pres_staff_notes']
   loop
     execute format('revoke all on public.%I from public, anon, authenticated', t);
     execute format('grant select on public.%I to authenticated', t);
@@ -270,7 +300,7 @@ do $$ declare t text; begin
 end $$;
 alter publication supabase_realtime add table public.pres_events, public.pres_event_teams, public.pres_draws, public.pres_roster,
   public.pres_speakers, public.pres_speakers_final, public.pres_files, public.pres_submissions, public.pres_tasks,
-  public.pres_announcements, public.pres_live, public.pres_scores;
+  public.pres_announcements, public.pres_live, public.pres_scores, public.pres_live_slots;
 
 -- ================= immutability guards (class D) =================
 create or replace function public._tg_pres_nodelete() returns trigger
@@ -317,7 +347,8 @@ end $$;
 
 do $$ declare t text; begin
   foreach t in array array['pres_events','pres_event_teams','pres_draws','pres_roster','pres_speakers_final','pres_speaker_log',
-    'pres_files','pres_submissions','pres_audit','pres_tasks','pres_announcements','pres_live','pres_rubrics','pres_scores']
+    'pres_files','pres_submissions','pres_audit','pres_tasks','pres_announcements','pres_live','pres_rubrics','pres_scores',
+    'pres_live_slots','pres_staff_notes']
   loop execute format('create trigger a_nodelete before delete on public.%I for each row execute function public._tg_pres_nodelete()', t); end loop;
 end $$;
 create trigger b_guard before update on public.pres_draws for each row execute function public._tg_pres_guard('', 'superseded_at,superseded_by,superseded_reason');
@@ -329,6 +360,7 @@ create trigger c_trans before update on public.pres_submissions for each row exe
 create trigger b_guard before update on public.pres_audit for each row execute function public._tg_pres_guard('', '');
 create trigger b_guard before update on public.pres_speaker_log for each row execute function public._tg_pres_guard('', '');
 create trigger b_guard before update on public.pres_speakers_final for each row execute function public._tg_pres_guard('', '');
+create trigger b_guard before update on public.pres_staff_notes for each row execute function public._tg_pres_guard('', '');
 create trigger b_guard before update on public.pres_rubrics for each row execute function public._tg_pres_guard('', '');
 create trigger b_guard before update on public.pres_scores for each row execute function public._tg_pres_guard('', 'superseded_at');
 -- participant may only go false -> true
@@ -357,7 +389,7 @@ begin
 end $$;
 do $$ declare t text; begin
   foreach t in array array['pres_events','pres_event_teams','pres_draws','pres_roster','pres_files','pres_submissions',
-    'pres_tasks','pres_announcements','pres_live','pres_rubrics','pres_scores']
+    'pres_tasks','pres_announcements','pres_live','pres_rubrics','pres_scores','pres_live_slots']
   loop execute format('create trigger z_audit after insert or update on public.%I for each row execute function public._tg_pres_audit()', t); end loop;
 end $$;
 create trigger z_audit after insert or update or delete on public.pres_speakers for each row execute function public._tg_pres_audit();

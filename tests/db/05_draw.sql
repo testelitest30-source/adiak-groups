@@ -3,7 +3,7 @@ select test.mk_event() as e \gset
 select test.as(test.id('s1'));
 select test.throws(format('select public.pres_draw(%s, 0)', :e), 'permission', 'student cannot draw');
 select test.as(test.id('tnone'));
-select test.throws(format('select public.pres_draw(%s, 0)', :e), 'permission', 'teacher without presentations perm cannot draw');
+select test.throws(format('select public.pres_draw(%s, 0)', :e), 'permission', 'class leader (no assessment rights) cannot draw');
 select test.as(test.id('tother'));
 select test.throws(format('select public.pres_draw(%s, 0)', :e), 'permission', 'staff of another class cannot draw');
 select test.as(test.id('tpres'));

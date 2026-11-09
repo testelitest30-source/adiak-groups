@@ -31,7 +31,9 @@ select test.eq(public.live_next(:e, 4), 5, 'next team');
 select test.throws(format('select public.live_next(%s, 5)', :e), 'no team', 'cannot skip past the last team');
 select test.eq(public.live_prev(:e, 5), 6, 'previous team');
 select test.as_db();
-select test.ok((select slot_index = 0 and elapsed_ms = 0 and duration_s = 420 from public.pres_live where event_id = :e), 'slot change resets the timer');
+select test.ok((select l.slot_index = 0 and l.elapsed_ms = sl.duration_ms and l.elapsed_ms > 0 from public.pres_live l join public.pres_live_slots sl on sl.event_id = l.event_id and sl.slot_index = 0 where l.event_id = :e),
+  'going back continues team 1 from its recorded time (a mistaken "next" loses nothing)');
+select test.eq((select status from public.pres_live_slots where event_id = :e and slot_index = 1), 'pending', 'team 2 back to pending');
 select test.as(test.id('s4'));
 select test.ok((select state = 'running' from public.pres_live where event_id = :e), 'every class member reads the same server state');
 select test.ok(public.server_now() is not null, 'server clock available for offset sync');
