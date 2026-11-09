@@ -8,7 +8,7 @@ case "$BASE" in *supabase.co*|*supabase.com*|*pooler*) echo "refusing: not a loc
 DB="${1:-adiak_test}"
 psql "$BASE/postgres" -qc "drop database if exists $DB" -c "create database $DB" >/dev/null
 psql "$BASE/$DB" -qc "alter database $DB set adiak.local='yes'" >/dev/null
-for f in supabase/baseline/0*.sql; do
+for f in supabase/baseline/0[0-6]_*.sql; do
   PGOPTIONS='-c adiak.local=yes -c client_min_messages=error -c check_function_bodies=off' psql "$BASE/$DB" -v ON_ERROR_STOP=1 -q -f "$f" >/dev/null || { echo "baseline failed: $f"; exit 1; }
 done
 # Seed the migration history like production (18 markers), so new migrations run with the real pre-flight check.

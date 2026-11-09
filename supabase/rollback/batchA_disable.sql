@@ -126,7 +126,8 @@ create policy r on public.messages as PERMISSIVE for SELECT to public using ((((
   WHERE (profiles.id = auth.uid())))) OR ((channel ~~ 'd:%'::text) AND (((auth.uid())::text = split_part(channel, ':'::text, 2)) OR ((auth.uid())::text = split_part(channel, ':'::text, 3)))) OR _cperm(_chtag(channel, class_tag), 'chats'::text)));
 do $$ declare f record; begin
   for f in select p.oid::regprocedure sig from pg_proc p where p.pronamespace = 'public'::regnamespace
-     and (p.proname like 'pres\_%' or p.proname like 'live\_%' or p.proname like 'notes\_%' or p.proname in ('save_fcm','drop_fcm','server_now'))
+     and (p.proname like 'pres\_%' or p.proname like 'live\_%' or p.proname like 'notes\_%' or p.proname like 'class\_%' or p.proname like 'assignment\_%'
+          or p.proname like 'ops\_%' or p.proname like 'owner\_%' or p.proname in ('save_fcm','drop_fcm','server_now','my_access','teacher_home'))
      and p.proname <> 'pres_due_reminders'
   loop execute format('revoke execute on function %s from authenticated', f.sig); end loop; end $$;
 alter table public.notifications disable trigger tg_note_outbox;

@@ -16,7 +16,8 @@ TRIG = [('notifications','tg_note_outbox'),('messages','tg_msg_outbox'),('profil
         ('user_tags','tg_n_tags'),('profiles','tg_n_membership'),('messages','tg_n_mentions')]
 REVOKE = """do $$ declare f record; begin
   for f in select p.oid::regprocedure sig from pg_proc p where p.pronamespace = 'public'::regnamespace
-     and (p.proname like 'pres\\_%' or p.proname like 'live\\_%' or p.proname like 'notes\\_%' or p.proname in ('save_fcm','drop_fcm','server_now'))
+     and (p.proname like 'pres\\_%' or p.proname like 'live\\_%' or p.proname like 'notes\\_%' or p.proname like 'class\\_%' or p.proname like 'assignment\\_%'
+          or p.proname like 'ops\\_%' or p.proname like 'owner\\_%' or p.proname in ('save_fcm','drop_fcm','server_now','my_access','teacher_home'))
      and p.proname <> 'pres_due_reminders'
   loop execute format('revoke execute on function %s from authenticated', f.sig); end loop; end $$;"""
 GRANT = REVOKE.replace("revoke execute on function %s from authenticated", "grant execute on function %s to authenticated")

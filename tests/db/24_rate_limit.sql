@@ -12,3 +12,9 @@ select test.lives(format('select public.pres_pick(%s, 1)', :e), 'window slides: 
 select test.throws('select * from public.rate_events', 'permission denied', 'rate log not readable by clients');
 select test.as_service();
 select test.lives('select public.push_sweep()', 'service context is not rate limited');
+-- existing RPCs (Batch C / M9): e.g. chat flood
+select test.as(test.id('s3'));
+select count(public.send_message('g:1', 'msg ' || i)) from generate_series(1, 30) i;
+select test.throws($q$select public.send_message('g:1', 'one too many')$q$, 'too many requests', '31st chat message within a minute is refused');
+select test.as(test.id('s4'));
+select test.lives($q$select public.send_message('g:2', 'other user unaffected')$q$, 'other users unaffected');
