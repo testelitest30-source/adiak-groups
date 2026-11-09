@@ -81,7 +81,13 @@ async function lvOpenMaterial(fid) {
     LV.pages = LV.pdf.numPages; render(); setTimeout(lvDraw, 30);
   } catch (e) { LV.pdf = null; toast(tr("This file cannot be previewed here. Open it instead."), 1); render(); }
 }
-async function lvDraw() {
+async function lvDraw() {   // serialised: pdf.js forbids two renders on one canvas; extra requests collapse into one redraw
+  if (LV.drawing) { LV.redraw = true; return; }
+  LV.drawing = true;
+  try { await lvDraw1(); } catch (e) { console.warn("pdf draw", e && e.message); }
+  finally { LV.drawing = false; if (LV.redraw) { LV.redraw = false; lvDraw(); } }
+}
+async function lvDraw1() {
   const c = document.getElementById("lvcanvas"); if (!c || !LV.pdf) return;
   const pg = await LV.pdf.getPage(LV.page), box = c.parentElement, w = box.clientWidth || 800, h = box.clientHeight || 600;
   const v0 = pg.getViewport({ scale: 1 }), sc = Math.min(w / v0.width, h / v0.height) * (window.devicePixelRatio || 1);
