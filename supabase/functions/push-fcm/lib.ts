@@ -80,12 +80,12 @@ function escNl(j: string) { let o = "", q = false, e = false;
   return o; }
 export type ServiceAccount = { client_email: string; private_key: string; project_id: string; private_key_id?: string };
 // Non-sensitive fingerprint for support: project, account domain + first 4 chars, key-id prefix, value length, repair used.
-export function describeServiceAccount(sa: ServiceAccount, raw: string, shape: number) {
+export function describeServiceAccount(sa: ServiceAccount, raw: string, shape: number, fixed: string[] = []) {
   const [local, dom] = String(sa.client_email).split("@");
-  return { project: sa.project_id, account: (local || "").slice(0, 4) + "…@" + (dom || "?"), key_id: String(sa.private_key_id || "").slice(0, 8) + "…",
+  return { whitespace_removed_from: fixed, email_shape_ok: /^[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com$/.test(sa.client_email), project: sa.project_id, account: (local || "").slice(0, 4) + "…@" + (dom || "?"), key_id: String(sa.private_key_id || "").slice(0, 8) + "…",
     length: raw.trim().length, stored_as: ["json", "json-string", "base64", "missing '{'", "missing '}'", "missing both braces", "json + raw newlines"][shape] || "other" };
 }
-export function parseServiceAccount(raw: string | undefined | null): { sa?: ServiceAccount; err?: string; shape?: number } {
+export function parseServiceAccount(raw: string | undefined | null): { sa?: ServiceAccount; err?: string; shape?: number; fixed?: string[] } {
   if (!raw || !raw.trim()) return { err: "missing" };
   const t = raw.trim(), shapes = [t, "{" + t, t + "}", "{" + t.replace(/^,|,$/g, "") + "}"];
   // [parser, shape code for describeServiceAccount]
@@ -96,7 +96,12 @@ export function parseServiceAccount(raw: string | undefined | null): { sa?: Serv
     let v: unknown, shape = code; try { v = f(); } catch { continue; }
     if (typeof v === "string") { try { v = JSON.parse(v); shape = 1; } catch { continue; } }
     const o = v as Partial<ServiceAccount> | null;
-    if (o && typeof o === "object" && o.client_email && o.private_key && o.project_id) return { sa: o as ServiceAccount, shape };
+    if (o && typeof o === "object" && o.client_email && o.private_key && o.project_id) {
+      // whitespace is never valid in these identifiers; a wrapped paste puts line breaks inside them ("account not found")
+      const ws = (["client_email", "project_id", "private_key_id"] as const).filter(k => /\s/.test(String(o[k] ?? "")));
+      for (const k of ws) (o as Record<string, string>)[k] = String(o[k]).replace(/\s+/g, "");
+      return { sa: o as ServiceAccount, shape, fixed: ws };
+    }
     if (o && typeof o === "object") return { err: "json-missing-fields:" + ["client_email", "private_key", "project_id"].filter(k => !(o as Record<string, unknown>)[k]).join(",") };
   }
   const cls = (c: string) => /[{}\[\]"]/.test(c) ? "'" + c + "'" : /[A-Za-z0-9+/=]/.test(c) ? "letter/digit" : /\s/.test(c) ? "whitespace" : "other";

@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
   const sa = p.sa;
   try { if (!tok || tok.exp < Date.now()) tok = { v: await accessToken(sa, fetch), exp: Date.now() + 50 * 60e3 }; }
   catch (e) { return new Response(JSON.stringify({ error: "google oauth failed: " + String((e as Error).message || e).slice(0, 160),
-    service_account: describeServiceAccount(sa, Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") || "", p.shape ?? -1) }), { status: 502, headers: { "content-type": "application/json" } }); }
+    service_account: describeServiceAccount(sa, Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") || "", p.shape ?? -1, p.fixed) }), { status: 502, headers: { "content-type": "application/json" } }); }
   const body = await req.json().catch(() => ({})) as { selftest?: boolean };
   if (body.selftest) {
     // Integration self-test (same secret as normal runs): real OAuth token + FCM HTTP v1 with validate_only to a
@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
       headers: { Authorization: "Bearer " + tok.v, "content-type": "application/json" },
       body: JSON.stringify({ validate_only: true, message: { token: "adiak-selftest-invalid-token", notification: { title: "ADIAK", body: "selftest" } } }) });
     const t = await r.text(); let st = ""; try { st = JSON.parse(t)?.error?.status || ""; } catch { /* not json */ }
-    return new Response(JSON.stringify({ selftest: true, oauth: "ok", service_account: describeServiceAccount(sa, Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") || "", p.shape ?? -1), fcm_http: r.status, fcm_status: st,
+    return new Response(JSON.stringify({ selftest: true, oauth: "ok", service_account: describeServiceAccount(sa, Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") || "", p.shape ?? -1, p.fixed), fcm_http: r.status, fcm_status: st,
       verdict: r.status === 400 && st === "INVALID_ARGUMENT" ? "fcm-ok" : r.status === 401 || r.status === 403 ? "credentials-problem" : "unexpected" }),
       { headers: { "content-type": "application/json" } });
   }

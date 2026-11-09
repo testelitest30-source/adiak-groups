@@ -56,4 +56,7 @@ ok(await signJwt({ client_email: SA.client_email, private_key: privateKey.replac
 const d = describeServiceAccount({ ...SA, private_key_id: "abcdef0123456789" }, js.slice(1), parseServiceAccount(js.slice(1)).shape);
 ok(d.stored_as === "missing '{'" && d.account === "svc@…@adiak-x.iam.gserviceaccount.com".replace("svc@…@", "svc…@") && d.key_id === "abcdef01…" && !JSON.stringify(d).includes("PRIVATE"), "support fingerprint: shape, masked account, key-id prefix, no key");
 ok(parseServiceAccount(js).shape === 0 && parseServiceAccount(Buffer.from(js).toString("base64")).shape === 2, "shape codes");
+const wrapped = js.replace('svc@adiak-x', 'svc@adi\nak-x').replace(/\\n/g, "\n");
+const pw = parseServiceAccount(wrapped); ok(pw.sa?.client_email === "svc@adiak-x.iam.gserviceaccount.com" && pw.fixed?.includes("client_email"), "line break inside client_email is removed and reported");
+ok(describeServiceAccount(pw.sa, wrapped, pw.shape, pw.fixed).email_shape_ok === true, "email shape check");
 console.log(`push-fcm: ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
