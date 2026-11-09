@@ -2,7 +2,7 @@
 // Woken by pg_net (after commit) and by the pg_cron sweeper. Auth: x-push-secret == push_config.secret (same as push-send).
 // Secrets: FCM_SERVICE_ACCOUNT_JSON (Supabase Edge secret). SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are provided by the platform.
 // Deployed to production on 2026-11-09 with the owner's approval (verify_jwt = false: authenticated by x-push-secret).
-import { run, accessToken, safeEqual, parseServiceAccount, type Row, type Templates, type Outcome } from "./lib.ts";
+import { run, accessToken, safeEqual, parseServiceAccount, describeServiceAccount, type Row, type Templates, type Outcome } from "./lib.ts";
 const URL_ = Deno.env.get("SUPABASE_URL")!, KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const H = { apikey: KEY, Authorization: "Bearer " + KEY, "content-type": "application/json" };
 const rest = async (path: string, init: RequestInit = {}) => { const r = await fetch(URL_ + "/rest/v1/" + path, { ...init, headers: { ...H, ...(init.headers || {}) } });
@@ -17,7 +17,8 @@ Deno.serve(async (req) => {
   if (!p.sa) return new Response(JSON.stringify({ error: "FCM_SERVICE_ACCOUNT_JSON " + p.err }), { status: 503, headers: { "content-type": "application/json" } });
   const sa = p.sa;
   try { if (!tok || tok.exp < Date.now()) tok = { v: await accessToken(sa, fetch), exp: Date.now() + 50 * 60e3 }; }
-  catch (e) { return new Response(JSON.stringify({ error: "google oauth failed: " + String((e as Error).message || e).slice(0, 160) }), { status: 502, headers: { "content-type": "application/json" } }); }
+  catch (e) { return new Response(JSON.stringify({ error: "google oauth failed: " + String((e as Error).message || e).slice(0, 160),
+    service_account: describeServiceAccount(sa, Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") || "", p.shape ?? -1) }), { status: 502, headers: { "content-type": "application/json" } }); }
   const body = await req.json().catch(() => ({})) as { selftest?: boolean };
   if (body.selftest) {
     // Integration self-test (same secret as normal runs): real OAuth token + FCM HTTP v1 with validate_only to a
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
       headers: { Authorization: "Bearer " + tok.v, "content-type": "application/json" },
       body: JSON.stringify({ validate_only: true, message: { token: "adiak-selftest-invalid-token", notification: { title: "ADIAK", body: "selftest" } } }) });
     const t = await r.text(); let st = ""; try { st = JSON.parse(t)?.error?.status || ""; } catch { /* not json */ }
-    return new Response(JSON.stringify({ selftest: true, oauth: "ok", project: sa.project_id, fcm_http: r.status, fcm_status: st,
+    return new Response(JSON.stringify({ selftest: true, oauth: "ok", service_account: describeServiceAccount(sa, Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") || "", p.shape ?? -1), fcm_http: r.status, fcm_status: st,
       verdict: r.status === 400 && st === "INVALID_ARGUMENT" ? "fcm-ok" : r.status === 401 || r.status === 403 ? "credentials-problem" : "unexpected" }),
       { headers: { "content-type": "application/json" } });
   }

@@ -1,6 +1,6 @@
 // Unit tests for supabase/functions/push-fcm/lib.ts with a mocked FCM (Node 22 strips the TS types).
 // Usage: node tests/edge/push-fcm.test.mjs
-import { buildMessage, classify, run, signJwt, parseServiceAccount, fill, safeEqual } from "../../supabase/functions/push-fcm/lib.ts";
+import { buildMessage, classify, run, signJwt, parseServiceAccount, describeServiceAccount, fill, safeEqual } from "../../supabase/functions/push-fcm/lib.ts";
 import { generateKeyPairSync, createVerify } from "node:crypto";
 let pass = 0, fail = 0; const ok = (c, n) => { c ? pass++ : fail++; console.log((c ? "  ok   " : "  FAIL ") + n); };
 const tpl = { "pres.draw:az": { title: "Püşk nəticəsi: {n} komandadan {pos}-cisiniz", body: "{title}" }, "pres.draw:en": { title: "Draw result: you present #{pos} of {n}", body: "{title}" },
@@ -53,4 +53,7 @@ const nlsa = parseServiceAccount(nl).sa; ok(await signJwt(nlsa, 1700000000).then
 ok(parseServiceAccount("").err === "missing" && /missing-fields:client_email/.test(parseServiceAccount('{"project_id":"x","private_key":"k"}').err), "missing / incomplete → clear error");
 const bad = parseServiceAccount("secret-value-that-must-not-leak"); ok(bad.err && !bad.err.includes("secret-value"), "diagnosis never contains the value");
 ok(await signJwt({ client_email: SA.client_email, private_key: privateKey.replace(/\n/g, "\\n") }, 1700000000).then(j => j.split(".").length === 3), "private key with escaped \\n line breaks still signs");
+const d = describeServiceAccount({ ...SA, private_key_id: "abcdef0123456789" }, js.slice(1), parseServiceAccount(js.slice(1)).shape);
+ok(d.stored_as === "missing '{'" && d.account === "svc@…@adiak-x.iam.gserviceaccount.com".replace("svc@…@", "svc…@") && d.key_id === "abcdef01…" && !JSON.stringify(d).includes("PRIVATE"), "support fingerprint: shape, masked account, key-id prefix, no key");
+ok(parseServiceAccount(js).shape === 0 && parseServiceAccount(Buffer.from(js).toString("base64")).shape === 2, "shape codes");
 console.log(`push-fcm: ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
