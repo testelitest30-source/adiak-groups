@@ -53,11 +53,15 @@ alter publication supabase_realtime add table public.profiles, public.groups, pu
 
 -- Table grants as in production (Supabase default privileges: anon/authenticated/service_role have all table privileges; RLS restricts).
 grant all on all tables in schema public to anon, authenticated, service_role;
+-- ...except these 9 tables, which production had already locked down (verified 2026-11-09 against information_schema.role_table_grants):
+revoke all on public.class_staff, public.classes, public.groups, public.join_ballots, public.kick_ballots, public.kicks, public.messages, public.profiles, public.requests, public.password_vault from anon, authenticated;
+grant select on public.class_staff, public.classes, public.groups, public.join_ballots, public.kick_ballots, public.kicks, public.messages, public.profiles, public.requests to authenticated;
 grant usage, select on all sequences in schema public to anon, authenticated, service_role;
 -- Function grants exactly as in production (pg_proc.proacl on 2026-11-09).
 revoke all on all functions in schema public from public, anon, authenticated, service_role;
 grant execute on all functions in schema public to service_role;
 grant execute on function public._norm_tag(text), public._group_tag_fill(), public._same_class_in_group(), public._tg_prof(), public._tg_grp() to public;
+grant execute on function public._norm_tag(text), public._group_tag_fill(), public._same_class_in_group(), public._tg_prof(), public._tg_grp() to anon, authenticated;
 do $$ declare f record; begin
   for f in select p.oid::regprocedure sig from pg_proc p where p.pronamespace='public'::regnamespace and p.proname not in
     ('_accept','_check_join','_check_kick','_req_admin','_fix_host','_pwgen','_set_temp','_say','_pw_save','_only_students_in_groups',
