@@ -5,7 +5,8 @@
 // - Oxumadan başqa (POST/PATCH/DELETE) sorğular "writes" siyahısına yazılır (yalnız saxta cavab alır)
 import { tables, rpc } from "./fixtures.mjs";
 
-export async function mockSupabase(context, origin) {
+export async function mockSupabase(context, origin, over = {}) {
+  const R = { ...rpc, ...(over.rpc || {}) }, T = { ...tables, ...(over.tables || {}) };
   const log = { leaks: [], writes: [], reads: [] };
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(body) });
 
@@ -17,14 +18,18 @@ export async function mockSupabase(context, origin) {
     const p = url.pathname;
     if (p.startsWith("/rest/v1/rpc/")) {
       const fn = p.slice("/rest/v1/rpc/".length);
-      if (!(fn in rpc)) log.writes.push(`rpc ${fn}`);
-      return json(route, rpc[fn] ?? null);
+      if (!(fn in R)) log.writes.push(`rpc ${fn}`);
+      let body = {}; try { body = JSON.parse(req.postData() || "{}"); } catch {}
+      log.calls = log.calls || []; log.calls.push({ fn, body });
+      const v = R[fn];
+      if (v && typeof v === "object" && v.__error) return json(route, { message: v.__error, code: "P0001" }, 400);
+      return json(route, typeof v === "function" ? v(body) : (v ?? null));
     }
     if (p.startsWith("/rest/v1/")) {
       const t = p.slice("/rest/v1/".length);
       if (req.method() !== "GET" && req.method() !== "HEAD") { log.writes.push(`${req.method()} ${t}`); return json(route, [], 201); }
       log.reads.push(t);
-      let rows = tables[t] ?? [];
+      let rows = T[t] ?? [];
       for (const [k, v] of url.searchParams) {           // sadə "col=eq.val" filtri
         const m = /^eq\.(.*)$/.exec(v);
         if (m && k !== "select") rows = rows.filter((r) => String(r[k]) === m[1]);

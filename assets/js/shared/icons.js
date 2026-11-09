@@ -1,5 +1,17 @@
 /* ADIAK Team Maker — SVG icon set · v1.1.0 */
 const ICONS={
+present:'<rect x="3.5" y="4.5" width="17" height="11" rx="1.6"/><path d="M12 15.5V19"/><path d="M8.5 20h7"/><path d="M8 12l2.5-2.5 2 2L16 8"/>',
+tasks:'<path d="M9 6.5h11"/><path d="M9 12h11"/><path d="M9 17.5h11"/><path d="m3.8 6.4 1.2 1.2 2-2.2"/><path d="m3.8 11.9 1.2 1.2 2-2.2"/><path d="M4 17.5h2.5"/>',
+upload:'<path d="M12 15.5V4.5"/><path d="m7.5 9 4.5-4.5L16.5 9"/><path d="M4.5 15v3.2a1.8 1.8 0 0 0 1.8 1.8h11.4a1.8 1.8 0 0 0 1.8-1.8V15"/>',
+play:'<path d="M8 5.5v13l10.5-6.5z"/>',
+pause:'<path d="M8.5 5.5v13"/><path d="M15.5 5.5v13"/>',
+next:'<path d="M6 5.5v13l9-6.5z"/><path d="M18 5.5v13"/>',
+prev:'<path d="M18 5.5v13l-9-6.5z"/><path d="M6 5.5v13"/>',
+flag:'<path d="M5.5 20.5V4"/><path d="M5.5 4.5h11l-2 4 2 4h-11"/>',
+calendar:'<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16"/><path d="M8.5 3.5v4"/><path d="M15.5 3.5v4"/>',
+megaphone:'<path d="M4.5 10v4a1 1 0 0 0 1 1H8l7 4V5L8 9H5.5a1 1 0 0 0-1 1z"/><path d="M18 9.5a3.5 3.5 0 0 1 0 5"/>',
+layers:'<path d="m12 4 8.5 4.5L12 13 3.5 8.5z"/><path d="m3.5 12.5 8.5 4.5 8.5-4.5"/><path d="m3.5 16.5 8.5 4.5 8.5-4.5"/>',
+expand:'<path d="M9 4.5H4.5V9"/><path d="M15 4.5h4.5V9"/><path d="M9 19.5H4.5V15"/><path d="M15 19.5h4.5V15"/>',
 home:'<path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10.5V20h11v-9.5"/><path d="M10 20v-5h4v5"/>',
 groups:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c.7-3.2 2.9-5 5.5-5s4.8 1.8 5.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.8 14.7c2.4.4 4 2 4.6 4.3"/>',
 user:'<circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-5.8 7-5.8s6.2 2 7 5.8"/>',
