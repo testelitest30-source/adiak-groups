@@ -35,8 +35,8 @@ const out = (p, buf) => { fs.mkdirSync(path.dirname(p), { recursive: true }); fs
     const dir = path.join(RES, `mipmap-${d}`);
     const legacy = await render(page, { mark: 'adiak-mark-black.svg', size: Math.round(48 * k), frac: .86 });
     out(path.join(dir, 'ic_launcher.png'), legacy); out(path.join(dir, 'ic_launcher_round.png'), legacy);
-    // adaptive layers are 108dp; the visible safe zone is the central 66dp circle
-    const fg = await render(page, { mark: 'adiak-mark-black.svg', size: Math.round(108 * k), frac: .56 });
+    // adaptive layers are 108dp; only the central 66dp circle is guaranteed visible (round masks clip the rest)
+    const fg = await render(page, { mark: 'adiak-mark-black.svg', size: Math.round(108 * k), frac: .45 });   // farthest point ≈ 32 dp: inside the 33 dp safe circle
     out(path.join(dir, 'ic_launcher_foreground.png'), fg); out(path.join(dir, 'ic_launcher_monochrome.png'), fg);
     // status-bar notification icon: white silhouette on transparent (24dp)
     out(path.join(RES, `drawable-${d}`, 'ic_stat_adiak.png'), await render(page, { mark: 'adiak-mark-white.svg', size: Math.round(24 * k), frac: .92 }));
