@@ -19,6 +19,11 @@
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <!-- Android 12+: system splash = ADIAK mark on the app canvas; hands over to the in-app intro animation -->
+        <item name="windowSplashScreenBackground">@color/app_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+        <!-- older Android: full-screen splash image -->
         <item name="android:background">@drawable/splash</item>
     </style>
 </resources>

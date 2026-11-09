@@ -272,3 +272,9 @@ kbd{font-family:var(--adia-font-sans);font-size:11px;background:var(--adia-surfa
 @media (max-width:380px){.tile{grid-template-columns:1fr;text-align:center;justify-items:center}.tile .tic{grid-row:auto;margin-bottom:4px}}
 @media (min-width:1400px){.hcard{padding:26px}}
 @media (prefers-reduced-motion:reduce){button,.gr,.tb .ti{transition:none}button:hover:not(:disabled),.gr:hover{transform:none}}
+
+/* ===== ADIAK brand mark (v1.0) ===== */
+.adiak-mark{display:block;width:100%;height:100%}
+.adiak-mark .m1{fill:var(--adia-brand-mark)}.adiak-mark .m2{fill:var(--adia-brand-fold)}
+.blogo{background:none!important;box-shadow:none!important;padding:3px}
+.big-logo{background:none!important;box-shadow:none!important;width:76px;height:76px;padding:4px}

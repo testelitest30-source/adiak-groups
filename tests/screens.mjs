@@ -55,6 +55,7 @@ async function ctxFor(user, width, theme, path) {
   const s = user ? fakeSession(user) : null;
   await context.addInitScript(([s, theme, uid, notes]) => {
     try {
+      sessionStorage.setItem("adiak-intro", "1");
       localStorage.setItem("lang", "az"); localStorage.setItem("theme", theme);
       if (s) { localStorage.setItem(s.key, s.value); localStorage.setItem("sid", "mock-sid"); localStorage.setItem("notes:" + uid, JSON.stringify(notes)); }
     } catch (e) {}

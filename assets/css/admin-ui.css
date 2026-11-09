@@ -220,3 +220,10 @@ input[type=file]::file-selector-button{font:inherit;font-weight:600;border:1px s
 }
 @media (min-width:1500px){.main{padding:48px 64px 80px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ADIAK brand mark (v1.0): white mark on the ink spine, purple on light surfaces */
+.adiak-mark{display:block;width:100%;height:100%}
+.adiak-mark .m1{fill:var(--adia-brand-mark)}.adiak-mark .m2{fill:var(--adia-brand-fold)}
+.brand .logo{background:none!important;padding:4px}
+.adiak-mark.on-ink .m1,.adiak-mark.on-ink .m2{fill:#fff}
+.admlogo{width:56px;height:56px;margin:0 auto 6px}

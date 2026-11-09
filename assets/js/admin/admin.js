@@ -56,7 +56,7 @@ async function call(fn,args,ok){const {data,error}=await sb.rpc(fn,args);if(erro
 
 /* ---------- 2. GİRİŞ ---------- */
 const normId=v=>{v=String(v||"").trim().toLowerCase();return v.includes("@")?v:v+"@classroom.app"};
-function loginView(msg){$("#root").innerHTML=`<div class="panel login">${admLang()}<div style="font-size:38px">${ic("wrench")}</div><h2>ADIAK Admin</h2><p class="mu">Sign in with an account that has panel access.</p><label class="l">ID</label><input id="li" placeholder="for example ali.m" autocapitalize="none" autocomplete="username"><label class="l">Password</label><input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><div class="err">${esc(msg||"")}</div><button style="width:100%" onclick="doLogin()">Sign in</button></div>`}
+function loginView(msg){$("#root").innerHTML=`<div class="panel login">${admLang()}<div class="admlogo">${adiakMark()}</div><h2>ADIAK Admin</h2><p class="mu">Sign in with an account that has panel access.</p><label class="l">ID</label><input id="li" placeholder="for example ali.m" autocapitalize="none" autocomplete="username"><label class="l">Password</label><input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><div class="err">${esc(msg||"")}</div><button style="width:100%" onclick="doLogin()">Sign in</button></div>`}
 async function doLogin(){const {data,error}=await sb.auth.signInWithPassword({email:normId(val("li")),password:val("lp")});if(error){loginView(tr("Wrong ID or password"));return}uid=data.user.id;await enter()}
 function noAccess(){$("#root").innerHTML=`<div class="panel login">${admLang()}<div style="font-size:38px">${ic("lock")}</div><h2>No access</h2><p class="mu">This account is not allowed to open the admin panel. An admin can allow it in People → Permissions.</p><div class="row"><button class="s" onclick="signOut()">Sign out</button><a href="../"><button>Student site</button></a></div></div>`}
 async function signOut(){if(chan){try{await sb.removeChannel(chan)}catch(e){}chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}uid=null;ME=null;loginView()}
@@ -104,7 +104,7 @@ function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=
  const sy=window.scrollY,mn=$(".main"),ms=mn?mn.scrollTop:0;
  const tabs=visibleTabs();if(!tabs.find(t=>t.k===tab))tab=tabs[0].k;
  const page={dash,people,groups,chats,pass:passPage,day,import:imp,settings,classes:clsPage,tags:tagPage,feedback:fbPage}[tab]();
- $("#root").innerHTML=`<div class="app"><aside class="side"><div class="brand"><div class="logo">${ic("wrench")}</div><div><b>ADIAK Admin</b><small>Team Maker control panel</small></div></div>
+ $("#root").innerHTML=`<div class="app"><aside class="side"><div class="brand"><div class="logo">${adiakMark("on-ink")}</div><div><b>ADIAK Admin</b><small>Team Maker control panel</small></div></div>
   <nav class="nav">${tabs.map(t=>`<button class="${tab===t.k?"on":""}" onclick="switchTab('${t.k}')"><span class="i">${t.i}</span>${t.t}</button>`).join("")}</nav>
   ${admLang()}<div class="me"><div class="row">${avatar(ME)}<div class="grow"><b>${esc(ME.name)}</b><div style="margin-top:3px">${roleChip(ME)}</div></div></div><button onclick="signOut()">Sign out</button><a href="../">← Student site</a></div></aside>
   <main class="main">${page}</main></div>`;

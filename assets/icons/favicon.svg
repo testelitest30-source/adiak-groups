@@ -1,15 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#4f46e5"/>
-      <stop offset="1" stop-color="#7c3aed"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="8" fill="url(#bg)"/>
-  <g transform="translate(4 4)" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="9" cy="8" r="3.2"/>
-    <path d="M3.5 19.5c.7-3.2 2.9-5 5.5-5s4.8 1.8 5.5 5"/>
-    <circle cx="17" cy="9" r="2.5"/>
-    <path d="M15.8 14.7c2.4.4 4 2 4.6 4.3"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 50 840 880" role="img" aria-label="ADIAK">
+<defs><clipPath id="rl-purple"><polygon points="392.5,400 566.6,400 883.5,960 694,960"/></clipPath></defs>
+  <circle cx="455" cy="160" r="96" fill="#7959D6"/>
+  <path fill="#7959D6" d="M185 295 L730 295 Q748 295 760 309 L795 352 Q808 374 783 378 L132 378 Q104 374 120 352 L160 309 Q171 295 185 295 Z"/>
+  <path fill="#7959D6" d="M60 915 L300 452 Q309 432 330 432 L566 432 Q587 432 596 452 L858 915 L670 915 L482 566 Q458 524 434 566 L245 915 Z"/>
+  <path fill="#7959D6" d="M290 832 C 380 700 520 660 697 630 L 772 762 C 560 772 380 800 250 915 Z"/>
+  <path fill="#6846C9" clip-path="url(#rl-purple)" d="M290 832 C 380 700 520 660 697 630 L 772 762 C 560 772 380 800 250 915 Z"/>
 </svg>

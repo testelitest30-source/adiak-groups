@@ -45,7 +45,7 @@ const installBox=()=>{if(isStandalone())return"";
 // Akademik qrup nömrəsi soruşan ekran (tələbənin nömrəsi yoxdursa, sayta girməzdən əvvəl)
 const classTagCard=()=>{if(CHOICES===null&&!window.__ld){window.__ld=1;loadChoices().then(()=>{window.__ld=0;render()})}
  const ch=CHOICES||[];
- return`<div class="card login"><div class="big-logo">${ic("cap")}</div><h2>${tr("Choose your class")}</h2><p class="mu">${tr("Pick the class you study in. You can set it only once; an admin can change it later.")}</p>
+ return`<div class="card login"><div class="big-logo">${adiakMark()}</div><h2>${tr("Choose your class")}</h2><p class="mu">${tr("Pick the class you study in. You can set it only once; an admin can change it later.")}</p>
   ${CHOICES===null?`<p class="mu">${tr("Loading…")}</p>`:ch.length?`<div class="clgrid" style="margin-top:8px">${ch.map(c=>`<button class="clcard" onclick="pickClass('${esc(c.tag)}')"><div class="cltag">${esc(c.tag)}</div>${c.title?`<div class="mu">${esc(c.title)}</div>`:""}</button>`).join("")}</div>`:`<p class="mu">${tr("No classes have been created yet. Ask your class representative or an admin.")}</p>`}
   <button class="s" onclick="logout()">${tr("Log out")}</button></div>`};
 /* ================= ANA SƏHİFƏ (dashboard), YAN MENYU, SİNİF SEÇİMİ ================= */
@@ -82,7 +82,7 @@ const homePage=()=>hcard()+homeMid()+chartCard()+homeCards();
 const NAV=()=>[["home",ic("home"),tr("Home"),""],["groups",ic("groups"),tr("Groups"),""],["chat",ic("chat"),tr("Chat"),ub(totalUnread())],["req",ic("inbox"),tr("Requests & idle"),ub(inboxCount())],["notes",ic("bell"),tr("Notifications"),ub(unreadNotes())],["tools",ic("tools"),tr("Tools"),""],["settings",ic("settings"),tr("Settings"),""]];
 // Masaüstü yan menyu
 const sideNav=()=>{const u=ME(),st=isStaff(u);
- return`<aside class="side"><div class="brand"><span class="blogo">${ic("groups")}</span><div><b>ADIAK</b><small>Team Maker</small></div></div>
+ return`<aside class="side"><div class="brand"><span class="blogo">${adiakMark()}</span><div><b>ADIAK</b><small>Team Maker</small></div></div>
   <button class="palbtn" onclick="openPalette()" aria-label="${tr("Search")}"><span>${ic("search")} ${tr("Search")}</span><kbd>Ctrl K</kbd></button>
   ${st&&ACLASS?`<button class="clsbtn" ${CLS.length>1?'onclick="leaveClass()"':""}><span>${ic("school")} ${esc(ACLASS)}</span>${CLS.length>1?`<span>${ic("swap")}</span>`:""}</button>`:""}
   <nav class="nav">${NAV().map(([k,i,t,b])=>`<button class="${tab===k?"on":""}" onclick="goTab('${k}')"><span class="ni">${i}</span><span>${t}</span>${b}</button>`).join("")}</nav>
@@ -227,7 +227,7 @@ function view(){
  const stage=x=>`<div class="stage"><i class="blob b1"></i><i class="blob b2"></i><div class="langfix">${langSw()}</div>${x}</div>`;
  if(screen==="boot")return stage(`<div class="card login" style="text-align:center"><div class="dots" role="status" aria-label="${tr("Loading…")}"><i></i><i></i><i></i></div></div>`);
  if(screen==="setup")return`<div class="card login"><h2>Setup needed</h2><p>Open <b>assets/js/shared/config.js</b> and paste your Supabase URL and anon key.</p></div>`;
- if(screen==="login")return stage(`<div class="card login"><div style="text-align:center"><div class="big-logo">${ic("groups")}</div><h2 style="margin:4px 0">ADIAK Team Maker</h2><div class="mu">${tr("Build your presentation team")}</div></div><p class="mu">${tr("Type your ID and password, then press Enter. Forgot it? Ask an admin to reset it.")}</p>
+ if(screen==="login")return stage(`<div class="card login"><div style="text-align:center"><div class="big-logo">${adiakMark()}</div><h2 style="margin:4px 0">ADIAK Team Maker</h2><div class="mu">${tr("Build your presentation team")}</div></div><p class="mu">${tr("Type your ID and password, then press Enter. Forgot it? Ask an admin to reset it.")}</p>
   <input id="idin" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="${tr("Your ID (for example ali.m)")}" value="${esc(lastId())}" onkeydown="if(event.key==='Enter')$('#pw').focus()">
   <input id="pw" type="password" autocomplete="current-password" placeholder="${tr("Password")}" onkeydown="if(event.key==='Enter')login()"><div class="err">${esc(err)}</div><button onclick="login()">${tr("Log in")}</button></div>`);
  if(screen==="setpw")return stage(`<div class="card login"><h2>${ic("lock")} ${tr("Set a new password")}</h2><p class="mu">${tr("Your temporary password stops working after this.")}</p>

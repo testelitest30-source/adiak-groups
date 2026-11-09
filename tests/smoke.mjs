@@ -27,6 +27,7 @@ async function open({ user = null, width = 1280, height = 800, scheme = "light",
   const s = user ? fakeSession(user) : null;
   await context.addInitScript(([s, theme]) => {
     try {
+      sessionStorage.setItem("adiak-intro", "1");          // launch animation has its own test (tests/intro.mjs)
       if (sessionStorage.getItem("__seeded")) return;      // yalnız ilk açılışda (reload testləri üçün)
       sessionStorage.setItem("__seeded", "1");
       localStorage.setItem("lang", "az");
