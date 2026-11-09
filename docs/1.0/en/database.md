@@ -16,7 +16,7 @@ Production had 18 migrations (`20261009113759` … `20261031205544`) that were n
 | `20261109100500_harden_existing` (Batch C) | revoke risky grants on existing objects |
 | `20261109100600_fix_delete_message` | message delete bug fix |
 | `20261109100700_academics` · `100800_rate_limit_existing` · `100900_ops` | assignments/announcements/issues, rate limits, Control Center read models |
-| `supabase/pending/batchB_cron_jobs.sql` | pg_cron jobs (needs approval) |
+| `supabase/migrations/20261109101100_cron_jobs.sql` | pg_cron jobs (reminders, push sweep, purge), applied 2026-11-09 |
 
 ## Verify locally
 ```

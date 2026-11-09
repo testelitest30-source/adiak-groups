@@ -39,7 +39,7 @@ export function classify(status: number, body: string): Outcome {
 const b64u = (b: ArrayBuffer | Uint8Array | string) => { const bytes = typeof b === "string" ? new TextEncoder().encode(b) : new Uint8Array(b as ArrayBuffer);
   let s = ""; bytes.forEach(x => s += String.fromCharCode(x)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
 export async function signJwt(sa: { client_email: string; private_key: string }, now = Math.floor(Date.now() / 1000)) {
-  const pem = sa.private_key.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const pem = sa.private_key.replace(/\\n/g, "\n").replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
   const der = Uint8Array.from(atob(pem), c => c.charCodeAt(0));
   const key = await crypto.subtle.importKey("pkcs8", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
   const h = b64u(JSON.stringify({ alg: "RS256", typ: "JWT" }));
@@ -51,7 +51,8 @@ export async function accessToken(sa: { client_email: string; private_key: strin
   const jwt = await signJwt(sa);
   const r = await fetchFn("https://oauth2.googleapis.com/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
     body: "grant_type=" + encodeURIComponent("urn:ietf:params:oauth:grant-type:jwt-bearer") + "&assertion=" + jwt });
-  if (!r.ok) throw new Error("oauth " + r.status);
+  if (!r.ok) { let why = ""; try { const j = await r.json(); why = [j.error, j.error_description].filter(Boolean).join(": "); } catch { /* */ }
+    throw new Error(("oauth " + r.status + " " + why).trim().slice(0, 160)); }   // Google's error code/description only, never the key
   return (await r.json()).access_token as string;
 }
 // one run: claim batches and deliver until the queue is empty or the time budget is used
@@ -70,3 +71,27 @@ export async function run(deps: { claim: (n: number) => Promise<Row[]>; mark: (i
   return { processed: n, sent: ok };
 }
 export function safeEqual(a: string, b: string) { if (a.length !== b.length) return false; let x = 0; for (let i = 0; i < a.length; i++) x |= a.charCodeAt(i) ^ b.charCodeAt(i); return x === 0; }
+// FCM_SERVICE_ACCOUNT_JSON as stored by the owner: raw JSON, a JSON-encoded string, base64 of the JSON, or the JSON body
+// pasted without its outer braces. Returns the account or a NON-sensitive diagnosis (never any part of the value).
+// real line breaks inside JSON string literals (a private key whose \\n escapes were turned into newlines) -> \\n
+function escNl(j: string) { let o = "", q = false, e = false;
+  for (const c of j) { if (q && !e && (c === "\n" || c === "\r")) { if (c === "\n") o += "\\n"; continue; }
+    o += c; if (e) e = false; else if (c === "\\") e = q; else if (c === '"') q = !q; }
+  return o; }
+export type ServiceAccount = { client_email: string; private_key: string; project_id: string };
+export function parseServiceAccount(raw: string | undefined | null): { sa?: ServiceAccount; err?: string } {
+  if (!raw || !raw.trim()) return { err: "missing" };
+  const t = raw.trim(), shapes = [t, "{" + t, t + "}", "{" + t.replace(/^,|,$/g, "") + "}"];
+  const tries: Array<() => unknown> = [() => JSON.parse(atob(t.replace(/\s+/g, "")))];
+  for (const x of shapes) tries.unshift(() => JSON.parse(x)), tries.push(() => JSON.parse(escNl(x)));
+  for (const f of tries) {
+    let v: unknown; try { v = f(); } catch { continue; }
+    if (typeof v === "string") { try { v = JSON.parse(v); } catch { continue; } }
+    const o = v as Partial<ServiceAccount> | null;
+    if (o && typeof o === "object" && o.client_email && o.private_key && o.project_id) return { sa: o as ServiceAccount };
+    if (o && typeof o === "object") return { err: "json-missing-fields:" + ["client_email", "private_key", "project_id"].filter(k => !(o as Record<string, unknown>)[k]).join(",") };
+  }
+  const cls = (c: string) => /[{}\[\]"]/.test(c) ? "'" + c + "'" : /[A-Za-z0-9+/=]/.test(c) ? "letter/digit" : /\s/.test(c) ? "whitespace" : "other";
+  let pos = ""; try { JSON.parse("{" + t); } catch (e) { const m = /position (\d+)/.exec(String((e as Error).message)); pos = m ? ", '{'+value fails at " + m[1] : ""; }
+  return { err: "not-json (length " + t.length + ", starts with " + cls(t[0]) + ", ends with " + cls(t[t.length - 1]) + pos + ")" };
+}

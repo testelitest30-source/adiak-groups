@@ -1,6 +1,6 @@
 // Unit tests for supabase/functions/push-fcm/lib.ts with a mocked FCM (Node 22 strips the TS types).
 // Usage: node tests/edge/push-fcm.test.mjs
-import { buildMessage, classify, run, signJwt, fill, safeEqual } from "../../supabase/functions/push-fcm/lib.ts";
+import { buildMessage, classify, run, signJwt, parseServiceAccount, fill, safeEqual } from "../../supabase/functions/push-fcm/lib.ts";
 import { generateKeyPairSync, createVerify } from "node:crypto";
 let pass = 0, fail = 0; const ok = (c, n) => { c ? pass++ : fail++; console.log((c ? "  ok   " : "  FAIL ") + n); };
 const tpl = { "pres.draw:az": { title: "Püşk nəticəsi: {n} komandadan {pos}-cisiniz", body: "{title}" }, "pres.draw:en": { title: "Draw result: you present #{pos} of {n}", body: "{title}" },
@@ -40,4 +40,17 @@ ok(v.verify(publicKey, Buffer.from(s, "base64url")), "JWT signature verifies (RS
 const claims = JSON.parse(Buffer.from(c, "base64url"));
 ok(claims.scope === "https://www.googleapis.com/auth/firebase.messaging" && claims.exp - claims.iat === 3600, "JWT scope + 1 h expiry");
 ok(safeEqual("abc", "abc") && !safeEqual("abc", "abd") && !safeEqual("abc", "ab"), "constant-time secret compare");
+// FCM_SERVICE_ACCOUNT_JSON stored in any of the common shapes; the diagnosis never echoes the value
+const SA = { type: "service_account", project_id: "adiak-x", client_email: "svc@adiak-x.iam.gserviceaccount.com", private_key: privateKey };
+const js = JSON.stringify(SA);
+ok(parseServiceAccount(js).sa?.project_id === "adiak-x", "service account: raw JSON");
+ok(parseServiceAccount(JSON.stringify(js)).sa?.project_id === "adiak-x", "service account: JSON-encoded string");
+ok(parseServiceAccount(Buffer.from(js).toString("base64")).sa?.project_id === "adiak-x", "service account: base64");
+ok(parseServiceAccount(js.slice(1, -1)).sa?.project_id === "adiak-x", "service account: pasted without outer braces");
+ok(parseServiceAccount(js.slice(1)).sa?.project_id === "adiak-x" && parseServiceAccount(js.slice(0, -1)).sa?.project_id === "adiak-x", "service account: missing opening or closing brace");
+const nl = js.slice(1).replace(/\\n/g, "\n"); ok(parseServiceAccount(nl).sa?.private_key.includes("\n"), "service account: real line breaks inside the private key + missing brace");
+const nlsa = parseServiceAccount(nl).sa; ok(await signJwt(nlsa, 1700000000).then(j => j.split(".").length === 3), "…and that key still signs");
+ok(parseServiceAccount("").err === "missing" && /missing-fields:client_email/.test(parseServiceAccount('{"project_id":"x","private_key":"k"}').err), "missing / incomplete → clear error");
+const bad = parseServiceAccount("secret-value-that-must-not-leak"); ok(bad.err && !bad.err.includes("secret-value"), "diagnosis never contains the value");
+ok(await signJwt({ client_email: SA.client_email, private_key: privateKey.replace(/\n/g, "\\n") }, 1700000000).then(j => j.split(".").length === 3), "private key with escaped \\n line breaks still signs");
 console.log(`push-fcm: ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
