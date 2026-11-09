@@ -1,0 +1,56 @@
+-- Regression after all migrations incl. Batch C: every client RPC and read the app uses still works for the right persona.
+select test.as(test.id('s1'));
+select test.eq((select count(*)::int from public.profiles), 9, 'student reads class profiles');
+select test.ok((select count(*) from public.groups) = 2 and (select count(*) from public.messages) >= 0 and (select count(*) from public.app_settings) = 1,
+  'student reads groups/messages/app_settings');
+select test.lives($q$select public.claim_session('sid-test-1')$q$, 'claim_session (auth rule unchanged)');
+select test.lives($q$select public.update_me('Student One', null)$q$, 'update_me');
+select test.lives($q$select public.send_message('g:1', 'hello')$q$, 'send_message g:');
+select test.lives($q$select public.send_message('all', 'hello all')$q$, 'send_message all');
+select id as mid from public.messages where body = 'hello' \gset
+select test.lives(format('select public.send_reply(''g:1'', ''re'', null, %s)', :mid), 'send_reply');
+select test.lives(format('select public.edit_message(%s, ''hello!'')', :mid), 'edit_message');
+select test.lives(format('select public.toggle_reaction(%s, ''👍'')', :mid), 'toggle_reaction');
+select test.lives(format('select public.delete_message(%s)', :mid), 'delete_message');
+select test.as_db();
+insert into storage.objects(bucket_id, name, owner) values ('chat-files', test.id('s1') || '/1-a-file.pdf', test.id('s1')), ('stickers', test.id('s1') || '/st.png', test.id('s1'));
+select test.as(test.id('s1'));
+select test.lives(format($q$select public.send_file('g:1', '%s/1-a-file.pdf', 'file.pdf', 'application/pdf', 100, '')$q$, test.id('s1')), 'send_file');
+select test.lives(format($q$select public.add_sticker('%s/st.png')$q$, test.id('s1')), 'add_sticker');
+select test.lives($q$select public.send_sticker('g:1', (select id from public.stickers limit 1))$q$, 'send_sticker');
+select test.lives($q$select public.delete_sticker((select id from public.stickers limit 1))$q$, 'delete_sticker');
+select test.lives($q$select public.send_feedback('works fine')$q$, 'send_feedback');
+select test.lives($q$select public.send_invite(1, test.id('s6'))$q$, 'send_invite (host)');
+select test.lives($q$select public.cancel_invite((select id from public.invites limit 1))$q$, 'cancel_invite');
+select test.lives($q$select public.start_kick(test.id('s3'))$q$, 'start_kick');
+select test.as(test.id('s2'));
+select test.lives($q$select public.vote_kick((select id from public.kicks limit 1), false)$q$, 'vote_kick');
+select test.as(test.id('s6'));
+select test.lives($q$select public.request_join(1)$q$, 'request_join');
+select test.lives($q$select public.cancel_request(1)$q$, 'cancel_request');
+select test.lives($q$select public.create_group('New Team', 4)$q$, 'create_group');
+select test.lives($q$select public.leave_group()$q$, 'leave_group');
+select test.as(test.id('s1'));
+select test.lives($q$select * from public.class_choices()$q$, 'class_choices');
+select test.throws($q$select public.set_my_password_copy('wrong')$q$, 'not your current password', 'set_my_password_copy callable (validates password)');
+select test.as(test.id('tpres'));
+select test.lives($q$select * from public.staff_classes()$q$, 'staff_classes');
+select test.lives($q$select public.add_points(test.id('s2'), 3)$q$, 'add_points (staff)');
+select test.lives($q$select public.admin_move_member(test.id('s6'), 2)$q$, 'admin_move_member');
+select test.lives($q$select public.admin_remove_member(test.id('s6'))$q$, 'admin_remove_member');
+select test.as(test.id('admin'));
+select test.lives($q$select public.admin_set_perms(test.id('tnone'), array['points','presentations'])$q$, 'admin_set_perms accepts presentations');
+select test.lives($q$select public.admin_set_staff(test.id('tnone'), 'c1', 'teacher', array['points','presentations'])$q$, 'admin_set_staff accepts presentations');
+select test.lives($q$select public.admin_set_setting('max_groups', '8')$q$, 'admin_set_setting');
+select test.lives($q$select * from public.admin_list_passwords()$q$, 'admin_list_passwords');
+-- hardened: internal helpers and push targets are no longer callable by clients
+select test.as(test.id('s1'));
+select test.throws('select * from public.push_targets(1)', 'permission denied', 'push_targets no longer leaks other users'' push keys');
+select test.throws($q$select public._tags_eval(auth.uid())$q$, 'permission denied', '_tags_eval not callable by clients');
+select test.throws($q$select public._perm(auth.uid(), 'admin')$q$, 'permission denied', '_perm not callable by clients');
+select test.throws($q$insert into public.app_settings values ('x','y')$q$, 'permission denied', 'no direct table writes (grant revoked)');
+select test.throws($q$select * from public.push_config$q$, 'permission denied', 'push_config not readable');
+select test.as_anon();
+select test.throws($q$select public._same_class_in_group()$q$, 'permission denied', 'anon cannot execute trigger helpers');
+select test.as_service();
+select test.lives('select * from public.push_targets(1)', 'push-send (service role) still reads push targets');

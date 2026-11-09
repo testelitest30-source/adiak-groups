@@ -1,0 +1,35 @@
+-- Rubric & feedback: validated criteria, server-computed totals, reviewer identity, publish, append-only history.
+select test.mk_event() as e \gset
+select test.as(test.id('tpres'));
+select test.throws(format($q$select public.pres_rubric_save(%s, '[]')$q$, :e), 'invalid rubric', 'empty rubric rejected');
+select test.throws(format($q$select public.pres_rubric_save(%s, '[{"key":"a","label":"A","max":0}]')$q$, :e), 'invalid rubric', 'max 0 rejected');
+select test.throws(format($q$select public.pres_rubric_save(%s, '[{"key":"a","label":"A","max":5},{"key":"a","label":"B","max":5}]')$q$, :e), 'invalid rubric', 'duplicate key rejected');
+select test.throws(format($q$select public.pres_rubric_save(%s, '[{"key":"a","label":"A","max":5,"weight":0}]')$q$, :e), 'invalid rubric', 'weight 0 rejected');
+select test.lives(format($q$select public.pres_rubric_save(%s, '[{"key":"content","label":"Content","max":10,"weight":2},{"key":"delivery","label":"Delivery","max":5,"weight":1}]')$q$, :e), 'valid rubric saved');
+select test.throws(format($q$select public.pres_score(%s, 1, '{"content":8,"delivery":4}')$q$, :e), 'once the presentation is live', 'no scores before live');
+select public.pres_draw(:e, 0); select public.live_start(:e, 0);
+select test.throws(format($q$select public.pres_score(%s, 1, '{"content":8}')$q$, :e), 'every criterion', 'missing criterion rejected');
+select test.throws(format($q$select public.pres_score(%s, 1, '{"content":11,"delivery":4}')$q$, :e), 'whole number from 0 to 10', 'score above max rejected');
+select test.throws(format($q$select public.pres_score(%s, 1, '{"content":7.5,"delivery":4}')$q$, :e), 'whole number', 'fractional score rejected');
+select test.throws(format($q$select public.pres_score(%s, 1, '{"content":8,"delivery":4,"extra":1}')$q$, :e), 'nothing else', 'unknown criterion rejected');
+select test.throws(format($q$select public.pres_score(%s, 3, '{"content":8,"delivery":4}')$q$, :e), 'not part', 'team outside the event rejected');
+select test.lives(format($q$select public.pres_score(%s, 1, '{"content":8,"delivery":4}', 'Clear structure')$q$, :e), 'staff scores team 1');
+select test.as_db();
+select test.eq((select total from public.pres_scores where event_id = :e and group_id = 1), 80.00::numeric, 'total computed server-side: (8/10*2 + 4/5*1)/3*100 = 80');
+select test.eq((select reviewer from public.pres_scores where event_id = :e), test.id('tpres'), 'reviewer identity from auth, not from input');
+select test.as(test.id('s1'));
+select test.eq((select count(*)::int from public.pres_scores where event_id = :e), 0, 'team cannot see unpublished scores');
+select test.throws(format($q$select public.pres_score(%s, 1, '{"content":10,"delivery":5}')$q$, :e), 'permission', 'team cannot score itself');
+select test.throws($q$update public.pres_scores set total = 100$q$, 'permission denied', 'no direct write path to scores');
+select test.as(test.id('tpres'));
+select test.lives(format($q$select public.pres_score(%s, 1, '{"content":9,"delivery":5}', 'Revised after Q&A')$q$, :e), 'reviewer revises the score');
+select public.pres_publish_scores(:e, true);
+select test.as(test.id('s2'));
+select test.eq((select count(*)::int from public.pres_scores where event_id = :e and group_id = 1), 1, 'team sees only the current published score');
+select test.eq((select total from public.pres_scores where event_id = :e and group_id = 1), 93.33::numeric, 'revised total');
+select test.as(test.id('s4'));
+select test.eq((select count(*)::int from public.pres_scores where event_id = :e and group_id = 1), 0, 'other team cannot see team 1 feedback');
+select test.as_db();
+select test.eq((select count(*)::int from public.pres_scores where event_id = :e and group_id = 1), 2, 'review history preserved (2 rows)');
+select test.throws(format('update public.pres_scores set total = 50 where event_id = %s', :e), 'protected', 'scores immutable');
+select test.ok(exists(select 1 from public.notifications where kind = 'pres.scores'), 'teams notified on publish');

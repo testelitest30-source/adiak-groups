@@ -1,16 +1,16 @@
 /* sw.js - service worker: sayt tətbiq kimi yüklənə bilsin və şəbəkə yox olanda açılış ekranı görünsün.
    Qayda: həmişə ƏVVƏL İNTERNETDƏN yükləyir (yeni versiya dərhal görünür), internet yoxdursa yaddaşdakı surəti göstərir.
    Supabase və başqa saytlara (başqa mənbə) toxunmur. */
-const V = "adiak-v7"; // v7: Purple Edition tələbə saytı (tokens/purple CSS + yerli şriftlər) — versiya artırılır ki, köhnə keş silinsin
+const V = "adiak-v10"; // v9: ADIAK 1.0 brand (logo, launch animation) // v8: + admin "Ledger" (admin-ui.css + admin şriftləri); v7: Purple Edition tələbə saytı — versiya artırılır ki, köhnə keş silinsin
 const SHELL = [
   "./", "index.html", "manifest.webmanifest",
   "assets/vendor/supabase.js",
-  "assets/css/tokens.css", "assets/css/style.css", "assets/css/features.css", "assets/css/purple.css", "assets/css/admin.css",
+  "assets/css/tokens.css", "assets/css/style.css", "assets/css/features.css", "assets/css/purple.css", "assets/css/admin.css", "assets/css/admin-ui.css",
   "assets/fonts/inter-latin-wght-normal.woff2", "assets/fonts/inter-latin-ext-wght-normal.woff2",
   "assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2", "assets/fonts/plus-jakarta-sans-latin-ext-wght-normal.woff2",
-  "assets/js/shared/config.js", "assets/js/shared/i18n.js", "assets/js/shared/icons.js",
-  "assets/js/app/core.js", "assets/js/app/pages.js", "assets/js/app/extras.js", "assets/js/app/main.js", "assets/js/app/native.js",
-  "admin/index.html", "assets/js/admin/admin.js", "assets/js/admin/i18n-admin.js",
+  "assets/js/shared/intro.js", "assets/js/shared/config.js", "assets/js/shared/i18n.js", "assets/js/shared/icons.js",
+  "assets/js/app/core.js", "assets/js/app/pages.js", "assets/js/app/extras.js", "assets/js/app/pres.js", "assets/js/app/live.js", "assets/js/app/studio.js", "assets/js/app/main.js", "assets/js/app/native.js",
+  "admin/index.html", "assets/js/admin/admin.js", "assets/js/admin/i18n-admin.js", "assets/js/admin/control.js",
   "assets/icons/favicon.svg", "favicon.ico",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png"
 ];

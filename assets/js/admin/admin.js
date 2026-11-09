@@ -56,7 +56,7 @@ async function call(fn,args,ok){const {data,error}=await sb.rpc(fn,args);if(erro
 
 /* ---------- 2. GİRİŞ ---------- */
 const normId=v=>{v=String(v||"").trim().toLowerCase();return v.includes("@")?v:v+"@classroom.app"};
-function loginView(msg){$("#root").innerHTML=`<div class="panel login">${admLang()}<div style="font-size:38px">${ic("wrench")}</div><h2>ADIAK Admin</h2><p class="mu">Sign in with an account that has panel access.</p><label class="l">ID</label><input id="li" placeholder="for example ali.m" autocapitalize="none" autocomplete="username"><label class="l">Password</label><input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><div class="err">${esc(msg||"")}</div><button style="width:100%" onclick="doLogin()">Sign in</button></div>`}
+function loginView(msg){$("#root").innerHTML=`<div class="panel login">${admLang()}<div class="admlogo">${adiakMark()}</div><h2>ADIAK Admin</h2><p class="mu">Sign in with an account that has panel access.</p><label class="l">ID</label><input id="li" placeholder="for example ali.m" autocapitalize="none" autocomplete="username"><label class="l">Password</label><input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><div class="err">${esc(msg||"")}</div><button style="width:100%" onclick="doLogin()">Sign in</button></div>`}
 async function doLogin(){const {data,error}=await sb.auth.signInWithPassword({email:normId(val("li")),password:val("lp")});if(error){loginView(tr("Wrong ID or password"));return}uid=data.user.id;await enter()}
 function noAccess(){$("#root").innerHTML=`<div class="panel login">${admLang()}<div style="font-size:38px">${ic("lock")}</div><h2>No access</h2><p class="mu">This account is not allowed to open the admin panel. An admin can allow it in People → Permissions.</p><div class="row"><button class="s" onclick="signOut()">Sign out</button><a href="../"><button>Student site</button></a></div></div>`}
 async function signOut(){if(chan){try{await sb.removeChannel(chan)}catch(e){}chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}uid=null;ME=null;loginView()}
@@ -87,7 +87,9 @@ async function load(tables){
 /* ---------- 4. ÜMUMİ GÖRÜNÜŞ ---------- */
 // Hər tab üçün lazım olan yetki
 const TABS=[["dash",ic("chart"),"Dashboard","panel"],["people",ic("groups"),"People","panel"],["groups",ic("puzzle"),"Groups","panel"],["classes",ic("school"),"Classes","classes"],["tags",ic("tag"),"Tags","tags"],["feedback",ic("chat"),"Feedback","feedback"],["chats",ic("chat"),"Chats","chats"],["pass",ic("key"),"Passwords","passwords"],["day",ic("archive"),"Close the day","admin"],["import",ic("import"),"Import names","admin"],["settings",ic("settings"),"Settings","admin"]];
-const visibleTabs=()=>isStar()?[{k:"classes",i:ic("school"),t:"My classes"}]:TABS.filter(t=>(t[3]==="classes"||t[3]==="tags"||t[3]==="feedback")?has("admin"):has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
+// ADIAK 1.0 (control.js): "ops" = admin modules (shown only when the server has them), "owner" = owner only
+const XADM={};
+const visibleTabs=()=>isStar()?[{k:"classes",i:ic("school"),t:"My classes"}]:TABS.filter(t=>t[3]==="owner"?window.ADM_OWNER===true:t[3]==="ops"?(has("admin")&&!!(window.CC&&CC.acc)):(t[3]==="classes"||t[3]==="tags"||t[3]==="feedback")?has("admin"):has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
 // Android tətbiqində Back üçün bölmə yığını (yalnız native.js istifadə edir; brauzer tarixçəsinə toxunmur).
 // Eyni bölmə yığında varsa, ona qədər kəsilir (dublikat/loop yoxdur). y = həmin bölmədəki scroll mövqeyi.
 let admStack=[],admBacking=false;
@@ -103,8 +105,8 @@ function adminBack(){
 function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=true;return}if(typingNow()){pendingDraw=true;return}pendingDraw=false;
  const sy=window.scrollY,mn=$(".main"),ms=mn?mn.scrollTop:0;
  const tabs=visibleTabs();if(!tabs.find(t=>t.k===tab))tab=tabs[0].k;
- const page={dash,people,groups,chats,pass:passPage,day,import:imp,settings,classes:clsPage,tags:tagPage,feedback:fbPage}[tab]();
- $("#root").innerHTML=`<div class="app"><aside class="side"><div class="brand"><div class="logo">${ic("wrench")}</div><div><b>ADIAK Admin</b><small>Team Maker control panel</small></div></div>
+ const page=({dash,people,groups,chats,pass:passPage,day,import:imp,settings,classes:clsPage,tags:tagPage,feedback:fbPage}[tab]||XADM[tab])();
+ $("#root").innerHTML=`<div class="app"><aside class="side"><div class="brand"><div class="logo">${adiakMark("on-ink")}</div><div><b>ADIAK Admin</b><small>Team Maker control panel</small></div></div>
   <nav class="nav">${tabs.map(t=>`<button class="${tab===t.k?"on":""}" onclick="switchTab('${t.k}')"><span class="i">${t.i}</span>${t.t}</button>`).join("")}</nav>
   ${admLang()}<div class="me"><div class="row">${avatar(ME)}<div class="grow"><b>${esc(ME.name)}</b><div style="margin-top:3px">${roleChip(ME)}</div></div></div><button onclick="signOut()">Sign out</button><a href="../">← Student site</a></div></aside>
   <main class="main">${page}</main></div>`;
@@ -112,7 +114,8 @@ function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=
  try{window.scrollTo(0,sy);const m2=$(".main");if(m2)m2.scrollTop=ms}catch(e){}}
 // Dil dəyişəndə cari ekranı yenidən çəkir
 function adminRerender(){if(!uid){loginView();return}if(ME&&has("panel"))draw();else if(ME)noAccess();else loginView()}
-const head=(t,s,right)=>`<div class="page-h"><div><h1>${t}</h1><p>${s}</p></div><div class="row wrap">${right||""}</div></div>`;
+// Səhifə başlığı. pidx = bölmənin yan menyudakı sıra nömrəsi (yalnız görünüş üçün)
+const head=(t,s,right)=>{const n=visibleTabs().findIndex(x=>x.k===tab)+1;return`<div class="page-h"><div><h1>${n?`<span class="pidx">${String(n).padStart(2,"0")}</span>`:""}${t}</h1><p>${s}</p></div><div class="row wrap">${right||""}</div></div>`};
 const empty=(e,t)=>`<div class="empty"><span class="e">${e}</span>${t}</div>`;
 
 /* ---------- 5. DASHBOARD ---------- */

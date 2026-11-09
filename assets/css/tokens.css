@@ -58,6 +58,8 @@
   --adia-primary-fill-pressed:#5A3BB5;
   --adia-on-primary:#FFFFFF;
   --adia-primary-light:#EDE9FE;      /* seçilmiş fon, chip fonu (mətn: primary-text) */
+  --adia-brand-mark:#7959D6;         /* logo */
+  --adia-brand-fold:#6846C9;         /* logo ribbon fold */
   --adia-primary-wash:#F6F3FE;       /* hover fonu */
 
   /* Mətn və səthlər */
@@ -145,6 +147,8 @@
   --adia-primary-fill-pressed:#5A3BB5;
   --adia-on-primary:#FFFFFF;
   --adia-primary-light:#3A3566;
+  --adia-brand-mark:#B39CF5;
+  --adia-brand-fold:#7959D6;
   --adia-primary-wash:#2C2E4D;
   --adia-text:#F3F2FA;               /* 14.50 on bg */
   --adia-secondary:#B4B7CC;          /* 7.09 on surface */
@@ -182,6 +186,8 @@
     --adia-primary-fill-pressed:#5A3BB5;
     --adia-on-primary:#FFFFFF;
     --adia-primary-light:#3A3566;
+    --adia-brand-mark:#B39CF5;
+    --adia-brand-fold:#7959D6;
     --adia-primary-wash:#2C2E4D;
     --adia-text:#F3F2FA;
     --adia-secondary:#B4B7CC;

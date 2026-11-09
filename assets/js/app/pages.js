@@ -20,13 +20,14 @@ const cards=()=>conv[0]==="g"?RQ.filter(r=>r.group_id===+conv.slice(2)).map(join
 // Sol üstdəki profil kartı
 function profile(){const u=ME(),rk=rank(u.points);return`<div class="card"><div class="row">${av(u,"big")}<div style="flex:1"><b>${esc(u.name)}</b>${tag(u)}${u.class_tag?` <span class="chip" title="${tr("Class group")}">${esc(u.class_tag)}</span>`:""}<br><span class="mu">${rk.name} · ${u.points} ${tr("pts")}</span><div class="bar"><i style="width:${rk.pct}%"></i></div>${gchip(u)}</div></div>${tagBox(u)}</div>`}
 const convOther=k=>{const x=k.split(":");return x[1]===uid?x[2]:x[1]};
-function convTitle(k){if(k==="all")return tr("Everyone");if(k[0]==="g")return gname(+k.slice(2))+" ("+tr("my group")+")";const x=k.split(":");return nameOf(x[1]===uid?x[2]:x[1])}
+function convTitle(k){if(k==="all")return tr("Everyone");if(k[0]==="p"&&window.pxConvTitle)return pxConvTitle(k);if(k[0]==="g")return gname(+k.slice(2))+" ("+tr("my group")+")";const x=k.split(":");return nameOf(x[1]===uid?x[2]:x[1])}
 function openC(k){conv=k;render()}
 const ub=n=>n?`<span class="badge">${n}</span>`:"";
 // Çat siyahısı (ən son yazışma yuxarıda, oxunmamış sayı dairədə)
 function chatRows(){const u=ME(),LAST={};M.forEach(m=>{if(mIn(m))LAST[m.channel]=m});
  const items=[{ch:"all",t:tr("Everyone"),d:tr("All students"),a:`<div class="av" style="background:#4f46e5">${ic("globe")}</div>`,c:""}];
  if(u.group_id!==null)items.push({ch:"g:"+u.group_id,t:gname(u.group_id),d:tr("Only my group"),a:`<div class="av" style="background:${gcol(u.group_id)}">${ic("groups")}</div>`,c:""});
+ if(window.pxChatItems)items.push(...pxChatItems());
  Object.values(P).filter(p=>p.id!==uid).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>items.push({ch:dmKey(uid,p.id),t:p.name,d:tr("Say hi"),a:av(p),c:gchip(p),g:tag(p)}));
  const li=x=>LAST[x.ch]?LAST[x.ch].id:0;items.forEach((x,i)=>{x.i=i});items.sort((a,b)=>li(b)-li(a)||a.i-b.i);
  const q=fold(CHQ.trim()),shown=q?items.filter(x=>fold(x.t).includes(q)):items;
@@ -45,7 +46,7 @@ const installBox=()=>{if(isStandalone())return"";
 // Akademik qrup nömrəsi soruşan ekran (tələbənin nömrəsi yoxdursa, sayta girməzdən əvvəl)
 const classTagCard=()=>{if(CHOICES===null&&!window.__ld){window.__ld=1;loadChoices().then(()=>{window.__ld=0;render()})}
  const ch=CHOICES||[];
- return`<div class="card login"><div class="big-logo">${ic("cap")}</div><h2>${tr("Choose your class")}</h2><p class="mu">${tr("Pick the class you study in. You can set it only once; an admin can change it later.")}</p>
+ return`<div class="card login"><div class="big-logo">${adiakMark()}</div><h2>${tr("Choose your class")}</h2><p class="mu">${tr("Pick the class you study in. You can set it only once; an admin can change it later.")}</p>
   ${CHOICES===null?`<p class="mu">${tr("Loading…")}</p>`:ch.length?`<div class="clgrid" style="margin-top:8px">${ch.map(c=>`<button class="clcard" onclick="pickClass('${esc(c.tag)}')"><div class="cltag">${esc(c.tag)}</div>${c.title?`<div class="mu">${esc(c.title)}</div>`:""}</button>`).join("")}</div>`:`<p class="mu">${tr("No classes have been created yet. Ask your class representative or an admin.")}</p>`}
   <button class="s" onclick="logout()">${tr("Log out")}</button></div>`};
 /* ================= ANA SƏHİFƏ (dashboard), YAN MENYU, SİNİF SEÇİMİ ================= */
@@ -78,11 +79,15 @@ const homeCards=()=>{const u=ME(),st=isStaff(u);let a;
  else if(u.group_id!==null&&grp(u.group_id)){const g=grp(u.group_id);a=`<div class="card" style="border-left:5px solid ${gcol(g.id)}"><b>${esc(g.name)}</b>${g.host_id===uid?` ${ic("crown")}`:""}<div class="avs">${mem(g.id).map(x=>av(x)).join("")}</div><p class="mu">${tr("{a}/{b} members",{a:mem(g.id).length,b:g.capacity})}</p><button onclick="goTab('groups',${g.id})">${tr("Open team")}</button></div>`}
  else a=`<div class="card"><b>${tr("You're idle")}</b><p class="mu">${tr("Open a group and send a join request, create your own, or wait for an invitation.")}</p><button onclick="goTab('groups')">${tr("Groups")}</button></div>`;
  return a;};
-const homePage=()=>hcard()+homeMid()+chartCard()+homeCards();
-const NAV=()=>[["home",ic("home"),tr("Home"),""],["groups",ic("groups"),tr("Groups"),""],["chat",ic("chat"),tr("Chat"),ub(totalUnread())],["req",ic("inbox"),tr("Requests & idle"),ub(inboxCount())],["notes",ic("bell"),tr("Notifications"),ub(unreadNotes())],["tools",ic("tools"),tr("Tools"),""],["settings",ic("settings"),tr("Settings"),""]];
+const homePage=()=>hcard()+(window.xHomeCards?xHomeCards():"")+homeMid()+chartCard()+homeCards();
+/* ADIAK 1.0 module registry: pres.js / studio.js / live.js register pages here.
+   XPAGES[k] = {title:()=>string, body:()=>html, icon:()=>html, badge:()=>html, show:()=>bool, order:n} */
+const XPAGES={};
+const xnav=()=>Object.entries(XPAGES).filter(([k,x])=>!x.show||x.show()).sort((a,b)=>(a[1].order||0)-(b[1].order||0)).map(([k,x])=>[k,x.icon(),x.title(),x.badge?x.badge():""]);
+const NAV=()=>[["home",ic("home"),tr("Home"),""],["groups",ic("groups"),tr("Groups"),""],["chat",ic("chat"),tr("Chat"),ub(totalUnread())],["req",ic("inbox"),tr("Requests & idle"),ub(inboxCount())],["notes",ic("bell"),tr("Notifications"),ub(unreadNotes())],["tools",ic("tools"),tr("Tools"),""],["settings",ic("settings"),tr("Settings"),""]].reduce((a,x,i)=>{if(i===1)a.push(...xnav());a.push(x);return a},[]);
 // Masaüstü yan menyu
 const sideNav=()=>{const u=ME(),st=isStaff(u);
- return`<aside class="side"><div class="brand"><span class="blogo">${ic("groups")}</span><div><b>ADIAK</b><small>Team Maker</small></div></div>
+ return`<aside class="side"><div class="brand"><span class="blogo">${adiakMark()}</span><div><b>ADIAK</b><small>Team Maker</small></div></div>
   <button class="palbtn" onclick="openPalette()" aria-label="${tr("Search")}"><span>${ic("search")} ${tr("Search")}</span><kbd>Ctrl K</kbd></button>
   ${st&&ACLASS?`<button class="clsbtn" ${CLS.length>1?'onclick="leaveClass()"':""}><span>${ic("school")} ${esc(ACLASS)}</span>${CLS.length>1?`<span>${ic("swap")}</span>`:""}</button>`:""}
   <nav class="nav">${NAV().map(([k,i,t,b])=>`<button class="${tab===k?"on":""}" onclick="goTab('${k}')"><span class="ni">${i}</span><span>${t}</span>${b}</button>`).join("")}</nav>
@@ -90,7 +95,7 @@ const sideNav=()=>{const u=ME(),st=isStaff(u);
   ${can("panel")?`<a class="navlink" href="admin/index.html" target="_blank">${ic("wrench")} ${tr("Admin panel")}</a>`:""}
   <div class="sfoot"><div class="sme" onclick="showProfile('${u.id}')">${av(u)}<div><b>${esc(u.name)}</b><small>${st?tr("Staff"):rank(u.points).name}</small></div></div><div class="srow">${langSw()}<button class="s" onclick="toggleMute()" title="${tr("Sounds")}">${muted?ic("soundOff"):ic("sound")}</button><button class="s" onclick="cycleTheme()" title="${tr("Toggle theme")}" aria-label="${tr("Toggle theme")}">${themeIcon()}</button><button class="s" onclick="confirmLogout()" title="${tr("Log out")}" aria-label="${tr("Log out")}">${ic("power")}</button></div></div></aside>`};
 const chatDesk=()=>`<div class="chat2${conv?" has-conv":""}"><div>${chatList()}</div><div>${conv?thread():`<div class="card mu" style="text-align:center;padding:44px 16px">${ic("chat")} ${tr("Select a chat")}</div>`}</div></div>`;
-const bodyOf=k=>({home:homePage,groups:groupsPage,chat:chatDesk,req:()=>reqPage()+idlePage(),notes:notesPage,tools:()=>toolsPage(),settings:settingsPage}[k]||homePage)();
+const bodyOf=k=>({home:homePage,groups:groupsPage,chat:chatDesk,req:()=>reqPage()+idlePage(),notes:notesPage,tools:()=>toolsPage(),settings:settingsPage}[k]||(XPAGES[k]&&XPAGES[k].body)||homePage)();
 // Heyət üçün sinif seçmə ekranı
 const classesScreen=()=>{const u=ME(),last=(()=>{try{return localStorage.getItem("lastClass")}catch(e){return null}})();
  return`<div class="cl-wrap"><div class="row sp"><div><h2 style="margin:0">${tr("Choose a class")}</h2><p class="mu" style="margin:4px 0 0">${tr("Welcome, {name}",{name:esc(u.name)})} · ${tr("Choose the class you want to open.")}</p></div><button class="s" onclick="confirmLogout()">${tr("Log out")}</button></div>
@@ -174,7 +179,7 @@ const snap=()=>({tab,openG,conv,sheet,sp,menuOpen,pm});
 // Naviqasiya açarı (render()-dəki navKey ilə eyni format) və geri keçiddə tarixçəyə yazmadan vəziyyəti sinxronlaşdırma
 const navKeyOf=s=>["app",s.tab,s.openG,s.conv,s.sp,s.sheet,s.menuOpen].join("|")+"|"+(s.pm||"");
 function navSync(){lastSnap=snap();lastNav=navKeyOf(lastSnap)}
-const mItems=()=>[["notes",ic("bell"),tr("Notifications"),ub(unreadNotes())],["chat",ic("chat"),tr("Chat"),ub(totalUnread())],["idle",ic("user"),tr("Idle people ({n})",{n:idle().length}),""],["groups",ic("groups"),tr("Groups"),""],["tools",ic("tools"),tr("Tools"),""],["settings",ic("settings"),tr("Settings"),""],["req",ic("inbox"),tr("Requests & invites"),ub(inboxCount())]];
+const mItems=()=>[["notes",ic("bell"),tr("Notifications"),ub(unreadNotes())],...xnav(),["chat",ic("chat"),tr("Chat"),ub(totalUnread())],["idle",ic("user"),tr("Idle people ({n})",{n:idle().length}),""],["groups",ic("groups"),tr("Groups"),""],["tools",ic("tools"),tr("Tools"),""],["settings",ic("settings"),tr("Settings"),""],["req",ic("inbox"),tr("Requests & invites"),ub(inboxCount())]];
 // Telefonda sağdan açılan menyu
 const drawer=()=>{const u=ME(),rk=rank(u.points);return`<div id="scrim" onclick="goBack()"></div><div id="drawer"><div class="dh">${av(u,"big")}<div><b>${esc(u.name)}</b><br><span class="mu">${rk.name} · ${u.points} ${tr("pts")}</span></div></div><div class="gr" onclick="openPalette()"><span>${ic("search")} ${tr("Search")}</span><span>›</span></div>${mItems().map(([k,i,t,b])=>`<div class="gr" onclick="menuOpen=false;sheet=true;sp='${k}';render()"><span>${i} ${t} ${b}</span><span>›</span></div>`).join("")}${isStaff(u)&&CLS.length>1?`<div class="gr" onclick="leaveClass()"><span>${ic("school")} ${tr("Switch class")}</span></div>`:""}${can("panel")?`<a class="gr" href="admin/index.html" target="_blank" style="text-decoration:none;color:inherit"><span>${ic("wrench")} ${tr("Admin panel")}</span></a>`:""}<div class="gr" onclick="confirmLogout()"><span>${ic("logout")} ${tr("Log out")}</span></div></div>`};
 // Geri: əvvəlki pəncərəyə qayıdır (proqramdan çıxmır)
@@ -227,7 +232,7 @@ function view(){
  const stage=x=>`<div class="stage"><i class="blob b1"></i><i class="blob b2"></i><div class="langfix">${langSw()}</div>${x}</div>`;
  if(screen==="boot")return stage(`<div class="card login" style="text-align:center"><div class="dots" role="status" aria-label="${tr("Loading…")}"><i></i><i></i><i></i></div></div>`);
  if(screen==="setup")return`<div class="card login"><h2>Setup needed</h2><p>Open <b>assets/js/shared/config.js</b> and paste your Supabase URL and anon key.</p></div>`;
- if(screen==="login")return stage(`<div class="card login"><div style="text-align:center"><div class="big-logo">${ic("groups")}</div><h2 style="margin:4px 0">ADIAK Team Maker</h2><div class="mu">${tr("Build your presentation team")}</div></div><p class="mu">${tr("Type your ID and password, then press Enter. Forgot it? Ask an admin to reset it.")}</p>
+ if(screen==="login")return stage(`<div class="card login"><div style="text-align:center"><div class="big-logo">${adiakMark()}</div><h2 style="margin:4px 0">ADIAK Team Maker</h2><div class="mu">${tr("Build your presentation team")}</div></div><p class="mu">${tr("Type your ID and password, then press Enter. Forgot it? Ask an admin to reset it.")}</p>
   <input id="idin" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="${tr("Your ID (for example ali.m)")}" value="${esc(lastId())}" onkeydown="if(event.key==='Enter')$('#pw').focus()">
   <input id="pw" type="password" autocomplete="current-password" placeholder="${tr("Password")}" onkeydown="if(event.key==='Enter')login()"><div class="err">${esc(err)}</div><button onclick="login()">${tr("Log in")}</button></div>`);
  if(screen==="setpw")return stage(`<div class="card login"><h2>${ic("lock")} ${tr("Set a new password")}</h2><p class="mu">${tr("Your temporary password stops working after this.")}</p>
@@ -236,8 +241,8 @@ function view(){
  if(needTag())return stage(classTagCard());
  if(screen==="classes")return stage(classesScreen());
  if(!ME())return`<div class="card login"><p>${tr("Your profile was not found. Ask the host to check your account.")}</p><button onclick="logout()">${tr("Log out")}</button></div>`;
- if(phone()){const T={notes:tr("Notifications"),chat:tr("Chat"),idle:tr("Idle people"),groups:tr("Groups"),tools:tr("Tools"),settings:tr("Settings"),req:tr("Requests & invites")}[sp]||tr("Menu"),bn=unreadNotes();
-  return`<div id="main">${homePage()}${groupsPage()}${credits(true)}</div>${tabbar()}${menuOpen?drawer():""}<div id="sheet" class="${sp==="chat"?"chat":""}" style="display:${sheet&&sp?"block":"none"}"><div class="hd"><b>${T}</b><button onclick="goBack()">← ${tr("Back")}</button></div>${sheet&&sp?pages[sp]():""}</div>`}
+ if(phone()){const T={notes:tr("Notifications"),chat:tr("Chat"),idle:tr("Idle people"),groups:tr("Groups"),tools:tr("Tools"),settings:tr("Settings"),req:tr("Requests & invites")}[sp]||(XPAGES[sp]&&XPAGES[sp].title())||tr("Menu"),bn=unreadNotes();
+  return`<div id="main">${homePage()}${groupsPage()}${credits(true)}</div>${tabbar()}${menuOpen?drawer():""}<div id="sheet" class="${sp==="chat"?"chat":""}" style="display:${sheet&&sp?"block":"none"}"><div class="hd"><b>${T}</b><button onclick="goBack()">← ${tr("Back")}</button></div>${sheet&&sp?(pages[sp]||(XPAGES[sp]&&XPAGES[sp].body)||(()=>""))():""}</div>`}
  return`<div id="shell">${sideNav()}<main id="main2">${bodyOf(tab)}</main></div>`}
 // Yazı sahəsində yazılıb-yazılmadığını yoxlayır (klaviatura açıq ola bilər)
 const isTyping=a=>!!a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=="file"&&a.type!=="button"&&!!$("#root")&&$("#root").contains(a);

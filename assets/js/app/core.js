@@ -81,7 +81,13 @@ async function toggleRec(){if(rec){stopRec(true);return}
   mr.ondataavailable=e=>{if(e.data.size)rec.chunks.push(e.data)};
   mr.onstop=()=>{const r=rec;clearInterval(r.iv);r.st.getTracks().forEach(t=>t.stop());rec=null;render();if(!r.send||!r.chunks.length)return;
    const type=(mr.mimeType||"audio/webm").split(";")[0],ext=type.includes("mp4")?"m4a":"webm";conv=r.ch;sendFile(new File(r.chunks,"voice-"+new Date().toISOString().slice(11,19).replace(/:/g,"")+"."+ext,{type}))};
-  mr.start();render()}catch(e){toast(tr("Microphone access was denied"),1)}}
+  mr.start();render()}catch(e){toast(micErr(e),1)}}
+// getUserMedia xətasını aydın mesaja çevirir (APK-da icazə ayarlardan bağlıdırsa yolu göstərir)
+function micErr(e){const n=e&&e.name||"",nat=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+ if(n==="NotAllowedError"||n==="SecurityError")return nat?tr("Microphone permission is off. Allow it in Settings → Apps → ADIAK → Permissions → Microphone."):tr("Microphone access was denied");
+ if(n==="NotFoundError"||n==="OverconstrainedError")return tr("No microphone was found on this device");
+ if(n==="NotReadableError"||n==="AbortError")return tr("The microphone is being used by another app");
+ return tr("Could not start voice recording")}
 function stopRec(send){if(!rec)return;rec.send=send;rec.mr.stop()}
 const cancelRec=()=>stopRec(false);
 function toggleMute(){muted=!muted;try{localStorage.setItem("mute",muted?"1":"0")}catch(e){}if(!muted)snd.ding();render()}
@@ -132,14 +138,18 @@ const inboxCount=()=>{const v=myVotes();return v.j.length+v.k.length+myInvites()
 /* ================= BİLDİRİŞLƏR (səs + sağ altda kart + siyahı) ================= */
 const loadNotes=()=>{try{NOTES=JSON.parse(localStorage.getItem("notes:"+uid))||[]}catch(e){NOTES=[]}};
 const saveNotes=()=>{try{localStorage.setItem("notes:"+uid,JSON.stringify(NOTES))}catch(e){}};
-const unreadNotes=()=>NOTES.filter(n=>!n.read).length;
-function readNotes(){if(NOTES.some(n=>!n.read)){NOTES.forEach(n=>{n.read=true});saveNotes()}}
+const unreadNotes=()=>NOTES.filter(n=>!n.read).length+(window.pxUnread?pxUnread():0);
+function readNotes(){if(NOTES.some(n=>!n.read)){NOTES.forEach(n=>{n.read=true});saveNotes()}if(window.pxReadAll)pxReadAll()}
 function ago(t){const s=Math.max(0,Math.round((Date.now()-t)/1000));return s<60?tr("just now"):s<3600?tr("{n} min ago",{n:Math.floor(s/60)}):s<86400?tr("{n} h ago",{n:Math.floor(s/3600)}):tr("{n} d ago",{n:Math.floor(s/86400)})}
 // Bildiriş yaradır: səs + sağ altda kart + bildiriş siyahısına əlavə
 function notify(t,b,act,sound){NOTES.unshift({id:Date.now()+Math.random(),t,b:b||"",act:act||null,time:Date.now(),read:false});NOTES=NOTES.slice(0,40);saveNotes();(snd[sound||"ding"])();try{if(document.hidden&&window.Notification&&Notification.permission==="granted")new Notification(t,{body:b||""})}catch(x){}
  try{const box=$("#toasts"),e=document.createElement("div");e.className="nt";e.innerHTML="<b>"+esc(t)+"</b>"+(b?"<small>"+esc(b)+"</small>":"");e.onclick=()=>{e.remove();go(act)};box.appendChild(e);while(box.children.length>3)box.removeChild(box.firstChild);setTimeout(()=>{if(e.remove)e.remove()},6500)}catch(x){}}
+// ADIAK 1.0: these events are persisted and pushed by the server; when server notifications are live the client does not duplicate them
+const SN=()=>!!(window.PX&&PX.on);
+function snotify(t,b,act,sound){if(SN())return;notify(t,b,act,sound)}
 // Bildirişə basanda müvafiq səhifəni açır
 function go(a){if(notesOpen)readNotes();notesOpen=false;if(!a){render();return}
+ if(window.openTarget&&(a.k==="pres"||a.k==="class"||a.k==="live"||a.k==="home"||a.k==="groups")){openTarget(a);return}
  if(a.k==="chat"){openChat(a.ch);return}
  if(a.k==="req"){if(phone()){sheet=true;sp="req"}else{tab="req";openG=null}render();return}
  if(a.k==="group"){openG=a.id;if(phone()){sheet=false;sp=null}else tab="groups";render()}}
@@ -152,8 +162,8 @@ const openDM=id=>openChat(dmKey(uid,id));
 function toggleNotes(){goTab("notes")}
 const noteRows=()=>NOTES.length?NOTES.map((n,i)=>`<div class="nrow${n.read?"":" un"}" onclick="go(NOTES[${i}].act)"><b>${esc(n.t)}</b>${n.b?`<br><span class="mu">${esc(n.b)}</span>`:""}<br><small>${ago(n.time)}</small></div>`).join(""):"<p class='mu'>"+tr("No notifications yet")+"</p>";
 const noteHead=()=>`<div class="row sp"><b>${ic("bell")} ${tr("Notifications")}</b><button class="s" onclick="readNotes();render()">${tr("Mark all read")}</button></div>`;
-const notesPanel=()=>`<div id="notes" class="card">${noteHead()}${noteRows()}</div>`;
-const notesPage=()=>`<div class="card">${noteHead()}${noteRows()}</div>`;
+const notesPanel=()=>`<div id="notes" class="card">${noteHead()}${window.pxNoteRows?pxNoteRows():noteRows()}</div>`;
+const notesPage=()=>`<div class="card">${noteHead()}${window.pxNoteRows?pxNoteRows():noteRows()}</div>`;
 
 /* ================= MƏLUMAT YÜKLƏMƏ VƏ REAL VAXT ================= */
 // Bütün məlumatı bazadan yükləyir və səhifəni yeniləyir
@@ -193,9 +203,9 @@ async function refresh(force,tables){
  if(A("profiles")){P={};R.profiles.data.forEach(x=>{P[x.id]=x})}
  if(A("groups"))G=R.groups.data;if(A("requests"))RQ=R.requests.data;if(A("join_ballots"))JB=R.join_ballots.data;if(A("kicks"))KK=R.kicks.data;
  if(A("kick_ballots"))KB=R.kick_ballots.data;const ot=new Set(UT.filter(x=>x.user_id===uid).map(x=>x.tag_id));if(A("tags"))TG=R.tags.data;if(A("user_tags"))UT=R.user_tags.data;if(A("msg_reactions"))RX=R.msg_reactions.data;
- if(ready){const nt=mytags({id:uid}).filter(t=>!ot.has(t.id))[0];if(nt){party();notify("🏷️ "+tr("New tag!"),nt.emoji+" "+nt.name,null,"ok")}}if(A("invites"))IV=R.invites.data;if(A("point_events"))PE=R.point_events.data;if(A("messages"))M=[...R.messages.data].reverse();
+ if(ready){const nt=mytags({id:uid}).filter(t=>!ot.has(t.id))[0];if(nt){party();snotify("🏷️ "+tr("New tag!"),nt.emoji+" "+nt.name,null,"ok")}}if(A("invites"))IV=R.invites.data;if(A("point_events"))PE=R.point_events.data;if(A("messages"))M=[...R.messages.data].reverse();
  const u=ME();if(u&&conv&&conv[0]==="g"&&u.group_id!==+conv.slice(2))conv=null;
- if(!ready){if(!Object.keys(SEEN).length)markSeen(true);ready=true;const n=inboxCount(),tx="📬 "+(n>1?tr("{n} items waiting for you",{n}):tr("1 item waiting for you"));if(n&&!(NOTES[0]&&!NOTES[0].read&&NOTES[0].t===tx))notify(tx,tr("Open Requests"),{k:"req"},"alert")}else diff(o);
+ if(!ready){if(!Object.keys(SEEN).length)markSeen(true);ready=true;if(window.pxBoot)setTimeout(pxBoot,0);const n=inboxCount(),tx="📬 "+(n>1?tr("{n} items waiting for you",{n}):tr("1 item waiting for you"));if(n&&!(NOTES[0]&&!NOTES[0].read&&NOTES[0].t===tx))notify(tx,tr("Open Requests"),{k:"req"},"alert")}else diff(o);
  render();saveCache();return true}
 // Real vaxtda gələn yeni mesajı sorğu göndərmədən birbaşa siyahıya əlavə edir (ən sürətli yol)
 function onMsg(n){if(!ready||!n||n.id==null)return false;const o=snapOld();
@@ -203,24 +213,24 @@ function onMsg(n){if(!ready||!n||n.id==null)return false;const o=snapOld();
  if(!M.some(m=>m.id===n.id)){M.push(n);M.sort((a,b)=>a.id-b.id)}if(M.length>600)M=M.slice(-400);
  SIGS.messages=null;diff(o);render();saveCache();return true}
 // Köhnə və yeni məlumatı müqayisə edib lazımi bildirişləri yaradır
-function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){sparks();notify("⭐ +"+dp+" "+tr("points!"),tr("Your total is now {n}",{n:u.points}),null,"ok")}rankUpCheck(o,u);const g=u.group_id,isHost=g!==null&&grp(g)&&grp(g).host_id===uid;
- if(o.g===null&&g!==null){party();notify("🎉 "+tr("You joined {g}",{g:gname(g)}),tr("Welcome to the group!"),{k:"group",id:g},"ok")}
- else if(o.g!==null&&g===null&&Date.now()>quietUntil)notify(tr("You are no longer in {g}",{g:gname(o.g)}),"",null,"err");
+function diff(o){const u=ME();if(!u)return;const dp=u.points-o.pts;if(dp>0){sparks();snotify("⭐ +"+dp+" "+tr("points!"),tr("Your total is now {n}",{n:u.points}),null,"ok")}rankUpCheck(o,u);const g=u.group_id,isHost=g!==null&&grp(g)&&grp(g).host_id===uid;
+ if(o.g===null&&g!==null){party();snotify("🎉 "+tr("You joined {g}",{g:gname(g)}),tr("Welcome to the group!"),{k:"group",id:g},"ok")}
+ else if(o.g!==null&&g===null&&Date.now()>quietUntil)snotify(tr("You are no longer in {g}",{g:gname(o.g)}),"",null,"err");
  if(g!==null){
   RQ.forEach(r=>{if(r.group_id!==g||r.user_id===uid)return;const was=o.rqs.get(r.id),nm=nameOf(r.user_id);
-   if(was===undefined)notify("🙋 "+tr("{nm} wants to join",{nm}),tr("Open Requests and put it to a vote"),{k:"req"},"alert");
-   else if(was==="pending"&&r.stage==="voting")notify("🗳️ "+tr("Vote opened for {nm}",{nm}),tr("Cast your vote in Requests"),{k:"req"},"alert");
-   else if(was!=="approved"&&r.stage==="approved"&&isHost)notify("✅ "+tr("Majority approved {nm}",{nm}),tr("Your final decision is needed"),{k:"req"},"alert")});
-  KK.filter(k=>k.group_id===g&&k.target_id!==uid&&!o.kk.has(k.id)).forEach(k=>notify("🗳️ "+tr("Kick vote for {nm}",{nm:nameOf(k.target_id)}),tr("Cast your vote in Requests"),{k:"req"},"alert"));
-  if(o.g===g)mem(g).filter(p=>p.id!==uid&&!o.mem.has(p.id)).forEach(p=>notify("👋 "+tr("{nm} joined your group",{nm:p.name}),"",{k:"group",id:g},"ok"))}
- IV.filter(x=>x.user_id===uid&&!o.iv.has(x.id)&&g===null).forEach(x=>notify("💌 "+tr("{g} invited you!",{g:gname(x.group_id)}),tr("Open Requests to accept"),{k:"req"},"alert"));
+   if(was===undefined)snotify("🙋 "+tr("{nm} wants to join",{nm}),tr("Open Requests and put it to a vote"),{k:"req"},"alert");
+   else if(was==="pending"&&r.stage==="voting")snotify("🗳️ "+tr("Vote opened for {nm}",{nm}),tr("Cast your vote in Requests"),{k:"req"},"alert");
+   else if(was!=="approved"&&r.stage==="approved"&&isHost)snotify("✅ "+tr("Majority approved {nm}",{nm}),tr("Your final decision is needed"),{k:"req"},"alert")});
+  KK.filter(k=>k.group_id===g&&k.target_id!==uid&&!o.kk.has(k.id)).forEach(k=>snotify("🗳️ "+tr("Kick vote for {nm}",{nm:nameOf(k.target_id)}),tr("Cast your vote in Requests"),{k:"req"},"alert"));
+  if(o.g===g)mem(g).filter(p=>p.id!==uid&&!o.mem.has(p.id)).forEach(p=>snotify("👋 "+tr("{nm} joined your group",{nm:p.name}),"",{k:"group",id:g},"ok"))}
+ IV.filter(x=>x.user_id===uid&&!o.iv.has(x.id)&&g===null).forEach(x=>snotify("💌 "+tr("{g} invited you!",{g:gname(x.group_id)}),tr("Open Requests to accept"),{k:"req"},"alert"));
  RQ.filter(r=>r.user_id===uid).forEach(r=>{const was=o.rqs.get(r.id);
-  if(was==="pending"&&r.stage==="voting")notify("🗳️ "+tr("Members are voting on your request"),gname(r.group_id),null,"ding");
-  if(was!==undefined&&was!=="approved"&&r.stage==="approved")notify("👍 "+tr("Members approved your request"),tr("Waiting for the host's final decision"),null,"ok")});
- if(g===null&&o.g===null&&Date.now()>quietUntil&&[...o.my].some(id=>!RQ.some(r=>r.id===id)))notify(tr("Your join request was declined")+" 😕","",null,"err");
+  if(was==="pending"&&r.stage==="voting")snotify("🗳️ "+tr("Members are voting on your request"),gname(r.group_id),null,"ding");
+  if(was!==undefined&&was!=="approved"&&r.stage==="approved")snotify("👍 "+tr("Members approved your request"),tr("Waiting for the host's final decision"),null,"ok")});
+ if(g===null&&o.g===null&&Date.now()>quietUntil&&[...o.my].some(id=>!RQ.some(r=>r.id===id)))snotify(tr("Your join request was declined")+" 😕","",null,"err");
  const vc=visibleConv();
- M.filter(m=>m.id>o.mx&&m.sender!==uid&&m.sender!==null).slice(-3).forEach(m=>{if(m.channel===vc){snd.pop();return}if(m.channel==="all"){if(mentionsMe(m))notify("📣 "+tr("{nm} mentioned you",{nm:nameOf(m.sender)}),prev(m,60),{k:"chat",ch:"all"},"msg");return}
-  notify(m.channel[0]==="d"?tr("New message from {nm}",{nm:nameOf(m.sender)}):tr("New message in {g} from {nm}",{g:gname(+m.channel.slice(2)),nm:nameOf(m.sender)}),prev(m,60),{k:"chat",ch:m.channel},"msg")})}
+ M.filter(m=>m.id>o.mx&&m.sender!==uid&&m.sender!==null).slice(-3).forEach(m=>{if(m.channel===vc){snd.pop();return}if(m.channel==="all"){if(mentionsMe(m))snotify("📣 "+tr("{nm} mentioned you",{nm:nameOf(m.sender)}),prev(m,60),{k:"chat",ch:"all"},"msg");return}
+  notify(m.channel[0]==="d"?tr("New message from {nm}",{nm:nameOf(m.sender)}):tr("New message in {g} from {nm}",{g:m.channel[0]==="p"?convTitle(m.channel):gname(+m.channel.slice(2)),nm:nameOf(m.sender)}),prev(m,60),{k:"chat",ch:m.channel},"msg")})}
 // Dəyişən cədvəllərin adını toplayıb 150 ms sonra yalnız onları yeniləyir
 let pendT=new Set(),pendAll=false;
 const sched=t=>{if(t)pendT.add(t);else pendAll=true;clearTimeout(tmSched);tmSched=setTimeout(()=>{const ts=pendAll?null:[...pendT];pendT=new Set();pendAll=false;refresh(false,ts)},150)};
@@ -228,6 +238,7 @@ const sched=t=>{if(t)pendT.add(t);else pendAll=true;clearTimeout(tmSched);tmSche
 function subscribe(){if(chan)return;
  chan=sb.channel("room",{config:{presence:{key:uid}}})
   .on("postgres_changes",{event:"*",schema:"public"},ev=>{const t=ev.table;
+   if(window.onDbChange&&onDbChange(t,ev))return;
    if(t==="app_settings"){loadMeta().then(render);return}
    if(t==="messages"&&ev.eventType==="INSERT"&&onMsg(ev.new))return;
    if(t==="messages"&&ev.eventType==="UPDATE"&&ev.new&&ev.new.id!=null){const i=M.findIndex(x=>x.id===ev.new.id);if(i>=0){M[i]={...M[i],...ev.new};render();return}}
@@ -242,7 +253,7 @@ const maxG=()=>+SET.max_groups||6;
 // Sayt ayarlarını (qrup limiti) yükləyir
 async function loadMeta(){try{const a=await sb.from("app_settings").select("*");(a.data||[]).forEach(x=>{SET[x.key]=x.value})}catch(e){}}
 // Hesaba başqa cihazdan girilibsə bu cihazı çıxarır
-async function kickedOut(){if(!uid)return;clearTimeout(tmRetry);clearTimeout(tmSched);clearTimeout(tmChan);if(chan){try{await sb.removeChannel(chan)}catch(e){}chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}
+async function kickedOut(){if(!uid)return;if(window.pushOff){try{await pushOff()}catch(e){}}clearTimeout(tmRetry);clearTimeout(tmSched);clearTimeout(tmChan);if(chan){try{await sb.removeChannel(chan)}catch(e){}chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}
  try{localStorage.removeItem("sid")}catch(e){}try{localStorage.removeItem(cacheKey(uid))}catch(e){}MYSID=null;uid=null;conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();
  err=tr("You were signed out because this account was opened on another device.");screen="login";render()}
 

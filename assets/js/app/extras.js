@@ -438,6 +438,7 @@ addEventListener("keydown", e => {
 /* ================= 15. HƏR RENDER-DƏN SONRA ================= */
 // render() sonunda çağırılır: çat qaralaması, oxunmamış xəttinə sürüşmə, aşağı düyməsi, taymer nişanı
 function afterRender() {
+  if (window.XAFTER) XAFTER.forEach(f => { try { f(); } catch (e) {} });
   try {
     const t = $("#tx");
     if (t && conv && !t.value && t.dataset.dr !== conv) {

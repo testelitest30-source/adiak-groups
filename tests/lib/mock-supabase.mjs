@@ -5,7 +5,8 @@
 // - Oxumadan başqa (POST/PATCH/DELETE) sorğular "writes" siyahısına yazılır (yalnız saxta cavab alır)
 import { tables, rpc } from "./fixtures.mjs";
 
-export async function mockSupabase(context, origin) {
+export async function mockSupabase(context, origin, over = {}) {
+  const R = { ...rpc, ...(over.rpc || {}) }, T = { ...tables, ...(over.tables || {}) };
   const log = { leaks: [], writes: [], reads: [] };
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(body) });
 
@@ -17,14 +18,18 @@ export async function mockSupabase(context, origin) {
     const p = url.pathname;
     if (p.startsWith("/rest/v1/rpc/")) {
       const fn = p.slice("/rest/v1/rpc/".length);
-      if (!(fn in rpc)) log.writes.push(`rpc ${fn}`);
-      return json(route, rpc[fn] ?? null);
+      if (!(fn in R)) log.writes.push(`rpc ${fn}`);
+      let body = {}; try { body = JSON.parse(req.postData() || "{}"); } catch {}
+      log.calls = log.calls || []; log.calls.push({ fn, body });
+      const v = R[fn];
+      if (v && typeof v === "object" && v.__error) return json(route, { message: v.__error, code: "P0001" }, 400);
+      return json(route, typeof v === "function" ? v(body) : (v ?? null));
     }
     if (p.startsWith("/rest/v1/")) {
       const t = p.slice("/rest/v1/".length);
       if (req.method() !== "GET" && req.method() !== "HEAD") { log.writes.push(`${req.method()} ${t}`); return json(route, [], 201); }
       log.reads.push(t);
-      let rows = tables[t] ?? [];
+      let rows = T[t] ?? [];
       for (const [k, v] of url.searchParams) {           // sadə "col=eq.val" filtri
         const m = /^eq\.(.*)$/.exec(v);
         if (m && k !== "select") rows = rows.filter((r) => String(r[k]) === m[1]);
@@ -37,6 +42,14 @@ export async function mockSupabase(context, origin) {
       log.writes.push(`auth ${p}`);                          // giriş testləri saxta sessiya ilə işləyir
       return json(route, { error: "mocked" }, 400);
     }
+    if (p.startsWith("/storage/v1/object/sign/")) {                 // signed URL for a private object → served from tests/fixtures
+      return json(route, { signedURL: "/object/public-fixture/" + p.slice("/storage/v1/object/sign/".length) + "?token=mock" });
+    }
+    if (p.startsWith("/storage/v1/object/public-fixture/")) {
+      const fs = await import("node:fs"); const pdf = fs.readFileSync(new URL("../fixtures/sample.pdf", import.meta.url));
+      return route.fulfill({ status: 200, contentType: "application/pdf", headers: { "access-control-allow-origin": "*" }, body: pdf });
+    }
+    if (p.startsWith("/storage/v1/object/") && req.method() === "POST") { log.writes.push("upload " + p); return json(route, { Key: p }); }
     if (p.startsWith("/storage/v1/")) return json(route, []);
     log.leaks.push(req.url());
     return route.abort();

@@ -1,5 +1,17 @@
 /* ADIAK Team Maker — SVG icon set · v1.1.0 */
 const ICONS={
+present:'<rect x="3.5" y="4.5" width="17" height="11" rx="1.6"/><path d="M12 15.5V19"/><path d="M8.5 20h7"/><path d="M8 12l2.5-2.5 2 2L16 8"/>',
+tasks:'<path d="M9 6.5h11"/><path d="M9 12h11"/><path d="M9 17.5h11"/><path d="m3.8 6.4 1.2 1.2 2-2.2"/><path d="m3.8 11.9 1.2 1.2 2-2.2"/><path d="M4 17.5h2.5"/>',
+upload:'<path d="M12 15.5V4.5"/><path d="m7.5 9 4.5-4.5L16.5 9"/><path d="M4.5 15v3.2a1.8 1.8 0 0 0 1.8 1.8h11.4a1.8 1.8 0 0 0 1.8-1.8V15"/>',
+play:'<path d="M8 5.5v13l10.5-6.5z"/>',
+pause:'<path d="M8.5 5.5v13"/><path d="M15.5 5.5v13"/>',
+next:'<path d="M6 5.5v13l9-6.5z"/><path d="M18 5.5v13"/>',
+prev:'<path d="M18 5.5v13l-9-6.5z"/><path d="M6 5.5v13"/>',
+flag:'<path d="M5.5 20.5V4"/><path d="M5.5 4.5h11l-2 4 2 4h-11"/>',
+calendar:'<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16"/><path d="M8.5 3.5v4"/><path d="M15.5 3.5v4"/>',
+megaphone:'<path d="M4.5 10v4a1 1 0 0 0 1 1H8l7 4V5L8 9H5.5a1 1 0 0 0-1 1z"/><path d="M18 9.5a3.5 3.5 0 0 1 0 5"/>',
+layers:'<path d="m12 4 8.5 4.5L12 13 3.5 8.5z"/><path d="m3.5 12.5 8.5 4.5 8.5-4.5"/><path d="m3.5 16.5 8.5 4.5 8.5-4.5"/>',
+expand:'<path d="M9 4.5H4.5V9"/><path d="M15 4.5h4.5V9"/><path d="M9 19.5H4.5V15"/><path d="M15 19.5h4.5V15"/>',
 home:'<path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10.5V20h11v-9.5"/><path d="M10 20v-5h4v5"/>',
 groups:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c.7-3.2 2.9-5 5.5-5s4.8 1.8 5.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.8 14.7c2.4.4 4 2 4.6 4.3"/>',
 user:'<circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-5.8 7-5.8s6.2 2 7 5.8"/>',
@@ -68,3 +80,6 @@ eyeOff:'<path d="M4 4l16 16"/><path d="M10.6 6c.5-.1.9-.1 1.4-.1 6 0 9.5 6.1 9.5
 const crownArt=()=>`<svg class="crownart yusf" data-file="yusf.svg" viewBox="275 148 290 180" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="yusf.svg"><title>yusf.svg</title><!-- yusf.svg --><path d="M 282.171 169.767 C 283.075 177.39 285.917 203.359 287.597 215.504 C 289.276 227.649 291.214 225.323 292.248 242.636 C 293.282 259.948 293.54 306.589 293.798 319.38"/><path d="M 282.946 174.419 C 294.832 180.879 338.501 204.134 354.264 213.178 C 370.026 222.222 373.385 226.227 377.519 228.682 C 381.654 231.137 378.682 228.424 379.07 227.907 C 379.457 227.39 377.907 232.687 379.845 225.581 C 381.783 218.475 387.339 196.77 390.698 185.271 C 394.057 173.773 394.574 157.235 400 156.589 C 405.426 155.943 413.953 170.284 423.256 181.395 C 432.558 192.506 449.354 215.245 455.814 223.256 C 462.274 231.266 459.302 229.07 462.016 229.457 C 464.729 229.845 467.054 228.553 472.093 225.581 C 477.132 222.61 487.08 215.375 492.248 211.628 C 497.416 207.881 495.607 209.819 503.101 203.101 C 510.594 196.382 531.525 176.615 537.209 171.318"/><path d="M 537.984 170.543 C 539.276 176.098 543.798 192.119 545.736 203.876 C 547.674 215.633 548.708 229.974 549.612 241.085 C 550.517 252.196 550 262.403 551.163 270.543 C 552.326 278.682 555.685 286.693 556.589 289.922"/><path d="M 296.124 318.605 C 300.388 318.734 300.517 320.543 321.705 319.38 C 342.894 318.217 399.483 313.695 423.256 311.628 C 447.028 309.561 445.09 309.819 464.341 306.977 C 483.592 304.134 523.514 296.641 538.76 294.574 C 554.005 292.506 552.972 294.574 555.814 294.574"/></svg>`;
 
 const ic=(n,cls)=>`<svg class="ic${cls?" "+cls:""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||""}</svg>`;
+
+/* ADIAK brand mark (vector source: assets/brand/adiak-mark-purple.svg). Colours: --adia-brand-mark / --adia-brand-fold. */
+const adiakMark=cls=>`<svg class="adiak-mark${cls?" "+cls:""}" viewBox="40 50 840 880" role="img" aria-label="ADIAK"><defs><clipPath id="adk-rl"><polygon points="392.5,400 566.6,400 883.5,960 694,960"/></clipPath></defs><circle cx="455" cy="160" r="96" class="m1"/><path class="m1" d="M185 295 L730 295 Q748 295 760 309 L795 352 Q808 374 783 378 L132 378 Q104 374 120 352 L160 309 Q171 295 185 295 Z"/><path class="m1" d="M60 915 L300 452 Q309 432 330 432 L566 432 Q587 432 596 452 L858 915 L670 915 L482 566 Q458 524 434 566 L245 915 Z"/><path class="m1" d="M290 832 C 380 700 520 660 697 630 L 772 762 C 560 772 380 800 250 915 Z"/><path class="m2" clip-path="url(#adk-rl)" d="M290 832 C 380 700 520 660 697 630 L 772 762 C 560 772 380 800 250 915 Z"/></svg>`;

@@ -27,6 +27,7 @@ async function open({ user = null, width = 1280, height = 800, scheme = "light",
   const s = user ? fakeSession(user) : null;
   await context.addInitScript(([s, theme]) => {
     try {
+      sessionStorage.setItem("adiak-intro", "1");          // launch animation has its own test (tests/intro.mjs)
       if (sessionStorage.getItem("__seeded")) return;      // yalnız ilk açılışda (reload testləri üçün)
       sessionStorage.setItem("__seeded", "1");
       localStorage.setItem("lang", "az");
@@ -71,6 +72,7 @@ await test("student desktop: side nav, real labels, no admin link", async () => 
   const env = await open({ user: IDS.student });
   const { page } = env;
   await page.waitForSelector("aside.side .nav button");
+  await page.waitForFunction(() => !window.PX || PX.on || PX.tried, null, { timeout: 5000 }).catch(() => {}); await settle(page, 300);   // ADIAK 1.0 boot finished (sidebar final)
   const labels = await page.locator("aside.side .nav button").allTextContents();
   for (const l of ["Ana səhifə", "Qruplar", "Çat", "Bildirişlər", "Alətlər", "Ayarlar"]) assert(labels.some((t) => t.includes(l)), "nav label missing: " + l);
   assert(await page.locator('a.navlink[href="admin/index.html"]').count() === 0, "student must not see admin link");
@@ -149,10 +151,21 @@ await test("admin panel: tabs by permission", async () => {
     return { n, txt };
   };
   const a = await count(IDS.admin), t = await count(IDS.teacher), s = await count(IDS.student);
-  assert(a.n === 11, `admin should see 11 sections, saw ${a.n}`);
+  assert(a.n === 15, `admin should see 11 classic + 4 ADIAK 1.0 operations sections, saw ${a.n}`);   // Platform + Diagnostics are owner-only
   assert(t.n === 3, `teacher (panel+points) should see 3 sections (dash, people, groups), saw ${t.n}`);   // TABS-da "panel" tələb edənlər
   assert(s.n === 0 && /No access|İcazə yoxdur|Giriş yoxdur/i.test(s.txt), "student must get No access");
   return null;
+});
+
+// 7b. Admin paneli tələbə saytının mövzu seçimini izləyir (pre-paint, yanıb-sönmə olmadan)
+await test("admin follows stored theme (pre-paint)", async () => {
+  const env = await open({ user: IDS.admin, path: "/admin/index.html", theme: "dark", scheme: "light" });
+  const { page } = env;
+  assert(await page.evaluate(() => document.documentElement.getAttribute("data-theme")) === "dark", "admin did not apply stored dark theme");
+  await page.waitForSelector("aside.side .nav button");
+  const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  assert(bg === "rgb(16, 18, 38)", "admin body not dark: " + bg);
+  return env;
 });
 
 // 8. Ekran şəkilləri: tələbə ana səhifə 390/768/1280 × light/dark

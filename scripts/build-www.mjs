@@ -25,6 +25,7 @@ for (const p of INCLUDE) {
 const NATIVE = {
   "assets/vendor/capacitor/capacitor.js": "node_modules/@capacitor/core/dist/capacitor.js",
   "assets/vendor/capacitor/app.js": "node_modules/@capacitor/app/dist/plugin.js",
+  "assets/vendor/capacitor/push.js": "node_modules/@capacitor/push-notifications/dist/plugin.js",
 };
 for (const [dest, src] of Object.entries(NATIVE)) {
   if (!existsSync(join(ROOT, src))) fail(`missing ${src} (run npm ci)`);
@@ -32,7 +33,7 @@ for (const [dest, src] of Object.entries(NATIVE)) {
   cpSync(join(ROOT, src), join(OUT, dest));
 }
 // Build stamp shown by native.js (APK only) so the installed APK can be matched to its commit/run.
-const stamp = { sha: (process.env.HEAD_SHA || "local").slice(0, 7), run: process.env.RUN_NUMBER || "local" };
+const stamp = { version: JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version, sha: (process.env.HEAD_SHA || "local").slice(0, 7), run: process.env.RUN_NUMBER || "local" };
 writeFileSync(join(OUT, "assets/vendor/capacitor/build.js"), `window.ADIAK_BUILD=${JSON.stringify(stamp)};\n`);
 
 // Verify references, resolved the same way a browser resolves them.

@@ -1,0 +1,88 @@
+name: Android release (signed APK + AAB)
+
+# Manual run (to verify signing) or a pushed v* tag. Creating the tag / GitHub Release needs the owner's approval.
+# Signing material lives ONLY in repository secrets:
+#   ANDROID_KEYSTORE_B64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD, ANDROID_CERT_SHA256 (expected fingerprint)
+# Firebase: GOOGLE_SERVICES_JSON.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+    # Pre-merge signing check on the 1.0 branch: build + verify + artifact only (a GitHub Release needs a v* tag).
+    branches: ["ccr-fb87e4c6-x8qay5"]
+
+permissions:
+  contents: write   # attach artifacts to the GitHub Release for v* tags
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Stage web assets
+        run: npm run build
+        env: { HEAD_SHA: "${{ github.sha }}", RUN_NUMBER: "${{ github.run_number }}" }
+      - run: npx cap sync android
+      - name: Firebase config from secret
+        env: { GOOGLE_SERVICES_JSON: "${{ secrets.GOOGLE_SERVICES_JSON }}" }
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then echo "::error::GOOGLE_SERVICES_JSON secret missing: a release without push is not allowed"; exit 1; fi
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          node -e "JSON.parse(require('fs').readFileSync('android/app/google-services.json','utf8'))" 2>/dev/null || printf '%s' "$GOOGLE_SERVICES_JSON" | base64 -d > android/app/google-services.json
+          node -e "const j=JSON.parse(require('fs').readFileSync('android/app/google-services.json','utf8'));if(!(j.client||[]).some(c=>c.client_info.android_client_info.package_name==='az.adiak.teammaker'))process.exit(1);console.log('Firebase project: '+j.project_info.project_id+' (push-fcm service account project must match)')"
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21, cache: gradle }
+      - uses: gradle/actions/wrapper-validation@v4
+      - name: Keystore from secrets
+        id: ks
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KS_B64" ]; then
+            if [ "${{ github.ref_type }}" = "branch" ] && [ "${{ github.event_name }}" = "push" ]; then
+              echo "::notice::Signing secrets are not configured yet: branch run skips the signed build (see docs/1.0/en/backup-and-keystore.md)"
+              echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            echo "::error::Signing secrets are not configured (see docs/1.0/en/backup-and-keystore.md)"; exit 1
+          fi
+          printf '%s' "$KS_B64" | base64 -d > "$RUNNER_TEMP/adiak-release.jks"
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+      - name: Build signed APK + AAB
+        if: steps.ks.outputs.ok == 'true'
+        working-directory: android
+        env:
+          ADIAK_KEYSTORE: ${{ runner.temp }}/adiak-release.jks
+          ADIAK_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ADIAK_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ADIAK_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease bundleRelease --no-daemon --stacktrace
+      - name: Verify signature
+        if: steps.ks.outputs.ok == 'true'
+        env: { EXPECTED: "${{ secrets.ANDROID_CERT_SHA256 }}" }
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" verify --verbose --print-certs "$APK" | tee "$RUNNER_TEMP/certs.txt" | grep -E "Verified using|certificate SHA-256"
+          GOT=$(grep -m1 "certificate SHA-256 digest" "$RUNNER_TEMP/certs.txt" | awk '{print $NF}')
+          if [ -n "$EXPECTED" ] && [ "$(echo "$GOT" | tr -d ':' | tr A-F a-f)" != "$(echo "$EXPECTED" | tr -d ': ' | tr A-F a-f)" ]; then echo "::error::APK is signed with an unexpected certificate"; exit 1; fi
+          echo "Signed with certificate SHA-256: $GOT"
+          mkdir -p dist && cp "$APK" dist/ADIAK-${{ github.ref_name }}.apk && cp android/app/build/outputs/bundle/release/app-release.aab dist/ADIAK-${{ github.ref_name }}.aab
+          sha256sum dist/* | tee dist/SHA256SUMS.txt
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/adiak-release.jks" android/app/google-services.json
+      - uses: actions/upload-artifact@v4
+        if: steps.ks.outputs.ok == 'true'
+        with: { name: "adiak-release-${{ github.ref_name }}-run${{ github.run_number }}", path: dist/, retention-days: 30, if-no-files-found: error }
+      - name: Attach to GitHub Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh release create "${{ github.ref_name }}" dist/* --title "ADIAK ${{ github.ref_name }}" --notes-file docs/1.0/az/release-notes.md || gh release upload "${{ github.ref_name }}" dist/* --clobber

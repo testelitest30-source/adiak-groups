@@ -4,3 +4,9 @@ node_modules/
 *.log
 /www/
 tests/out/
+
+# ADIAK 1.0: secrets / signing material never in git
+google-services.json
+*.jks
+*.keystore
+keystore.properties

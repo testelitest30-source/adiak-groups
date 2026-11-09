@@ -1,0 +1,229 @@
+/* =====================================================================
+   admin-ui.css  -  ADIAK Admin · "Ledger" (Purple Edition, admin üçün ayrıca kimlik)
+   Yüklənmə: tokens.css → admin.css → admin-ui.css (SONUNCU)
+   İdeya: redaksiya / idarəetmə otağı. Mürəkkəb-göy "onurğa" menyu, nömrələnmiş bölmələr,
+   böyük Schibsted Grotesk rəqəmləri, JetBrains Mono ilə cədvəl/ID/vaxt, nazik xətlər.
+   Qradiyent YOXDUR. Bənövşəyi yalnız "siqnal"dır: aktiv bölmə, əsas əməliyyat, fokus.
+   Funksiyaya, icazələrə və naviqasiyaya toxunmur.
+   ===================================================================== */
+
+/* ---------- 1. Admin tokenları ---------- */
+:root,:root[data-theme="light"]{
+  --paper:#F8F7FC;--sheet:#FFFFFF;--ink:#15132B;--ink-2:#4A4763;--ink-3:#6E6A86;
+  --rule:#E4E0EE;--rule-2:#CBC4DC;--signal:#6846C9;--signal-fill:#6846C9;--signal-wash:#F0ECFC;
+  --spine:#15132B;--spine-2:#221F3D;--spine-tx:#C9C6DA;--spine-rule:#2C2950;
+  --ok-tx:#0F7A50;--warn-tx:#94570A;--bad-tx:#B4233A;--info-tx:#3A5EA8;
+}
+:root[data-theme="dark"]{
+  --paper:#101226;--sheet:#171A31;--ink:#EEEDF7;--ink-2:#B1B3CB;--ink-3:#8E91AE;
+  --rule:#272B49;--rule-2:#3A3F64;--signal:#B39CF5;--signal-fill:#7959D6;--signal-wash:#221F45;
+  --spine:#090A18;--spine-2:#15172C;--spine-tx:#AEB0C8;--spine-rule:#1E2140;
+  --ok-tx:#4FCB93;--warn-tx:#F0B95F;--bad-tx:#FF8797;--info-tx:#90AEF5;color-scheme:dark;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#101226;--sheet:#171A31;--ink:#EEEDF7;--ink-2:#B1B3CB;--ink-3:#8E91AE;
+  --rule:#272B49;--rule-2:#3A3F64;--signal:#B39CF5;--signal-fill:#7959D6;--signal-wash:#221F45;
+  --spine:#090A18;--spine-2:#15172C;--spine-tx:#AEB0C8;--spine-rule:#1E2140;
+  --ok-tx:#4FCB93;--warn-tx:#F0B95F;--bad-tx:#FF8797;--info-tx:#90AEF5;color-scheme:dark;
+}}
+/* admin.css-in köhnə dəyişənləri */
+:root,:root[data-theme="light"],:root[data-theme="dark"]{
+  --bg:var(--paper);--card:var(--sheet);--tx:var(--ink);--mu:var(--ink-2);--bd:var(--rule);--soft:var(--signal-wash);
+  --ac:var(--signal-fill);--ac2:var(--signal);--ok:var(--ok-tx);--bad:var(--bad-tx);--warn:var(--warn-tx);--r:6px;--sh:none;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:var(--paper);--card:var(--sheet);--tx:var(--ink);--mu:var(--ink-2);--bd:var(--rule);--soft:var(--signal-wash)}}
+
+/* ---------- 2. Kağız, tipoqrafiya ---------- */
+html,body{background:var(--paper)}
+body{font-family:var(--adia-font-sans);font-size:14.5px;color:var(--ink);font-feature-settings:"tnum","cv11"}
+.main{background:none;padding:40px 48px 72px}
+h1,h2,h3,h4,.brand b,.stat b,.cls-tag,.sheet-h b,.login h2{font-family:var(--adia-font-admin-display);letter-spacing:-.02em}
+.mono,.pts,.pc .pts,.tbl td.num,.big,.pwbox .v{font-family:var(--adia-font-mono)}
+.mu,.hint{color:var(--ink-2)}
+::selection{background:var(--signal-fill);color:#fff}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--rule-2);border-radius:2px;border:3px solid transparent;background-clip:padding-box}
+.ic{stroke-width:1.7}
+
+/* ---------- 3. Onurğa (yan menyu) ---------- */
+.app{grid-template-columns:256px 1fr}
+.side{background:var(--spine);color:var(--spine-tx);padding:26px 0 18px;border-right:1px solid var(--spine-rule)}
+.brand{padding:0 22px 26px;gap:12px;border-bottom:1px solid var(--spine-rule);margin-bottom:14px}
+.brand .logo{width:38px;height:38px;border-radius:8px;background:var(--signal-fill);color:#fff;box-shadow:none}
+.brand .logo .ic{width:22px;height:22px}
+.brand b{font-size:19px;font-weight:800;color:#fff;letter-spacing:-.03em}
+.brand small{font-family:var(--adia-font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;opacity:1;color:var(--spine-tx)}
+.nav{gap:0;counter-reset:sec;padding:0 10px}
+.nav button{counter-increment:sec;position:relative;gap:12px;padding:10px 12px 10px 14px;min-height:42px;border-radius:4px;background:transparent;color:var(--spine-tx);
+  font-weight:500;font-size:14px;box-shadow:none;transform:none}
+.nav button::before{content:counter(sec,decimal-leading-zero);font-family:var(--adia-font-mono);font-size:11px;letter-spacing:.04em;color:#6E6A93;width:20px;flex:none}
+.nav button .i{width:20px;opacity:.9}
+.nav button:hover{background:var(--spine-2);color:#fff;filter:none;transform:none}
+.nav button.on{background:var(--spine-2);color:#fff;font-weight:650;box-shadow:inset 3px 0 0 #9D80F2}
+.nav button.on::before{color:#B9A6F7}
+.nav button.on .i{color:#B9A6F7}
+.side .lang-a{padding:0 22px}
+.side .lang-a button,.side .lang-a button.s{background:transparent;border:1px solid var(--spine-rule);color:var(--spine-tx);border-radius:4px;opacity:1;font-family:var(--adia-font-mono);font-size:12px;min-height:32px}
+.side .lang-a button.on{background:#fff;color:#15132B;border-color:#fff}
+.me{background:transparent;border-top:1px solid var(--spine-rule);border-radius:0;margin:14px 0 0;padding:16px 22px 0}
+.me b{color:#fff}
+.me button{background:transparent;border:1px solid var(--spine-rule);color:#fff;border-radius:4px;min-height:36px}
+.me button:hover{background:var(--spine-2)}
+.me a{color:var(--spine-tx);font-size:12.5px}
+.me .chip{background:transparent;border:1px solid #4B4778;color:#D7CCFB}
+
+/* ---------- 4. Səhifə başlığı ---------- */
+.page-h{align-items:flex-end;margin-bottom:30px;padding-bottom:22px;border-bottom:1px solid var(--rule)}
+.page-h h1{font-size:44px;line-height:1;font-weight:800;letter-spacing:-.035em;color:var(--ink);display:flex;align-items:baseline;gap:14px}
+.pidx{font-family:var(--adia-font-mono);font-size:13px;font-weight:600;letter-spacing:.04em;color:var(--signal);border:1px solid currentColor;border-radius:3px;padding:2px 6px;transform:translateY(-8px)}
+.page-h p{margin-top:10px;color:var(--ink-2);font-size:15px;max-width:68ch}
+
+/* ---------- 5. Rəqəm zolağı (dashboard statistikası) ---------- */
+.stats{gap:0;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);margin-bottom:34px;background:transparent}
+.stat{background:transparent;border:0;border-right:1px solid var(--rule);border-radius:0;box-shadow:none;padding:18px 20px 20px;display:flex;flex-direction:column-reverse;align-items:flex-start;gap:6px}
+.stat:last-child{border-right:0}
+.stat .ico,.stat:nth-child(n) .ico{width:auto;height:auto;background:none;color:var(--ink-3);border-radius:0;position:absolute;top:18px;right:18px}
+.stat .ico .ic{width:18px;height:18px}
+.stat{position:relative}
+.stat>div{display:flex;flex-direction:column-reverse;gap:8px}
+.stat b{font-size:46px;font-weight:700;line-height:.95;letter-spacing:-.04em;color:var(--ink);font-variant-numeric:tabular-nums}
+.stat span{font-family:var(--adia-font-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)}
+.stat:first-child b{color:var(--signal)}
+
+/* ---------- 6. Bölmələr (panel) ---------- */
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;box-shadow:none;padding:24px 26px;margin-bottom:22px}
+.panel h3{font-size:20px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.panel h3::before{content:"";width:8px;height:8px;background:var(--signal-fill);border-radius:1px;flex:none}
+.panel .hint{font-size:14px;margin-bottom:18px}
+.sec{border:1px solid var(--rule);border-radius:6px;background:var(--sheet)}
+.sec>h4{font-family:var(--adia-font-admin-display);font-size:15px}
+.sec.locked{background:var(--paper)}
+.empty{color:var(--ink-3);border:1px dashed var(--rule-2);border-radius:6px;font-size:14px}
+.empty .e{color:var(--ink-3)}
+
+/* ---------- 7. Düymələr, formalar ---------- */
+.btn,button{border-radius:5px;min-height:38px;padding:9px 16px;font-weight:600;background:var(--signal-fill);color:#fff;box-shadow:none;letter-spacing:0;transition:background .15s,border-color .15s,color .15s}
+button:hover{transform:none;filter:none;background:#5A3BB5}
+button:active{transform:translateY(1px)}
+button.s{background:transparent;color:var(--ink);border:1px solid var(--rule-2)}
+button.s:hover{background:var(--sheet);border-color:var(--ink)}
+button.d{background:#B4233A;color:#fff}button.d:hover{background:#951B2F}
+button.ok{background:#0F7A50;color:#fff}button.ok:hover{background:#0B643F}
+button.sm{min-height:30px;padding:5px 11px;font-size:12.5px;border-radius:4px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+input,select,textarea{border-radius:5px;background:var(--sheet);border:1px solid var(--adia-border-input);color:var(--ink);min-height:40px;padding:9px 12px}
+input:focus,select:focus,textarea:focus{border-color:var(--signal);box-shadow:0 0 0 3px color-mix(in srgb,var(--signal-fill) 22%,transparent);background:var(--sheet)}
+input::placeholder,textarea::placeholder{color:var(--ink-3)}
+label.l{font-family:var(--adia-font-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);font-weight:600}
+.toolbar{gap:12px;margin-bottom:20px}
+.toolbar input{background:var(--sheet)}
+
+/* Seqment: alt xətli tab */
+.seg{background:transparent;border:0;border-bottom:1px solid var(--rule);border-radius:0;padding:0;gap:18px}
+.seg button{background:transparent;color:var(--ink-2);border-radius:0;padding:8px 0;min-height:36px;font-weight:600;box-shadow:inset 0 -2px 0 transparent}
+.seg button:hover{background:transparent;color:var(--ink)}
+.seg button.on{background:transparent;color:var(--ink);box-shadow:inset 0 -2px 0 var(--signal-fill)}
+
+/* ---------- 8. Nişanlar (chip): konturlu, sakit ---------- */
+.chip{border-radius:3px;background:transparent;border:1px solid var(--rule-2);color:var(--ink-2);font-size:11.5px;padding:2px 8px;font-weight:600}
+.chip.admin{background:transparent;color:var(--signal);border:1px solid currentColor}
+.chip.teacher{background:transparent;color:var(--info-tx);border:1px solid currentColor}
+.chip.student{background:transparent;color:var(--ink-2);border:1px solid var(--rule-2)}
+.chip.host,.chip.warn{background:transparent;color:var(--warn-tx);border:1px solid currentColor}
+.chip.ok{background:transparent;color:var(--ok-tx);border:1px solid currentColor}
+.chip.bad{background:transparent;color:var(--bad-tx);border:1px solid currentColor}
+.tchip{border-radius:3px}
+
+/* ---------- 9. İnsan siyahısı, kartlar ---------- */
+.plist{gap:0;border-top:1px solid var(--rule)}
+.pc{border:0;border-bottom:1px solid var(--rule);border-radius:0;background:transparent;padding:14px 8px;transition:background .12s}
+.pc:hover{transform:none;background:var(--signal-wash);box-shadow:inset 3px 0 0 var(--signal-fill)}
+.pc .pts{font-weight:600;font-size:16px;color:var(--ink)}
+.av{box-shadow:none;font-family:var(--adia-font-admin-display)}
+.av i{border-color:var(--sheet)}
+.gcards{gap:16px}
+.gcards .panel{border-top:3px solid var(--ink)}
+.bar{background:var(--paper);border:1px solid var(--rule);border-radius:2px;height:8px}
+.bar i{background:var(--signal-fill);border-radius:0}
+.cls-card{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;box-shadow:none;transition:border-color .15s}
+.cls-card:hover{transform:none;border-color:var(--ink)}
+.cls-tag{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--ink);font-size:34px;font-weight:800}
+input[type=file]::file-selector-button{font:inherit;font-weight:600;border:1px solid var(--rule-2);background:var(--sheet);color:var(--ink);border-radius:4px;padding:6px 12px;margin-right:10px;cursor:pointer}
+.fbtn{background:transparent;border:1px solid var(--rule-2);border-radius:5px;color:var(--ink)}
+
+/* ---------- 10. Cədvəllər ---------- */
+.scroll{border:1px solid var(--rule);border-radius:6px;background:var(--sheet)}
+.tbl th{font-family:var(--adia-font-mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink-2);background:var(--sheet);border-bottom:1.5px solid var(--ink);padding:12px 14px}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--rule)}
+.tbl tr:hover td{background:var(--signal-wash)}
+.tbl tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--signal-fill)}
+
+/* ---------- 11. Çatlar ---------- */
+.citem{border-radius:4px;padding:10px 12px}
+.citem:hover{background:var(--signal-wash)}
+.citem.on{background:var(--signal-wash);box-shadow:inset 3px 0 0 var(--signal-fill);font-weight:650}
+.msg{background:transparent;border-bottom:1px solid var(--rule);border-radius:0;margin:0;padding:12px 6px}
+.msg small{font-family:var(--adia-font-mono);font-size:11px;color:var(--ink-3)}
+
+/* ---------- 12. Dialoqlar, keçid, toast ---------- */
+.ov{background:rgb(10 9 25 / 55%);backdrop-filter:blur(2px)}
+.sheet{background:var(--sheet);border:1px solid var(--rule);border-radius:8px;box-shadow:0 30px 70px -24px rgb(10 8 30 / 55%)}
+.sheet-h{border-bottom:1px solid var(--rule);padding:20px 24px 16px}
+.sheet-h b,.sheet-h h2,.sheet-h h3{font-size:22px}
+.sheet-b{padding:18px 24px 24px}
+.prow{border-bottom:1px solid var(--rule);padding:12px 4px}
+.prow .pi{border-radius:5px;background:var(--signal-wash);color:var(--signal)}
+.sw i{background:var(--rule-2);border-radius:99px}
+.sw input:checked+i{background:var(--signal-fill)}
+.sw input:focus-visible+i{outline:2px solid var(--signal);outline-offset:2px}
+.pwbox{background:var(--paper);border:1px dashed var(--rule-2);border-radius:5px}
+.big{background:var(--paper);border:1px solid var(--rule);border-radius:5px}
+#toast{background:var(--ink);color:var(--paper);border-radius:5px;font-weight:600;box-shadow:0 14px 34px -14px rgb(10 8 30 / 50%)}
+#toast.bad{background:#B4233A;color:#fff}
+.err{color:var(--bad-tx)}
+
+/* ---------- 13. Giriş ---------- */
+.login{background:var(--sheet);border:1px solid var(--rule);border-top:4px solid var(--signal-fill);border-radius:6px;box-shadow:0 30px 60px -36px rgb(20 15 50 / 45%);padding:36px 34px}
+.login h2{font-size:32px;font-weight:800;margin:14px 0 6px}
+.login>div[style*="font-size"]{color:var(--signal)}
+.panel .lang-a button{background:transparent;border:1px solid var(--rule-2);color:var(--ink);border-radius:4px}
+.panel .lang-a button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* ---------- 14. Telefon / planşet (≤900): onurğa yuxarı zolağa çevrilir ---------- */
+@media (max-width:900px){
+  .app{display:block}
+  .side{position:static;height:auto;padding:12px 0 0;border-right:0;border-bottom:1px solid var(--spine-rule)}
+  .brand{padding:0 16px 12px;margin-bottom:0;border-bottom:0}
+  .brand .logo{width:32px;height:32px}
+  .brand b{font-size:17px}
+  .nav{flex-direction:row;overflow-x:auto;padding:0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{flex:none;min-height:44px;padding:10px 12px;border-radius:0;white-space:nowrap}
+  .nav button.on{box-shadow:inset 0 -3px 0 #9D80F2;background:transparent}
+  .side{display:flex;flex-direction:column}
+  .side .lang-a{order:3;padding:10px 16px 0;margin:0;border-top:1px solid var(--spine-rule)}
+  .side .lang-a button{flex:none;min-width:48px}
+  .me{order:4;display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0;padding:10px 16px 12px;border-top:0}
+  .me .row{margin:0;flex:1 1 200px}
+  .me button{width:auto;min-height:36px}
+  .me a{margin:0}
+  .main{padding:22px 16px 64px}
+  .page-h{margin-bottom:20px;padding-bottom:16px}
+  .page-h h1{font-size:32px}
+  .pidx{transform:translateY(-5px)}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stat{border-bottom:1px solid var(--rule);padding:14px 14px 16px}
+  .stat:nth-child(2n){border-right:0}
+  .stat b{font-size:36px}
+  .panel{padding:18px 16px}
+  .seg{gap:14px;overflow-x:auto;flex-wrap:nowrap}
+  .seg button{flex:none}
+}
+@media (min-width:1500px){.main{padding:48px 64px 80px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ADIAK brand mark (v1.0): white mark on the ink spine, purple on light surfaces */
+.adiak-mark{display:block;width:100%;height:100%}
+.adiak-mark .m1{fill:var(--adia-brand-mark)}.adiak-mark .m2{fill:var(--adia-brand-fold)}
+.brand .logo{background:none!important;padding:4px}
+.adiak-mark.on-ink .m1,.adiak-mark.on-ink .m2{fill:#fff}
+.admlogo{width:56px;height:56px;margin:0 auto 6px}
