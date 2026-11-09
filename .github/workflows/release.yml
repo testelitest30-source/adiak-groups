@@ -85,4 +85,4 @@ jobs:
       - name: Attach to GitHub Release (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         env: { GH_TOKEN: "${{ github.token }}" }
-        run: gh release create "${{ github.ref_name }}" dist/* --draft --title "ADIAK ${{ github.ref_name }}" --notes-file docs/1.0/en/release-notes.md || gh release upload "${{ github.ref_name }}" dist/* --clobber
+        run: gh release create "${{ github.ref_name }}" dist/* --title "ADIAK ${{ github.ref_name }}" --notes-file docs/1.0/az/release-notes.md || gh release upload "${{ github.ref_name }}" dist/* --clobber
