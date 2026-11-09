@@ -28,9 +28,9 @@ Object.assign(ADM, {
 window.CC = null;
 const CC = { acc: null, ov: null, push: null, audit: [], src: "all", jobs: null, stor: null, errs: null, migs: null, inc: null, ev: null, tried: false };
 async function ccBoot() {
-  if (CC.tried || !sb || !ME) return; CC.tried = true;
+  if (CC.tried || !sb || !ME || typeof has !== "function" || !has("panel")) return; CC.tried = true;
   const r = await sb.rpc("my_access"); if (r.error || !r.data) { CC.acc = false; return; }
-  CC.acc = r.data; window.ADM_OWNER = !!r.data.owner; draw();
+  CC.acc = r.data; window.ADM_OWNER = !!r.data.owner; adminRerender();
 }
 setInterval(() => { if (ME && !CC.tried) ccBoot(); if (!ME && CC.tried) { CC.tried = false; CC.acc = null; window.ADM_OWNER = false; } }, 600);
 const ccRpc = async (fn, a) => { const r = await sb.rpc(fn, a || {}); if (r.error) { toast(r.error.message, 1); return null; } return r.data; };
