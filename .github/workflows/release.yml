@@ -1,11 +1,15 @@
 name: Android release (signed APK + AAB)
 
-# Manual run (to verify signing) or a pushed v* tag. Creating the tag / GitHub Release needs the owner's approval.
+# Manual run (to verify signing), a pushed v* tag, or a manual run with release_tag + target: then the job builds exactly
+# `target` (a commit on main), and creates the tag + GitHub Release server-side. Creating a release needs the owner's approval.
 # Signing material lives ONLY in repository secrets:
 #   ANDROID_KEYSTORE_B64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD, ANDROID_CERT_SHA256 (expected fingerprint)
 # Firebase: GOOGLE_SERVICES_JSON.
 on:
   workflow_dispatch:
+    inputs:
+      release_tag: { description: "Tag to create, e.g. v1.0.0 (empty = signing check only)", required: false, default: "" }
+      target: { description: "Full commit SHA on main to build and tag", required: false, default: "" }
   push:
     tags: ["v*"]
     # Pre-merge signing check on the 1.0 branch: build + verify + artifact only (a GitHub Release needs a v* tag).
@@ -22,14 +26,26 @@ jobs:
   release:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    env:
+      TAG: ${{ inputs.release_tag || github.ref_name }}
+      TARGET: ${{ inputs.target || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with: { ref: "${{ inputs.target || github.sha }}", fetch-depth: 0 }
+      - name: Release inputs
+        if: inputs.release_tag != ''
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::release_tag must look like v1.2.3"; exit 1; }
+          [[ "$TARGET" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::target must be a full commit SHA"; exit 1; }
+          git fetch -q origin main && git merge-base --is-ancestor "$TARGET" origin/main || { echo "::error::target is not on main"; exit 1; }
+          if git ls-remote --tags origin "refs/tags/$TAG" | grep -q .; then echo "::error::tag $TAG already exists"; exit 1; fi
+          echo "Building $TAG from $TARGET"
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - name: Stage web assets
         run: npm run build
-        env: { HEAD_SHA: "${{ github.sha }}", RUN_NUMBER: "${{ github.run_number }}" }
+        env: { HEAD_SHA: "${{ inputs.target || github.sha }}", RUN_NUMBER: "${{ github.run_number }}" }
       - run: npx cap sync android
       - name: Firebase config from secret
         env: { GOOGLE_SERVICES_JSON: "${{ secrets.GOOGLE_SERVICES_JSON }}" }
@@ -74,15 +90,15 @@ jobs:
           GOT=$(grep -m1 "certificate SHA-256 digest" "$RUNNER_TEMP/certs.txt" | awk '{print $NF}')
           if [ -n "$EXPECTED" ] && [ "$(echo "$GOT" | tr -d ':' | tr A-F a-f)" != "$(echo "$EXPECTED" | tr -d ': ' | tr A-F a-f)" ]; then echo "::error::APK is signed with an unexpected certificate"; exit 1; fi
           echo "Signed with certificate SHA-256: $GOT"
-          mkdir -p dist && cp "$APK" dist/ADIAK-${{ github.ref_name }}.apk && cp android/app/build/outputs/bundle/release/app-release.aab dist/ADIAK-${{ github.ref_name }}.aab
+          mkdir -p dist && cp "$APK" dist/ADIAK-$TAG.apk && cp android/app/build/outputs/bundle/release/app-release.aab dist/ADIAK-$TAG.aab
           sha256sum dist/* | tee dist/SHA256SUMS.txt
       - name: Remove keystore
         if: always()
         run: rm -f "$RUNNER_TEMP/adiak-release.jks" android/app/google-services.json
       - uses: actions/upload-artifact@v4
         if: steps.ks.outputs.ok == 'true'
-        with: { name: "adiak-release-${{ github.ref_name }}-run${{ github.run_number }}", path: dist/, retention-days: 30, if-no-files-found: error }
-      - name: Attach to GitHub Release (tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
+        with: { name: "adiak-release-${{ inputs.release_tag || github.ref_name }}-run${{ github.run_number }}", path: dist/, retention-days: 30, if-no-files-found: error }
+      - name: Create the GitHub Release (v* tag push, or manual release_tag)
+        if: steps.ks.outputs.ok == 'true' && (startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != '')
         env: { GH_TOKEN: "${{ github.token }}" }
-        run: gh release create "${{ github.ref_name }}" dist/* --title "ADIAK ${{ github.ref_name }}" --notes-file docs/1.0/az/release-notes.md || gh release upload "${{ github.ref_name }}" dist/* --clobber
+        run: gh release create "$TAG" dist/* --target "$TARGET" --title "ADIAK $TAG" --notes-file docs/1.0/az/release-notes.md || gh release upload "$TAG" dist/* --clobber
