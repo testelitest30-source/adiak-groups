@@ -2,4 +2,5 @@
 <resources>
     <!-- Same as the CSS bg variable in assets/css/tokens.css (adia-background token) (light) -->
     <color name="app_bg">#F4F1FD</color>
+    <color name="adiak_brand">#7959D6</color>
 </resources>

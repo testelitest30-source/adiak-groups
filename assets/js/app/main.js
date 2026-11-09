@@ -72,7 +72,7 @@ async function start(user,fresh){uid=user.id;ready=false;loadSeen();loadNotes();
  screen=(isStaff(ME())&&!ACLASS)?"classes":"app";render();saveCache();subscribe()}
 async function loadLogin(){screen="login";render()}
 // Çıxış edir
-async function logout(){clearTimeout(tmRetry);clearTimeout(tmSched);clearTimeout(tmChan);if(chan){await sb.removeChannel(chan);chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}try{localStorage.removeItem("sid")}catch(e){}try{localStorage.removeItem(cacheKey(uid))}catch(e){}MYSID=null;uid=null;ACLASS=null;CLS=[];CHOICES=null;tab="home";conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();homeTab="main";await loadLogin()}
+async function logout(){if(window.pushOff){try{await pushOff()}catch(e){}}clearTimeout(tmRetry);clearTimeout(tmSched);clearTimeout(tmChan);if(chan){await sb.removeChannel(chan);chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}try{localStorage.removeItem("sid")}catch(e){}try{localStorage.removeItem(cacheKey(uid))}catch(e){}MYSID=null;uid=null;ACLASS=null;CLS=[];CHOICES=null;tab="home";conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();homeTab="main";await loadLogin()}
 // Sayt açılanda ilk işləyən funksiya
 async function boot(){try{
  if(SUPABASE_URL.includes("PASTE")){screen="setup";return render()}

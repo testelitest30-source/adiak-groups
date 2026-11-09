@@ -38,6 +38,8 @@ const out = (p, buf) => { fs.mkdirSync(path.dirname(p), { recursive: true }); fs
     // adaptive layers are 108dp; the visible safe zone is the central 66dp circle
     const fg = await render(page, { mark: 'adiak-mark-black.svg', size: Math.round(108 * k), frac: .56 });
     out(path.join(dir, 'ic_launcher_foreground.png'), fg); out(path.join(dir, 'ic_launcher_monochrome.png'), fg);
+    // status-bar notification icon: white silhouette on transparent (24dp)
+    out(path.join(RES, `drawable-${d}`, 'ic_stat_adiak.png'), await render(page, { mark: 'adiak-mark-white.svg', size: Math.round(24 * k), frac: .92 }));
     // Android 12+ splash icon: 288dp canvas, icon must sit inside the 192dp circle
     out(path.join(RES, `drawable-${d}`, 'splash_icon.png'), await render(page, { mark: 'adiak-mark-black.svg', size: Math.round(288 * k), frac: .5 }));
     out(path.join(RES, `drawable-night-${d}`, 'splash_icon.png'), await render(page, { mark: 'adiak-mark-white.svg', size: Math.round(288 * k), frac: .5 }));

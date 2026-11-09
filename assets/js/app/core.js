@@ -247,7 +247,7 @@ const maxG=()=>+SET.max_groups||6;
 // Sayt ayarlarını (qrup limiti) yükləyir
 async function loadMeta(){try{const a=await sb.from("app_settings").select("*");(a.data||[]).forEach(x=>{SET[x.key]=x.value})}catch(e){}}
 // Hesaba başqa cihazdan girilibsə bu cihazı çıxarır
-async function kickedOut(){if(!uid)return;clearTimeout(tmRetry);clearTimeout(tmSched);clearTimeout(tmChan);if(chan){try{await sb.removeChannel(chan)}catch(e){}chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}
+async function kickedOut(){if(!uid)return;if(window.pushOff){try{await pushOff()}catch(e){}}clearTimeout(tmRetry);clearTimeout(tmSched);clearTimeout(tmChan);if(chan){try{await sb.removeChannel(chan)}catch(e){}chan=null}try{await sb.auth.signOut({scope:"local"})}catch(e){}
  try{localStorage.removeItem("sid")}catch(e){}try{localStorage.removeItem(cacheKey(uid))}catch(e){}MYSID=null;uid=null;conv=null;sheet=false;sp=null;openG=null;menuOpen=false;navStack=[];if(rec)stopRec(false);online=new Set();ready=false;NOTES=[];notesOpen=false;PE=[];closeM();
  err=tr("You were signed out because this account was opened on another device.");screen="login";render()}
 

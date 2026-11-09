@@ -9,6 +9,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- ADIAK 1.0: FCM defaults (status-bar icon + brand colour) -->
+        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_adiak" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/adiak_brand" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="adiak_default" />
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
@@ -38,6 +42,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 13+: runtime permission for push notifications (asked once, after login) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Used by the existing web features: voice messages (getUserMedia audio) and the camera capture -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CAMERA" />
