@@ -151,7 +151,7 @@ await test("admin panel: tabs by permission", async () => {
     return { n, txt };
   };
   const a = await count(IDS.admin), t = await count(IDS.teacher), s = await count(IDS.student);
-  assert(a.n === 11, `admin should see 11 sections, saw ${a.n}`);
+  assert(a.n === 15, `admin should see 11 classic + 4 ADIAK 1.0 operations sections, saw ${a.n}`);   // Platform + Diagnostics are owner-only
   assert(t.n === 3, `teacher (panel+points) should see 3 sections (dash, people, groups), saw ${t.n}`);   // TABS-da "panel" tələb edənlər
   assert(s.n === 0 && /No access|İcazə yoxdur|Giriş yoxdur/i.test(s.txt), "student must get No access");
   return null;

@@ -87,7 +87,9 @@ async function load(tables){
 /* ---------- 4. ÜMUMİ GÖRÜNÜŞ ---------- */
 // Hər tab üçün lazım olan yetki
 const TABS=[["dash",ic("chart"),"Dashboard","panel"],["people",ic("groups"),"People","panel"],["groups",ic("puzzle"),"Groups","panel"],["classes",ic("school"),"Classes","classes"],["tags",ic("tag"),"Tags","tags"],["feedback",ic("chat"),"Feedback","feedback"],["chats",ic("chat"),"Chats","chats"],["pass",ic("key"),"Passwords","passwords"],["day",ic("archive"),"Close the day","admin"],["import",ic("import"),"Import names","admin"],["settings",ic("settings"),"Settings","admin"]];
-const visibleTabs=()=>isStar()?[{k:"classes",i:ic("school"),t:"My classes"}]:TABS.filter(t=>(t[3]==="classes"||t[3]==="tags"||t[3]==="feedback")?has("admin"):has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
+// ADIAK 1.0 (control.js): "ops" = admin modules (shown only when the server has them), "owner" = owner only
+const XADM={};
+const visibleTabs=()=>isStar()?[{k:"classes",i:ic("school"),t:"My classes"}]:TABS.filter(t=>t[3]==="owner"?window.ADM_OWNER===true:t[3]==="ops"?(has("admin")&&!!(window.CC&&CC.acc)):(t[3]==="classes"||t[3]==="tags"||t[3]==="feedback")?has("admin"):has(t[3])).map(t=>({k:t[0],i:t[1],t:t[2]}));
 // Android tətbiqində Back üçün bölmə yığını (yalnız native.js istifadə edir; brauzer tarixçəsinə toxunmur).
 // Eyni bölmə yığında varsa, ona qədər kəsilir (dublikat/loop yoxdur). y = həmin bölmədəki scroll mövqeyi.
 let admStack=[],admBacking=false;
@@ -103,7 +105,7 @@ function adminBack(){
 function draw(){if(!ME)return;if(pressing&&Date.now()-pressTs<2500){pendingDraw=true;return}if(typingNow()){pendingDraw=true;return}pendingDraw=false;
  const sy=window.scrollY,mn=$(".main"),ms=mn?mn.scrollTop:0;
  const tabs=visibleTabs();if(!tabs.find(t=>t.k===tab))tab=tabs[0].k;
- const page={dash,people,groups,chats,pass:passPage,day,import:imp,settings,classes:clsPage,tags:tagPage,feedback:fbPage}[tab]();
+ const page=({dash,people,groups,chats,pass:passPage,day,import:imp,settings,classes:clsPage,tags:tagPage,feedback:fbPage}[tab]||XADM[tab])();
  $("#root").innerHTML=`<div class="app"><aside class="side"><div class="brand"><div class="logo">${adiakMark("on-ink")}</div><div><b>ADIAK Admin</b><small>Team Maker control panel</small></div></div>
   <nav class="nav">${tabs.map(t=>`<button class="${tab===t.k?"on":""}" onclick="switchTab('${t.k}')"><span class="i">${t.i}</span>${t.t}</button>`).join("")}</nav>
   ${admLang()}<div class="me"><div class="row">${avatar(ME)}<div class="grow"><b>${esc(ME.name)}</b><div style="margin-top:3px">${roleChip(ME)}</div></div></div><button onclick="signOut()">Sign out</button><a href="../">← Student site</a></div></aside>
