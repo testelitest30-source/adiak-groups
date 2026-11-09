@@ -9,7 +9,7 @@ const SHELL = [
   "assets/fonts/inter-latin-wght-normal.woff2", "assets/fonts/inter-latin-ext-wght-normal.woff2",
   "assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2", "assets/fonts/plus-jakarta-sans-latin-ext-wght-normal.woff2",
   "assets/js/shared/intro.js", "assets/js/shared/config.js", "assets/js/shared/i18n.js", "assets/js/shared/icons.js",
-  "assets/js/app/core.js", "assets/js/app/pages.js", "assets/js/app/extras.js", "assets/js/app/pres.js", "assets/js/app/main.js", "assets/js/app/native.js",
+  "assets/js/app/core.js", "assets/js/app/pages.js", "assets/js/app/extras.js", "assets/js/app/pres.js", "assets/js/app/live.js", "assets/js/app/main.js", "assets/js/app/native.js",
   "admin/index.html", "assets/js/admin/admin.js", "assets/js/admin/i18n-admin.js",
   "assets/icons/favicon.svg", "favicon.ico",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png"

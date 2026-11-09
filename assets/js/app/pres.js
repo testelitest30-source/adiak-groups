@@ -50,15 +50,19 @@ Object.assign(AZ_ERR, {
 /* ---------- state ---------- */
 const PX = { on: false, acc: null, notes: [], ev: [], et: [], dr: [], ro: [], sp: [], spf: [], fl: [], sub: [], tk: [], an: [], lv: [], ls: [], sc: [], rb: [], log: [],
   cur: null, sec: "overview", off: 0, tm: null, loaded: false, hist: null };
+window.PX = PX;   // top-level const is not a window property; core.js (SN) and tests read window.PX
 const pxTables = { pres_events: "ev", pres_event_teams: "et", pres_draws: "dr", pres_roster: "ro", pres_speakers: "sp", pres_speakers_final: "spf",
   pres_files: "fl", pres_submissions: "sub", pres_tasks: "tk", pres_announcements: "an", pres_live: "lv", pres_live_slots: "ls", pres_scores: "sc", pres_rubrics: "rb", pres_speaker_log: "log" };
 const pxOrder = { pres_events: "id", pres_files: "id", pres_submissions: "version", pres_announcements: "id", pres_speaker_log: "id" };
 
 async function pxBoot() {
-  if (!sb || PX.on) return;
+  if (!sb || PX.on || PX.booting || !uid) return;
+  PX.booting = true; PX.tried = uid;
   const r = await sb.rpc("my_access");
-  if (r.error || !r.data) { PX.on = false; return; }          // server without ADIAK 1.0 migrations: feature stays off
+  PX.booting = false;
+  if (r.error || !r.data) { PX.on = false; try { localStorage.removeItem("px-on:" + uid); } catch (e) {} render(); return; }   // server without ADIAK 1.0 migrations: feature stays off
   PX.on = true; PX.acc = r.data;
+  try { localStorage.setItem("px-on:" + uid, "1"); localStorage.setItem("px-acc:" + uid, JSON.stringify(r.data)); } catch (e) {}
   try { const t0 = Date.now(), s = await sb.rpc("server_now"); if (!s.error && s.data) PX.off = new Date(s.data).getTime() - (t0 + Date.now()) / 2; } catch (e) {}
   await Promise.all([pxLoad(), pxNotesLoad()]);
   if (window.xBoot) xBoot.forEach(f => { try { f(); } catch (e) {} });
@@ -398,7 +402,9 @@ function pxChatItems() {
     return { ch: "p:" + e.id + ":" + g, t: pxConvTitle("p:" + e.id + ":" + g), d: tr("Team chat"), a: `<div class="av" style="background:var(--adia-primary-fill)">${ic("present")}</div>`, c: "" }; }).filter(Boolean);
 }
 
-XPAGES.pres = { order: 1, title: () => tr("Presentations"), icon: () => ic("present"), badge: () => ub(pxActionCount()), show: () => PX.on, body: pxPage };
+// shown from the first paint when this account already had the feature (no sidebar shift after start)
+const pxKnown = () => { try { return !!uid && localStorage.getItem("px-on:" + uid) === "1"; } catch (e) { return false; } };
+XPAGES.pres = { order: 1, title: () => tr("Presentations"), icon: () => ic("present"), badge: () => ub(pxActionCount()), show: () => PX.on || pxKnown(), body: pxPage };
 // home card: next presentation step (students)
 function pxHomeCard() {
   if (!PX.on) return ""; const e = pxMyEvents().find(x => x.status !== "done" && pxMyGroup(x.id)); if (!e) return "";
@@ -408,3 +414,5 @@ function pxHomeCard() {
 // home cards contributed by modules (presentation progress, teacher studio, class hub)
 const XHOME = [pxHomeCard];
 function xHomeCards() { return XHOME.map(f => { try { return f(); } catch (e) { return ""; } }).join(""); }
+// boot also after a cached start or a re-login (the "first ready" hook does not fire then); once per signed-in user
+setInterval(() => { if (sb && uid && typeof ME === "function" && ME() && PX.tried !== uid && !PX.booting) pxBoot(); if (!uid && PX.on) { PX.on = false; PX.tried = null; PX.notes = []; PX.acc = null; } }, 700);

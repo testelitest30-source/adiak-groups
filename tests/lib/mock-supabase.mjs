@@ -42,6 +42,14 @@ export async function mockSupabase(context, origin, over = {}) {
       log.writes.push(`auth ${p}`);                          // giriş testləri saxta sessiya ilə işləyir
       return json(route, { error: "mocked" }, 400);
     }
+    if (p.startsWith("/storage/v1/object/sign/")) {                 // signed URL for a private object → served from tests/fixtures
+      return json(route, { signedURL: "/object/public-fixture/" + p.slice("/storage/v1/object/sign/".length) + "?token=mock" });
+    }
+    if (p.startsWith("/storage/v1/object/public-fixture/")) {
+      const fs = await import("node:fs"); const pdf = fs.readFileSync(new URL("../fixtures/sample.pdf", import.meta.url));
+      return route.fulfill({ status: 200, contentType: "application/pdf", headers: { "access-control-allow-origin": "*" }, body: pdf });
+    }
+    if (p.startsWith("/storage/v1/object/") && req.method() === "POST") { log.writes.push("upload " + p); return json(route, { Key: p }); }
     if (p.startsWith("/storage/v1/")) return json(route, []);
     log.leaks.push(req.url());
     return route.abort();

@@ -72,6 +72,7 @@ await test("student desktop: side nav, real labels, no admin link", async () => 
   const env = await open({ user: IDS.student });
   const { page } = env;
   await page.waitForSelector("aside.side .nav button");
+  await page.waitForFunction(() => !window.PX || PX.on || PX.tried, null, { timeout: 5000 }).catch(() => {}); await settle(page, 300);   // ADIAK 1.0 boot finished (sidebar final)
   const labels = await page.locator("aside.side .nav button").allTextContents();
   for (const l of ["Ana səhifə", "Qruplar", "Çat", "Bildirişlər", "Alətlər", "Ayarlar"]) assert(labels.some((t) => t.includes(l)), "nav label missing: " + l);
   assert(await page.locator('a.navlink[href="admin/index.html"]').count() === 0, "student must not see admin link");
