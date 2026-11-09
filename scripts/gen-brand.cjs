@@ -46,7 +46,7 @@ const out = (p, buf) => { fs.mkdirSync(path.dirname(p), { recursive: true }); fs
     // legacy (< Android 12) full-screen splash
     for (const [o, w, h] of [['port', 320, 480], ['land', 480, 320]]) {
       out(path.join(RES, `drawable-${o}-${d}`, 'splash.png'), await render(page, { mark: 'adiak-mark-black.svg', w: Math.round(w * k), h: Math.round(h * k), frac: .28, bg: CANVAS }));
-      out(path.join(RES, `drawable-night-${o}-${d}`, 'splash.png'), await render(page, { mark: 'adiak-mark-white.svg', w: Math.round(w * k), h: Math.round(h * k), frac: .28, bg: NAVY }));
+      out(path.join(RES, `drawable-${o}-night-${d}`, 'splash.png'), await render(page, { mark: 'adiak-mark-white.svg', w: Math.round(w * k), h: Math.round(h * k), frac: .28, bg: NAVY }));
     }
   }
   out(path.join(RES, 'drawable', 'splash.png'), await render(page, { mark: 'adiak-mark-black.svg', w: 480, h: 320, frac: .28, bg: CANVAS }));
