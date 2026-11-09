@@ -15,7 +15,7 @@
 | 11 | "Previous team" continues the team's recorded time (no reset). | A mistaken "next" never loses recorded time. |
 | 12 | Duration criterion: full marks within tolerance, linear to 0 at twice the tolerance; override needs an audited reason. No team-vs-team comparison. | Prompt §7.6. |
 | 13 | Notifications: server rows are the source; client toasts for server-covered events are suppressed only while server notifications are live. Chat messages stay unread-count based (no per-message rows except @mentions). | Avoid duplicates and table bloat. |
-| 14 | Migration history: 18 marker files + sha256 manifest. The full statement texts were **not** copied into the repo (4 contained secret-like patterns); they remain in production `supabase_migrations`. | Safety over completeness; markers are proven by `tests/cli/markers.sh`. |
+| 14 | Migration history: 18 marker files + sha256 manifest, **plus the exact statement text in `supabase/history/sql/`** (exported read-only on 2026-11-09, every sha256 equal to the manifest). The earlier "secret-like" hits were reviewed by hand: only column names and secrets generated in the DB at run time, no literal values. | Complete audit trail without any secret; markers stay proven by `tests/cli/markers.sh`. |
 | 15 | No attendance model and no peer voting exist → none invented. | Prompt: "where supported". |
 | 16 | Web push postponed to 1.1. | Prompt §12. |
 | 17 | Signing key generated in the build session (RSA 4096, 30 years); delivered to the owner privately; GitHub secrets added by the owner (no secrets API in this session). | Prompt §13. |
